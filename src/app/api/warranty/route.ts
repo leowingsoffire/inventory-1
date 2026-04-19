@@ -223,11 +223,11 @@ export async function POST(request: NextRequest) {
       const toneKey = lang === 'zh' ? 'zh' : 'en';
       const template = TONE_TEMPLATES[toneKey][toneIdx];
 
-      const data = {
+      const data: Record<string, string> = {
         customerName: asset.customerName || asset.assignedTo || 'Valued Customer',
         assetName: asset.name,
         assetTag: asset.assetTag,
-        warrantyEnd: asset.warrantyEnd ? String(asset.warrantyEnd) : 'N/A',
+        warrantyEnd: asset.warrantyEnd ? new Date(asset.warrantyEnd).toLocaleDateString() : 'N/A',
       };
 
       const subject = fillTemplate(template.subject, data);
