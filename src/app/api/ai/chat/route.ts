@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const AZURE_AI_ENDPOINT = process.env.AZURE_AI_ENDPOINT || 'https://models.inference.ai.azure.com';
+const AZURE_AI_ENDPOINT = process.env.AZURE_AI_ENDPOINT || 'https://lai-grok-4-20-reasoning-resource.services.ai.azure.com/api/projects/lai-grok-4-20-reasoning';
 const AZURE_AI_KEY = process.env.AZURE_AI_KEY || '';
-const AZURE_AI_MODEL = process.env.AZURE_AI_MODEL || 'grok-4-1-fast-non-reasoning';
+const AZURE_AI_MODEL = process.env.AZURE_AI_MODEL || 'grok-4-20-reasoning';
 
 const BASE_SYSTEM_PROMPT = `You are "Uni AI", the primary AI assistant fully integrated into the Unitech IT System — a Singapore-based SME IT company's internal platform.
 
@@ -151,10 +151,10 @@ export async function POST(request: NextRequest) {
     // PRIMARY: Azure OpenAI API
     if (key) {
       try {
-        const response = await fetch(`${AZURE_AI_ENDPOINT}/chat/completions`, {
+        const response = await fetch(`${AZURE_AI_ENDPOINT}/openai/chat/completions?api-version=2025-01-01`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${key}`,
+            'api-key': key,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
