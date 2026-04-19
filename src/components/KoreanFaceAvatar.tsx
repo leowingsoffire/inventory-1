@@ -142,13 +142,19 @@ function FaceSVG({ face, uid }: { face: AiAvatar['face']; uid: string }) {
         </filter>
       </defs>
 
-      {/* ──── HAIR BACK ──── */}
-      <HairBack s={face.hairStyle} hc={hc} hcH={hcH} hcL={hcL} uid={uid} />
+      {/* ──── HAIR BACK (gentle sway) ──── */}
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="0,100,0;-0.4,100,0;0,100,0;0.3,100,0;0,100,0" dur="6s" repeatCount="indefinite" />
+        <HairBack s={face.hairStyle} hc={hc} hcH={hcH} hcL={hcL} uid={uid} />
+      </g>
 
-      {/* ──── NECK + SHOULDERS ──── */}
-      <path d="M82,148 Q82,142 88,138 L112,138 Q118,142 118,148 L120,186 Q112,196 100,197 Q88,196 80,186 Z" fill={sk} />
-      <ellipse cx="100" cy="143" rx="18" ry="4" fill={skD} opacity="0.14" filter={`url(#b1-${uid})`} />
-      <path d="M85,160 Q94,157 100,158 Q106,157 115,160" stroke={skD} strokeWidth="0.5" fill="none" opacity="0.06" />
+      {/* ──── NECK + SHOULDERS (subtle head tilt) ──── */}
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="0,100,130;0.8,100,130;0,100,130;-0.6,100,130;0,100,130" dur="7s" repeatCount="indefinite" />
+        <path d="M82,148 Q82,142 88,138 L112,138 Q118,142 118,148 L120,186 Q112,196 100,197 Q88,196 80,186 Z" fill={sk} />
+        <ellipse cx="100" cy="143" rx="18" ry="4" fill={skD} opacity="0.14" filter={`url(#b1-${uid})`} />
+        <path d="M85,160 Q94,157 100,158 Q106,157 115,160" stroke={skD} strokeWidth="0.5" fill="none" opacity="0.06" />
+      </g>
 
       {/* ──── FACE — V-line jaw (specular lit) ──── */}
       <g filter={`url(#spec-${uid})`}>
@@ -176,9 +182,13 @@ function FaceSVG({ face, uid }: { face: AiAvatar['face']; uid: string }) {
       <path d="M52,110 Q60,135 100,152 Q140,135 148,110 L148,122 Q136,142 100,158 Q64,142 52,122 Z"
         fill={`url(#jw-${uid})`} />
 
-      {/* ──── BLUSH ──── */}
-      <ellipse cx="66" cy="108" rx="17" ry="11" fill={`url(#bl-${uid})`} />
-      <ellipse cx="134" cy="108" rx="17" ry="11" fill={`url(#bl-${uid})`} />
+      {/* ──── BLUSH (animated glow pulse) ──── */}
+      <ellipse cx="66" cy="108" rx="17" ry="11" fill={`url(#bl-${uid})`}>
+        <animate attributeName="opacity" values="1;0.7;1" dur="3.5s" repeatCount="indefinite" />
+      </ellipse>
+      <ellipse cx="134" cy="108" rx="17" ry="11" fill={`url(#bl-${uid})`}>
+        <animate attributeName="opacity" values="1;0.7;1" dur="3.5s" repeatCount="indefinite" />
+      </ellipse>
 
       {/* Dimples (for dimple moods) */}
       {mouth.dimple && <>
@@ -215,8 +225,9 @@ function FaceSVG({ face, uid }: { face: AiAvatar['face']; uid: string }) {
         <path d="M137,68 L139,66.5" stroke={hc} strokeWidth="0.4" opacity="0.14" />
       </g>
 
-      {/* ──── LIPS — mood + style ──── */}
+      {/* ──── LIPS — mood + style (subtle breathing anim) ──── */}
       <g>
+        <animateTransform attributeName="transform" type="translate" values="0,0;0,-0.4;0,0" dur="4s" repeatCount="indefinite" />
         {/* Lip shadow */}
         <ellipse cx="100" cy="138" rx="16" ry="3" fill={skD2} opacity="0.05" filter={`url(#b1-${uid})`} />
         {/* Upper lip */}
@@ -254,8 +265,11 @@ function FaceSVG({ face, uid }: { face: AiAvatar['face']; uid: string }) {
         )}
       </g>
 
-      {/* ──── HAIR FRONT ──── */}
-      <HairFront s={face.hairStyle} hc={hc} hcH={hcH} hcL={hcL} uid={uid} />
+      {/* ──── HAIR FRONT (gentle sway animation) ──── */}
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="0,100,0;0.6,100,0;0,100,0;-0.5,100,0;0,100,0" dur="5s" repeatCount="indefinite" />
+        <HairFront s={face.hairStyle} hc={hc} hcH={hcH} hcL={hcL} uid={uid} />
+      </g>
 
       {/* ──── ACCESSORIES ──── */}
       {face.accessory === 'glasses' && (
@@ -288,6 +302,8 @@ function FaceSVG({ face, uid }: { face: AiAvatar['face']; uid: string }) {
           <circle cx="40" cy="121" r="3.5" fill="white" opacity="0.35" />
           <circle cx="40" cy="121" r="2" fill="white" opacity="0.65" />
           <circle cx="39" cy="120" r="0.8" fill="white" opacity="0.9" />
+          {/* Earring swing animation — left */}
+          <animateTransform attributeName="transform" type="rotate" values="0,41,108;3,41,108;0,41,108;-2,41,108;0,41,108" dur="4s" repeatCount="indefinite" />
           <line x1="158" y1="108" x2="160" y2="119" stroke="white" strokeWidth="0.5" opacity="0.28" />
           <circle cx="160" cy="121" r="3.5" fill="white" opacity="0.35" />
           <circle cx="160" cy="121" r="2" fill="white" opacity="0.65" />
@@ -367,15 +383,23 @@ function RealisticEye({ cx, cy, face, uid, side, lw, hasWing, isSmoky, isWink }:
           stroke={lighten(face.eyeColor, 22)} strokeWidth="0.25" opacity="0.14" />
       ))}
 
-      {/* Pupil */}
-      <circle cx={cx + f * 1} cy={cy + 0.5} r="3.8" fill="#080808" />
+      {/* Pupil — micro-saccade movement */}
+      <circle cx={cx + f * 1} cy={cy + 0.5} r="3.8" fill="#080808">
+        <animateTransform attributeName="transform" type="translate" values="0,0;0.6,0;0.3,-0.3;-0.3,0.2;0,0" dur="5s" repeatCount="indefinite" />
+      </circle>
 
-      {/* Catchlight — large primary */}
-      <ellipse cx={cx + f * 4.5} cy={cy - 2.5} rx="3.2" ry="3.8" fill="white" opacity="0.88" />
+      {/* Catchlight — large primary (sparkle anim) */}
+      <ellipse cx={cx + f * 4.5} cy={cy - 2.5} rx="3.2" ry="3.8" fill="white" opacity="0.88">
+        <animate attributeName="opacity" values="0.88;0.6;0.88;0.95;0.88" dur="3s" repeatCount="indefinite" />
+      </ellipse>
       {/* Secondary */}
-      <circle cx={cx - f * 2.5} cy={cy + 3} r="1.4" fill="white" opacity="0.42" />
+      <circle cx={cx - f * 2.5} cy={cy + 3} r="1.4" fill="white" opacity="0.42">
+        <animate attributeName="opacity" values="0.42;0.2;0.42;0.55;0.42" dur="4s" repeatCount="indefinite" />
+      </circle>
       {/* Tertiary sparkle */}
-      <circle cx={cx + f * 1.5} cy={cy + 1} r="0.6" fill="white" opacity="0.55" />
+      <circle cx={cx + f * 1.5} cy={cy + 1} r="0.6" fill="white" opacity="0.55">
+        <animate attributeName="opacity" values="0.55;0.3;0.55;0.7;0.55" dur="2.5s" repeatCount="indefinite" />
+      </circle>
 
       {/* Double eyelid fold — Korean beauty signature */}
       <path d={`M${cx - 16},${cy - 1} Q${cx - 8},${cy - 16} ${cx},${cy - 15.5} Q${cx + 8},${cy - 16} ${cx + 16},${cy - 1}`}
@@ -412,6 +436,12 @@ function RealisticEye({ cx, cy, face, uid, side, lw, hasWing, isSmoky, isWink }:
         fill="white" opacity="0.08" />
       <path d={`M${cx - 10},${cy + 7.5} Q${cx},${cy + 11.5} ${cx + 10},${cy + 7.5}`}
         fill="white" opacity="0.04" />
+
+      {/* ── Blink animation — skin-colored eyelid overlay ── */}
+      <ellipse cx={cx} cy={cy - 1} rx="16" ry="12" fill={face.skinTone}>
+        <animate attributeName="ry" values="0;0;0;0;0;0;0;0;12;0;0;0;0;0;0;0;0;0;0;0;0;12;12;0;0;0;0;0;0;0" dur="6s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0;0;0;0;0;0;0;0;1;0;0;0;0;0;0;0;0;0;0;0;0;1;1;0;0;0;0;0;0;0" dur="6s" repeatCount="indefinite" />
+      </ellipse>
     </g>
   );
 }
