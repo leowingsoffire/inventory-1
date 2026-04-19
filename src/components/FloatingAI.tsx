@@ -6,6 +6,7 @@ import {
   Send, X, Sparkles, Minimize2, Settings2, Mic, MicOff,
   AlertTriangle, Shield, Bell, ChevronRight, Volume2, Paperclip,
   FileText, FileSpreadsheet, FileImage, File,
+  ThumbsUp, ThumbsDown, Brain, Plus, Trash2, BookOpen, Save,
 } from 'lucide-react';
 import { useApp } from '@/lib/context';
 import { aiAvatars, aiChatThemes, getAvatar, getChatTheme } from '@/lib/ai-avatars';
@@ -82,14 +83,24 @@ const contextSuggestions: Record<string, { en: string[]; zh: string[] }> = {
   },
 };
 
-// Smart alerts — trusted sources only
-const smartAlerts: AlertTip[] = [
-  { id: 'a1', text: '3 warranties expiring within 30 days — review recommended', icon: 'warning', shown: 0 },
-  { id: 'a2', text: 'PDPA assessment has 5 controls not started — action needed', icon: 'info', shown: 0 },
-  { id: 'a3', text: 'CSA Singapore: New advisory on ransomware targeting SMEs', icon: 'security', shown: 0 },
-  { id: 'a4', text: '2 high-priority maintenance tickets unresolved for 48h+', icon: 'warning', shown: 0 },
-  { id: 'a5', text: 'NIST: Critical CVE published for common enterprise software', icon: 'security', shown: 0 },
-];
+// Smart alerts — dynamically generated from live app data
+function generateSmartAlerts(ctx: Record<string, unknown> | null): AlertTip[] {
+  if (!ctx) return [];
+  const alerts: AlertTip[] = [];
+  const assets = ctx.assets as Record<string, number> | undefined;
+  const maintenance = ctx.maintenance as Record<string, number> | undefined;
+
+  if (assets?.warrantyExpiringSoon && assets.warrantyExpiringSoon > 0) {
+    alerts.push({ id: 'a-warranty', text: `${assets.warrantyExpiringSoon} warranties expiring within 30 days — review recommended`, icon: 'warning', shown: 0 });
+  }
+  if (maintenance?.open && maintenance.open > 0) {
+    alerts.push({ id: 'a-tickets', text: `${maintenance.open} open maintenance tickets awaiting attention`, icon: 'info', shown: 0 });
+  }
+  if (maintenance?.inProgress && maintenance.inProgress > 0) {
+    alerts.push({ id: 'a-progress', text: `${maintenance.inProgress} tickets currently in progress`, icon: 'info', shown: 0 });
+  }
+  return alerts;
+}
 
 // Extract follow-up questions from AI response as suggestion cards
 function extractSuggestions(content: string): string[] {
@@ -134,11 +145,16 @@ export default function FloatingAI() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentPath, setCurrentPath] = useState('/dashboard');
   const [activeAlert, setActiveAlert] = useState<AlertTip | null>(null);
-  const [alertQueue, setAlertQueue] = useState<AlertTip[]>([...smartAlerts]);
+  const [alertQueue, setAlertQueue] = useState<AlertTip[]>([]);
   const [appContext, setAppContext] = useState<Record<string, unknown> | null>(null);
   const [aiSource, setAiSource] = useState<string>('');
   const [pendingFile, setPendingFile] = useState<FileAttachment | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [showTraining, setShowTraining] = useState(false);
+  const [customInstructions, setCustomInstructions] = useState('');
+  const [knowledgeEntries, setKnowledgeEntries] = useState<{ id: string; text: string }[]>([]);
+  const [newKnowledge, setNewKnowledge] = useState('');
+  const [trainingSaved, setTrainingSaved] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -151,6 +167,16 @@ export default function FloatingAI() {
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
   useEffect(() => { if (open && !showSettings) inputRef.current?.focus(); }, [open, showSettings]);
 
+  // Load training data from localStorage
+  useEffect(() => {
+    const savedInstructions = localStorage.getItem('unitech-ai-instructions');
+    const savedKnowledge = localStorage.getItem('unitech-ai-knowledge');
+    if (savedInstructions) setCustomInstructions(savedInstructions);
+    if (savedKnowledge) {
+      try { setKnowledgeEntries(JSON.parse(savedKnowledge)); } catch { /* silent */ }
+    }
+  }, []);
+
   // Fetch live app data context for AI — refreshes every 60 seconds and when chat opens
   useEffect(() => {
     const fetchContext = async () => {
@@ -159,6 +185,8 @@ export default function FloatingAI() {
         if (res.ok) {
           const data = await res.json();
           setAppContext(data);
+          const alerts = generateSmartAlerts(data);
+          if (alerts.length > 0) setAlertQueue(alerts);
         }
       } catch { /* silent — will use cached context */ }
     };
@@ -239,6 +267,33 @@ export default function FloatingAI() {
   const pathKey = Object.keys(contextSuggestions).find(k => currentPath.startsWith(k)) || 'default';
   const currentSuggestions = contextSuggestions[pathKey]![lang as 'en' | 'zh'] || contextSuggestions.default!.en;
 
+  const saveTrainingData = () => {
+    localStorage.setItem('unitech-ai-instructions', customInstructions);
+    localStorage.setItem('unitech-ai-knowledge', JSON.stringify(knowledgeEntries));
+    setTrainingSaved(true);
+    setTimeout(() => setTrainingSaved(false), 2000);
+  };
+
+  const addKnowledgeEntry = () => {
+    if (!newKnowledge.trim()) return;
+    setKnowledgeEntries(prev => [...prev, { id: Date.now().toString(), text: newKnowledge.trim() }]);
+    setNewKnowledge('');
+  };
+
+  const removeKnowledgeEntry = (id: string) => {
+    setKnowledgeEntries(prev => prev.filter(e => e.id !== id));
+  };
+
+  // Build training context string for AI requests
+  const getTrainingContext = () => {
+    const parts: string[] = [];
+    if (customInstructions.trim()) parts.push(`USER INSTRUCTIONS: ${customInstructions.trim()}`);
+    if (knowledgeEntries.length > 0) {
+      parts.push('CUSTOM KNOWLEDGE:\n' + knowledgeEntries.map(e => `- ${e.text}`).join('\n'));
+    }
+    return parts.join('\n\n');
+  };
+
   // File upload handler
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -308,6 +363,7 @@ export default function FloatingAI() {
     try {
       const chatHistory = [...messages, { role: 'user' as const, content: aiMessageContent }]
         .map(m => ({ role: m.role, content: m.content }));
+      const trainingCtx = getTrainingContext();
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -316,6 +372,7 @@ export default function FloatingAI() {
           apiKey: aiApiKey || undefined,
           currentPage: currentPath,
           appContext: appContext || undefined,
+          trainingContext: trainingCtx || undefined,
         }),
       });
       if (!res.ok) throw new Error('API error');
@@ -509,6 +566,69 @@ export default function FloatingAI() {
                         ))}
                       </div>
                     </div>
+
+                    {/* AI Training */}
+                    <div>
+                      <button onClick={() => setShowTraining(!showTraining)} className="flex items-center gap-1.5 text-white/50 text-[10px] font-medium uppercase tracking-wider mb-2">
+                        <ChevronRight className={`w-3 h-3 transition-transform ${showTraining ? 'rotate-90' : ''}`} />
+                        <Brain className="w-3 h-3" />
+                        {lang === 'en' ? 'AI Training' : 'AI 训练'}
+                      </button>
+                      {showTraining && (
+                        <div className="space-y-3">
+                          {/* Custom Instructions */}
+                          <div>
+                            <label className="text-white/40 text-[9px] mb-1 block">{lang === 'en' ? 'Custom Instructions (how AI should respond)' : '自定义指令（AI应如何回应）'}</label>
+                            <textarea
+                              value={customInstructions}
+                              onChange={e => setCustomInstructions(e.target.value)}
+                              placeholder={lang === 'en' ? 'e.g., Always respond in bullet points. Focus on Singapore IT market...' : '例如：总是以要点回答。关注新加坡IT市场...'}
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-2 text-white text-[10px] placeholder:text-white/20 focus:outline-none focus:border-white/25 resize-none"
+                              rows={3}
+                            />
+                          </div>
+
+                          {/* Knowledge Base Entries */}
+                          <div>
+                            <label className="text-white/40 text-[9px] mb-1 block">{lang === 'en' ? 'Knowledge Base (teach AI about your company)' : '知识库（教AI了解您的公司）'}</label>
+                            <div className="flex gap-1.5 mb-2">
+                              <input
+                                type="text"
+                                value={newKnowledge}
+                                onChange={e => setNewKnowledge(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') addKnowledgeEntry(); }}
+                                placeholder={lang === 'en' ? 'Add company info, terms, processes...' : '添加公司信息、术语、流程...'}
+                                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-white text-[10px] placeholder:text-white/20 focus:outline-none focus:border-white/25"
+                              />
+                              <motion.button onClick={addKnowledgeEntry} className="px-2 py-1.5 rounded-lg bg-accent-500/20 border border-accent-500/30 text-accent-400" whileTap={{ scale: 0.9 }}>
+                                <Plus className="w-3 h-3" />
+                              </motion.button>
+                            </div>
+                            {knowledgeEntries.length > 0 && (
+                              <div className="space-y-1 max-h-24 overflow-y-auto">
+                                {knowledgeEntries.map(entry => (
+                                  <div key={entry.id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06] group">
+                                    <BookOpen className="w-2.5 h-2.5 text-white/20 flex-shrink-0" />
+                                    <span className="text-white/50 text-[9px] flex-1 truncate">{entry.text}</span>
+                                    <button onClick={() => removeKnowledgeEntry(entry.id)} className="text-white/10 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                                      <Trash2 className="w-2.5 h-2.5" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <motion.button
+                            onClick={saveTrainingData}
+                            className="w-full px-3 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-medium flex items-center justify-center gap-1.5"
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            {trainingSaved ? <><ThumbsUp className="w-3 h-3" /> {lang === 'en' ? 'Saved!' : '已保存！'}</> : <><Save className="w-3 h-3" /> {lang === 'en' ? 'Save Training' : '保存训练'}</>}
+                          </motion.button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -584,15 +704,45 @@ export default function FloatingAI() {
                     }`}>
                       {msg.content}
                     </div>
-                    {/* Read aloud button for AI messages */}
+                    {/* Read aloud + feedback buttons for AI messages */}
                     {msg.role === 'assistant' && (
-                      <button
-                        onClick={() => speak(msg.content)}
-                        className="text-white/20 hover:text-white/50 transition-colors p-0.5"
-                        title={lang === 'en' ? 'Read aloud' : '朗读'}
-                      >
-                        <Volume2 className="w-3 h-3" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => speak(msg.content)}
+                          className="text-white/20 hover:text-white/50 transition-colors p-0.5"
+                          title={lang === 'en' ? 'Read aloud' : '朗读'}
+                        >
+                          <Volume2 className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            const entry = `Good response to: "${messages.find(m => m.id < msg.id && m.role === 'user')?.content?.slice(0, 80) || 'query'}"`;
+                            setKnowledgeEntries(prev => {
+                              const updated = [...prev, { id: `fb-${Date.now()}`, text: `[POSITIVE] ${entry}` }];
+                              localStorage.setItem('unitech-ai-knowledge', JSON.stringify(updated));
+                              return updated;
+                            });
+                          }}
+                          className="text-white/20 hover:text-emerald-400 transition-colors p-0.5"
+                          title={lang === 'en' ? 'Good response' : '好的回答'}
+                        >
+                          <ThumbsUp className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            const entry = `Needs improvement for: "${messages.find(m => m.id < msg.id && m.role === 'user')?.content?.slice(0, 80) || 'query'}"`;
+                            setKnowledgeEntries(prev => {
+                              const updated = [...prev, { id: `fb-${Date.now()}`, text: `[NEEDS IMPROVEMENT] ${entry}` }];
+                              localStorage.setItem('unitech-ai-knowledge', JSON.stringify(updated));
+                              return updated;
+                            });
+                          }}
+                          className="text-white/20 hover:text-red-400 transition-colors p-0.5"
+                          title={lang === 'en' ? 'Needs improvement' : '需要改进'}
+                        >
+                          <ThumbsDown className="w-3 h-3" />
+                        </button>
+                      </div>
                     )}
                     {/* Suggested reply cards after AI response */}
                     {msg.role === 'assistant' && msg.suggestions && msg.suggestions.length > 0 && (

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Monitor, Wrench, Shield, AlertTriangle, GitBranch, BookOpen,
@@ -23,128 +24,130 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 };
 
-const serviceCategories = [
-  {
-    title: 'Incident Management',
-    titleZh: '事件管理',
-    description: 'Track and resolve IT incidents and service disruptions',
-    descZh: '跟踪和解决IT事件和服务中断',
-    icon: AlertTriangle,
-    color: 'from-red-500 to-orange-500',
-    href: '/maintenance',
-    stats: { label: 'Open Tickets', value: 5 },
-  },
-  {
-    title: 'Change Management',
-    titleZh: '变更管理',
-    description: 'Plan, approve, and implement IT changes safely',
-    descZh: '安全地规划、审批和实施IT变更',
-    icon: GitBranch,
-    color: 'from-blue-500 to-accent-500',
-    href: '/change-requests',
-    stats: { label: 'Pending Changes', value: 8 },
-  },
-  {
-    title: 'Asset Management',
-    titleZh: '资产管理',
-    description: 'Track hardware, software, and IT inventory lifecycle',
-    descZh: '跟踪硬件、软件和IT库存生命周期',
-    icon: Monitor,
-    color: 'from-violet-500 to-purple-500',
-    href: '/assets',
-    stats: { label: 'Total Assets', value: 118 },
-  },
-  {
-    title: 'Configuration',
-    titleZh: '配置管理',
-    description: 'Manage system configurations and infrastructure',
-    descZh: '管理系统配置和基础设施',
-    icon: Settings,
-    color: 'from-slate-500 to-slate-600',
-    href: '/settings',
-    stats: { label: 'Config Items', value: 24 },
-  },
-  {
-    title: 'Knowledge Base',
-    titleZh: '知识库',
-    description: 'Access documentation, guides, and troubleshooting articles',
-    descZh: '访问文档、指南和故障排除文章',
-    icon: BookOpen,
-    color: 'from-emerald-500 to-green-500',
-    href: '/ai-assistant',
-    stats: { label: 'Articles', value: 42 },
-  },
-  {
-    title: 'Service Catalog',
-    titleZh: '服务目录',
-    description: 'Browse and request IT services and resources',
-    descZh: '浏览和请求IT服务和资源',
-    icon: FileText,
-    color: 'from-amber-500 to-yellow-500',
-    href: '/maintenance?action=add',
-    stats: { label: 'Services', value: 15 },
-  },
-  {
-    title: 'User Administration',
-    titleZh: '用户管理',
-    description: 'Manage users, roles, and access permissions',
-    descZh: '管理用户、角色和访问权限',
-    icon: Users,
-    color: 'from-indigo-500 to-blue-500',
-    href: '/users',
-    stats: { label: 'Active Users', value: 8 },
-  },
-  {
-    title: 'Reports & Analytics',
-    titleZh: '报告分析',
-    description: 'View dashboards, KPIs, and performance metrics',
-    descZh: '查看仪表板、KPI和绩效指标',
-    icon: BarChart3,
-    color: 'from-teal-500 to-emerald-500',
-    href: '/reports',
-    stats: { label: 'Dashboards', value: 6 },
-  },
-  {
-    title: 'Network & Security',
-    titleZh: '网络安全',
-    description: 'Monitor network health and security posture',
-    descZh: '监控网络健康和安全状态',
-    icon: Shield,
-    color: 'from-rose-500 to-pink-500',
-    href: '/warranty',
-    stats: { label: 'Alerts', value: 3 },
-  },
-  {
-    title: 'Email & Notifications',
-    titleZh: '邮件通知',
-    description: 'Configure email alerts, SMTP, and notification rules',
-    descZh: '配置邮件警报、SMTP和通知规则',
-    icon: Mail,
-    color: 'from-sky-500 to-blue-400',
-    href: '/settings',
-    stats: { label: 'Templates', value: 4 },
-  },
-  {
-    title: 'Vendor Management',
-    titleZh: '供应商管理',
-    description: 'Track vendors, contracts, and procurement',
-    descZh: '跟踪供应商、合同和采购',
-    icon: HardDrive,
-    color: 'from-orange-500 to-amber-500',
-    href: '/vendors',
-    stats: { label: 'Vendors', value: 4 },
-  },
-  {
-    title: 'Customer Relations',
-    titleZh: '客户关系',
-    description: 'CRM, invoicing, and customer engagement tracking',
-    descZh: 'CRM、发票和客户互动跟踪',
-    icon: Headphones,
-    color: 'from-fuchsia-500 to-purple-500',
-    href: '/customers',
-    stats: { label: 'Clients', value: 5 },
-  },
-];
+function getServiceCategories(counts: Record<string, number>) {
+  return [
+    {
+      title: 'Incident Management',
+      titleZh: '事件管理',
+      description: 'Track and resolve IT incidents and service disruptions',
+      descZh: '跟踪和解决IT事件和服务中断',
+      icon: AlertTriangle,
+      color: 'from-red-500 to-orange-500',
+      href: '/maintenance',
+      stats: { label: 'Open Tickets', value: counts.openTickets ?? 0 },
+    },
+    {
+      title: 'Change Management',
+      titleZh: '变更管理',
+      description: 'Plan, approve, and implement IT changes safely',
+      descZh: '安全地规划、审批和实施IT变更',
+      icon: GitBranch,
+      color: 'from-blue-500 to-accent-500',
+      href: '/change-requests',
+      stats: { label: 'Pending Changes', value: counts.pendingChanges ?? 0 },
+    },
+    {
+      title: 'Asset Management',
+      titleZh: '资产管理',
+      description: 'Track hardware, software, and IT inventory lifecycle',
+      descZh: '跟踪硬件、软件和IT库存生命周期',
+      icon: Monitor,
+      color: 'from-violet-500 to-purple-500',
+      href: '/assets',
+      stats: { label: 'Total Assets', value: counts.totalAssets ?? 0 },
+    },
+    {
+      title: 'Configuration',
+      titleZh: '配置管理',
+      description: 'Manage system configurations and infrastructure',
+      descZh: '管理系统配置和基础设施',
+      icon: Settings,
+      color: 'from-slate-500 to-slate-600',
+      href: '/settings',
+      stats: { label: 'Config Items', value: counts.totalAssets ?? 0 },
+    },
+    {
+      title: 'Knowledge Base',
+      titleZh: '知识库',
+      description: 'Access documentation, guides, and troubleshooting articles',
+      descZh: '访问文档、指南和故障排除文章',
+      icon: BookOpen,
+      color: 'from-emerald-500 to-green-500',
+      href: '/ai-assistant',
+      stats: { label: 'Articles', value: 0 },
+    },
+    {
+      title: 'Service Catalog',
+      titleZh: '服务目录',
+      description: 'Browse and request IT services and resources',
+      descZh: '浏览和请求IT服务和资源',
+      icon: FileText,
+      color: 'from-amber-500 to-yellow-500',
+      href: '/maintenance?action=add',
+      stats: { label: 'Services', value: counts.totalTickets ?? 0 },
+    },
+    {
+      title: 'User Administration',
+      titleZh: '用户管理',
+      description: 'Manage users, roles, and access permissions',
+      descZh: '管理用户、角色和访问权限',
+      icon: Users,
+      color: 'from-indigo-500 to-blue-500',
+      href: '/users',
+      stats: { label: 'Active Users', value: counts.activeUsers ?? 0 },
+    },
+    {
+      title: 'Reports & Analytics',
+      titleZh: '报告分析',
+      description: 'View dashboards, KPIs, and performance metrics',
+      descZh: '查看仪表板、KPI和绩效指标',
+      icon: BarChart3,
+      color: 'from-teal-500 to-emerald-500',
+      href: '/reports',
+      stats: { label: 'Dashboards', value: 6 },
+    },
+    {
+      title: 'Network & Security',
+      titleZh: '网络安全',
+      description: 'Monitor network health and security posture',
+      descZh: '监控网络健康和安全状态',
+      icon: Shield,
+      color: 'from-rose-500 to-pink-500',
+      href: '/warranty',
+      stats: { label: 'Alerts', value: counts.warrantyAlerts ?? 0 },
+    },
+    {
+      title: 'Email & Notifications',
+      titleZh: '邮件通知',
+      description: 'Configure email alerts, SMTP, and notification rules',
+      descZh: '配置邮件警报、SMTP和通知规则',
+      icon: Mail,
+      color: 'from-sky-500 to-blue-400',
+      href: '/settings',
+      stats: { label: 'Templates', value: 0 },
+    },
+    {
+      title: 'Vendor Management',
+      titleZh: '供应商管理',
+      description: 'Track vendors, contracts, and procurement',
+      descZh: '跟踪供应商、合同和采购',
+      icon: HardDrive,
+      color: 'from-orange-500 to-amber-500',
+      href: '/vendors',
+      stats: { label: 'Vendors', value: counts.totalVendors ?? 0 },
+    },
+    {
+      title: 'Customer Relations',
+      titleZh: '客户关系',
+      description: 'CRM, invoicing, and customer engagement tracking',
+      descZh: 'CRM、发票和客户互动跟踪',
+      icon: Headphones,
+      color: 'from-fuchsia-500 to-purple-500',
+      href: '/customers',
+      stats: { label: 'Clients', value: counts.totalCustomers ?? 0 },
+    },
+  ];
+}
 
 const quickLinks = [
   { label: 'Create Incident', labelZh: '创建事件', href: '/maintenance?action=add', icon: AlertTriangle },
@@ -158,6 +161,26 @@ const quickLinks = [
 export default function ServiceDeskPage() {
   const { lang } = useApp();
   const router = useRouter();
+  const [counts, setCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    fetch('/api/ai/context').then(r => r.ok ? r.json() : null).then(data => {
+      if (data) {
+        setCounts({
+          openTickets: (data.maintenance?.open ?? 0) + (data.maintenance?.inProgress ?? 0),
+          pendingChanges: data.changeRequests?.total ?? 0,
+          totalAssets: data.assets?.total ?? 0,
+          totalTickets: data.maintenance?.total ?? 0,
+          activeUsers: data.employees?.total ?? 0,
+          warrantyAlerts: data.assets?.warrantyExpiringSoon ?? 0,
+          totalVendors: data.vendors?.total ?? 0,
+          totalCustomers: data.customers?.total ?? 0,
+        });
+      }
+    }).catch(() => {});
+  }, []);
+
+  const serviceCategories = getServiceCategories(counts);
 
   return (
     <MainLayout>

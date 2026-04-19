@@ -6,6 +6,7 @@ import { Plus, Search, X, Wrench, AlertTriangle, Clock, CheckCircle, ChevronDown
 import MainLayout from '@/components/MainLayout';
 import { useApp } from '@/lib/context';
 import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
+import AIFormAssist from '@/components/AIFormAssist';
 import { t } from '@/lib/i18n';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -242,9 +243,16 @@ export default function MaintenancePage() {
                   <h2 className="text-xl font-bold text-white">
                     {editingTicket ? t('maint.edit', lang) : t('maint.add', lang)}
                   </h2>
-                  <button onClick={() => setShowModal(false)} className="p-2 rounded-xl hover:bg-white/10 text-white/50 hover:text-white transition-all">
-                    <X className="w-5 h-5" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <AIFormAssist
+                      module="maintenance"
+                      currentValues={Object.fromEntries(Object.entries(formData).map(([k, v]) => [k, String(v || '')]))}
+                      onApplySuggestion={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
+                    />
+                    <button onClick={() => setShowModal(false)} className="p-2 rounded-xl hover:bg-white/10 text-white/50 hover:text-white transition-all">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-4">
                   <div>

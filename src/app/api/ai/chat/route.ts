@@ -126,7 +126,7 @@ function buildAppContext(appData: Record<string, unknown>): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, apiKey, currentPage, appContext } = await request.json();
+    const { messages, apiKey, currentPage, appContext, trainingContext } = await request.json();
 
     const key = apiKey || AZURE_AI_KEY;
 
@@ -141,6 +141,11 @@ export async function POST(request: NextRequest) {
     // Add live app data context
     if (appContext) {
       systemPrompt += buildAppContext(appContext);
+    }
+
+    // Add user training context (custom instructions & knowledge base)
+    if (trainingContext && typeof trainingContext === 'string' && trainingContext.trim()) {
+      systemPrompt += `\n\n--- USER TRAINING CONTEXT ---\n${trainingContext}\n--- END TRAINING CONTEXT ---`;
     }
 
     // PRIMARY: Azure OpenAI API

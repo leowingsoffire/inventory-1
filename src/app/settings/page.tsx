@@ -7,6 +7,7 @@ import {
   Mail, MessageSquare, Bell, Shield, Database, Cloud, Webhook, Link2,
   Monitor, Users, Wrench, TrendingUp, ScanLine, ArrowRight, Sparkles,
   ArrowDown, LayoutDashboard, FileText, ShieldCheck, Upload, Image, AlertCircle, CheckCircle,
+  RotateCcw, Droplets, Layers,
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useApp } from '@/lib/context';
@@ -20,7 +21,7 @@ const cardVariants = {
 };
 
 export default function SettingsPage() {
-  const { themeKey, setTheme, lang, setLang, aiApiKey, setAiApiKey } = useApp();
+  const { themeKey, setTheme, lang, setLang, aiApiKey, setAiApiKey, themeOverrides, setThemeOverrides } = useApp();
   const [apiKeyInput, setApiKeyInput] = useState(aiApiKey);
   const [showApiKey, setShowApiKey] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -178,11 +179,14 @@ export default function SettingsPage() {
                 <Palette className="w-4 h-4 text-pink-400" />
                 {t('settings.theme', lang)}
               </h2>
-              <div className="grid grid-cols-3 gap-2">
+
+              {/* Preset Themes */}
+              <p className="text-white/40 text-[10px] mb-2 uppercase tracking-wider font-medium">{lang === 'en' ? 'Preset Themes' : '预设主题'}</p>
+              <div className="grid grid-cols-3 gap-2 mb-4">
                 {themeEntries.map((entry) => (
                   <motion.button
                     key={entry.key}
-                    onClick={() => setTheme(entry.key)}
+                    onClick={() => { setTheme(entry.key); setThemeOverrides({ ...themeOverrides, accentColor: undefined, gradientFrom: undefined, gradientVia: undefined, gradientTo: undefined }); }}
                     className={`relative p-3 rounded-xl border transition-all text-left ${
                       themeKey === entry.key ? 'border-white/40 bg-white/10 ring-2 ring-white/20' : 'border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20'
                     }`}
@@ -199,6 +203,162 @@ export default function SettingsPage() {
                   </motion.button>
                 ))}
               </div>
+
+              {/* Custom Accent Color */}
+              <p className="text-white/40 text-[10px] mb-2 uppercase tracking-wider font-medium">{lang === 'en' ? 'Custom Accent Color' : '自定义强调色'}</p>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {[
+                  { hex: '#10b981', name: 'Emerald' },
+                  { hex: '#8b5cf6', name: 'Violet' },
+                  { hex: '#f97316', name: 'Orange' },
+                  { hex: '#3b82f6', name: 'Blue' },
+                  { hex: '#ef4444', name: 'Red' },
+                  { hex: '#ec4899', name: 'Pink' },
+                  { hex: '#06b6d4', name: 'Cyan' },
+                  { hex: '#eab308', name: 'Yellow' },
+                  { hex: '#14b8a6', name: 'Teal' },
+                  { hex: '#6366f1', name: 'Indigo' },
+                  { hex: '#f43f5e', name: 'Rose' },
+                  { hex: '#84cc16', name: 'Lime' },
+                ].map(c => (
+                  <motion.button
+                    key={c.hex}
+                    onClick={() => setThemeOverrides({ ...themeOverrides, accentColor: c.hex })}
+                    className={`relative w-8 h-8 rounded-lg border-2 transition-all ${themeOverrides.accentColor === c.hex ? 'border-white ring-2 ring-white/30 scale-110' : 'border-white/20 hover:border-white/40'}`}
+                    style={{ backgroundColor: c.hex }}
+                    whileHover={{ scale: 1.15 }}
+                    whileTap={{ scale: 0.9 }}
+                    title={c.name}
+                  >
+                    {themeOverrides.accentColor === c.hex && <Check className="w-3.5 h-3.5 text-white absolute inset-0 m-auto drop-shadow-md" />}
+                  </motion.button>
+                ))}
+                <div className="relative">
+                  <input
+                    type="color"
+                    value={themeOverrides.accentColor || '#10b981'}
+                    onChange={e => setThemeOverrides({ ...themeOverrides, accentColor: e.target.value })}
+                    className="w-8 h-8 rounded-lg cursor-pointer border-2 border-dashed border-white/20 hover:border-white/40 bg-transparent"
+                    title={lang === 'en' ? 'Pick custom color' : '选择自定义颜色'}
+                  />
+                </div>
+                {themeOverrides.accentColor && (
+                  <motion.button
+                    onClick={() => setThemeOverrides({ ...themeOverrides, accentColor: undefined })}
+                    className="w-8 h-8 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-white/40 hover:text-white/70 hover:bg-white/10"
+                    whileHover={{ scale: 1.1 }}
+                    title={lang === 'en' ? 'Reset to theme default' : '重置为主题默认'}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </motion.button>
+                )}
+              </div>
+              {themeOverrides.accentColor && (
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: themeOverrides.accentColor }} />
+                  <span className="text-white/50 text-[10px] font-mono">{themeOverrides.accentColor.toUpperCase()}</span>
+                </div>
+              )}
+
+              {/* Custom Background Gradient */}
+              <p className="text-white/40 text-[10px] mb-2 uppercase tracking-wider font-medium flex items-center gap-1.5">
+                <Layers className="w-3 h-3" />
+                {lang === 'en' ? 'Background Gradient' : '背景渐变'}
+              </p>
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div>
+                  <label className="text-white/30 text-[9px] mb-1 block">{lang === 'en' ? 'From' : '起始'}</label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={themeOverrides.gradientFrom || themes[themeKey].gradientFrom} onChange={e => setThemeOverrides({ ...themeOverrides, gradientFrom: e.target.value })} className="w-8 h-8 rounded-lg cursor-pointer border border-white/20 bg-transparent" />
+                    <span className="text-white/30 text-[9px] font-mono">{(themeOverrides.gradientFrom || themes[themeKey].gradientFrom).toUpperCase()}</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-white/30 text-[9px] mb-1 block">{lang === 'en' ? 'Via' : '中间'}</label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={themeOverrides.gradientVia || themes[themeKey].gradientVia} onChange={e => setThemeOverrides({ ...themeOverrides, gradientVia: e.target.value })} className="w-8 h-8 rounded-lg cursor-pointer border border-white/20 bg-transparent" />
+                    <span className="text-white/30 text-[9px] font-mono">{(themeOverrides.gradientVia || themes[themeKey].gradientVia).toUpperCase()}</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-white/30 text-[9px] mb-1 block">{lang === 'en' ? 'To' : '终止'}</label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={themeOverrides.gradientTo || themes[themeKey].gradientTo} onChange={e => setThemeOverrides({ ...themeOverrides, gradientTo: e.target.value })} className="w-8 h-8 rounded-lg cursor-pointer border border-white/20 bg-transparent" />
+                    <span className="text-white/30 text-[9px] font-mono">{(themeOverrides.gradientTo || themes[themeKey].gradientTo).toUpperCase()}</span>
+                  </div>
+                </div>
+              </div>
+              {/* Gradient Preview */}
+              <div className="w-full h-10 rounded-xl mb-3 border border-white/10" style={{ background: `linear-gradient(to right, ${themeOverrides.gradientFrom || themes[themeKey].gradientFrom}, ${themeOverrides.gradientVia || themes[themeKey].gradientVia}, ${themeOverrides.gradientTo || themes[themeKey].gradientTo})` }} />
+              {(themeOverrides.gradientFrom || themeOverrides.gradientVia || themeOverrides.gradientTo) && (
+                <motion.button
+                  onClick={() => setThemeOverrides({ ...themeOverrides, gradientFrom: undefined, gradientVia: undefined, gradientTo: undefined })}
+                  className="text-white/40 hover:text-white/70 text-[10px] flex items-center gap-1 mb-3"
+                  whileHover={{ x: 2 }}
+                >
+                  <RotateCcw className="w-3 h-3" /> {lang === 'en' ? 'Reset gradient to theme default' : '重置渐变为主题默认'}
+                </motion.button>
+              )}
+
+              {/* Glass Effect Controls */}
+              <p className="text-white/40 text-[10px] mb-2 uppercase tracking-wider font-medium flex items-center gap-1.5">
+                <Droplets className="w-3 h-3" />
+                {lang === 'en' ? 'Glass Effect' : '玻璃效果'}
+              </p>
+              <div className="grid grid-cols-2 gap-4 mb-3">
+                <div>
+                  <label className="text-white/30 text-[9px] mb-1 flex items-center justify-between">
+                    <span>{lang === 'en' ? 'Glass Opacity' : '玻璃透明度'}</span>
+                    <span className="font-mono">{Math.round((themeOverrides.glassOpacity ?? 0.82) * 100)}%</span>
+                  </label>
+                  <input type="range" min="0.4" max="1" step="0.02" value={themeOverrides.glassOpacity ?? 0.82} onChange={e => setThemeOverrides({ ...themeOverrides, glassOpacity: parseFloat(e.target.value) })} className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-white bg-white/10" />
+                </div>
+                <div>
+                  <label className="text-white/30 text-[9px] mb-1 flex items-center justify-between">
+                    <span>{lang === 'en' ? 'Border Opacity' : '边框透明度'}</span>
+                    <span className="font-mono">{Math.round((themeOverrides.borderOpacity ?? 0.12) * 100)}%</span>
+                  </label>
+                  <input type="range" min="0" max="0.4" step="0.02" value={themeOverrides.borderOpacity ?? 0.12} onChange={e => setThemeOverrides({ ...themeOverrides, borderOpacity: parseFloat(e.target.value) })} className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-white bg-white/10" />
+                </div>
+              </div>
+
+              {/* Quick Gradient Presets */}
+              <p className="text-white/40 text-[10px] mb-2 uppercase tracking-wider font-medium">{lang === 'en' ? 'Quick Gradient Presets' : '快速渐变预设'}</p>
+              <div className="grid grid-cols-4 gap-2 mb-2">
+                {[
+                  { name: 'Midnight', from: '#0f0c29', via: '#302b63', to: '#24243e' },
+                  { name: 'Ocean', from: '#000428', via: '#004e92', to: '#000428' },
+                  { name: 'Sunset', from: '#1a1a2e', via: '#4a1942', to: '#16213e' },
+                  { name: 'Forest', from: '#0a1f0a', via: '#1a3a1a', to: '#0d2818' },
+                  { name: 'Aurora', from: '#0d1b2a', via: '#1b2838', to: '#0b132b' },
+                  { name: 'Crimson', from: '#1a0a0a', via: '#2d1515', to: '#1a0a1a' },
+                  { name: 'Frost', from: '#0c1445', via: '#1a237e', to: '#0c1445' },
+                  { name: 'Shadow', from: '#0a0a0a', via: '#141414', to: '#0a0a0a' },
+                ].map(p => (
+                  <motion.button
+                    key={p.name}
+                    onClick={() => setThemeOverrides({ ...themeOverrides, gradientFrom: p.from, gradientVia: p.via, gradientTo: p.to })}
+                    className="p-1.5 rounded-lg border border-white/10 hover:border-white/25 transition-all text-center"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <div className="w-full h-5 rounded-md mb-1 border border-white/5" style={{ background: `linear-gradient(to right, ${p.from}, ${p.via}, ${p.to})` }} />
+                    <span className="text-white/50 text-[9px]">{p.name}</span>
+                  </motion.button>
+                ))}
+              </div>
+
+              {/* Reset All Customizations */}
+              {(themeOverrides.accentColor || themeOverrides.gradientFrom || themeOverrides.glassOpacity !== undefined || themeOverrides.borderOpacity !== undefined) && (
+                <motion.button
+                  onClick={() => setThemeOverrides({})}
+                  className="mt-2 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-lg text-red-300 text-[10px] flex items-center gap-1.5 transition-colors"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <RotateCcw className="w-3 h-3" /> {lang === 'en' ? 'Reset All Custom Styling' : '重置所有自定义样式'}
+                </motion.button>
+              )}
             </motion.div>
 
             {/* Language */}

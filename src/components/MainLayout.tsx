@@ -7,10 +7,14 @@ import Header from '@/components/Header';
 import FloatingAI from '@/components/FloatingAI';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  const { theme, sidebarOpen } = useApp();
+  const { theme, themeOverrides, sidebarOpen } = useApp();
+
+  const bgStyle = themeOverrides.gradientFrom ? {
+    background: `linear-gradient(to bottom right, ${themeOverrides.gradientFrom}, ${themeOverrides.gradientVia || themeOverrides.gradientFrom}, ${themeOverrides.gradientTo || themeOverrides.gradientFrom})`,
+  } : undefined;
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${theme.gradient} animated-gradient relative`}>
+    <div className={`min-h-screen bg-gradient-to-br ${bgStyle ? '' : theme.gradient} animated-gradient relative`} style={bgStyle}>
       {/* Animated background orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <motion.div

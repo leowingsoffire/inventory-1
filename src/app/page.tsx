@@ -6,6 +6,7 @@ import { Cpu, Eye, EyeOff, ArrowRight, Shield, AlertCircle, Mail, Zap, Terminal 
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
+import { APP_VERSION } from '@/lib/version';
 
 export default function LoginPage() {
   const [login, setLogin] = useState('');
@@ -457,10 +458,13 @@ export default function LoginPage() {
           </motion.div>
 
           {/* Footer */}
-          <div className="mt-4 flex items-center justify-center gap-2 text-white/20 text-[10px]">
-            <div className="w-4 h-[1px] bg-gradient-to-r from-transparent to-white/20" />
-            <span>© 2026 Unitech IT System • Singapore</span>
-            <div className="w-4 h-[1px] bg-gradient-to-l from-transparent to-white/20" />
+          <div className="mt-4 flex flex-col items-center gap-1">
+            <div className="flex items-center gap-2 text-white/20 text-[10px]">
+              <div className="w-4 h-[1px] bg-gradient-to-r from-transparent to-white/20" />
+              <span>© 2026 Unitech IT System • Singapore</span>
+              <div className="w-4 h-[1px] bg-gradient-to-l from-transparent to-white/20" />
+            </div>
+            <span className="text-white/15 text-[9px] font-mono tracking-wider">v{APP_VERSION}</span>
           </div>
         </div>
       </motion.div>

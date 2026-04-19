@@ -14,6 +14,7 @@ import { t } from '@/lib/i18n';
 import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
 import { CyberWorkflow } from '@/components/CyberWorkflow';
 import { getModuleWorkflows } from '@/lib/workflow-definitions';
+import { APP_VERSION } from '@/lib/version';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -131,6 +132,7 @@ export default function DashboardPage() {
             <p className="text-white/50 text-xs">
               {new Date().toLocaleDateString(lang === 'en' ? 'en-SG' : 'zh-SG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
+            <p className="text-white/25 text-[10px] font-mono mt-0.5">v{APP_VERSION}</p>
           </div>
         </motion.div>
 
