@@ -1,9 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import crypto from 'crypto';
 
 const AZURE_AI_ENDPOINT = process.env.AZURE_AI_ENDPOINT || '';
 const AZURE_AI_KEY = process.env.AZURE_AI_KEY || '';
 const AZURE_AI_MODEL = process.env.AZURE_AI_MODEL || 'grok-4-20-reasoning';
+
+interface DocRow {
+  id: string;
+  fileName: string;
+  fileType: string;
+  fileCategory: string;
+  fileSize: number;
+  extractedText: string;
+}
+
+interface GuideRow {
+  id: string;
+  documentId: string;
+  title: string;
+  content: string;
+  version: number;
+  status: string;
+  generatedBy: string;
+  createdAt: string;
+  updatedAt: string;
+  docId?: string;
+  docFileName?: string;
+  docFileType?: string;
+  docFileCategory?: string;
+}
 
 const GUIDE_SYSTEM_PROMPT = `You are a professional technical documentation writer at Unitech. Your job is to generate comprehensive, easy-to-follow user guides from uploaded documents.
 
@@ -49,13 +75,30 @@ export async function GET(request: NextRequest) {
   const documentId = searchParams.get('documentId');
 
   try {
-    const where = documentId ? { documentId } : {};
-    const guides = await prisma.userGuide.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      include: { document: { select: { id: true, fileName: true, fileType: true, fileCategory: true } } },
-    });
-    return NextResponse.json(guides);
+    let guides: GuideRow[];
+    if (documentId) {
+      guides = await prisma.$queryRawUnsafe<GuideRow[]>(
+        `SELECT g.id, g.documentId, g.title, g.content, g.version, g.status, g.generatedBy, g.createdAt, g.updatedAt,
+                d.id as docId, d.fileName as docFileName, d.fileType as docFileType, d.fileCategory as docFileCategory
+         FROM UserGuide g LEFT JOIN Document d ON g.documentId = d.id
+         WHERE g.documentId = ? ORDER BY g.createdAt DESC`, documentId
+      );
+    } else {
+      guides = await prisma.$queryRawUnsafe<GuideRow[]>(
+        `SELECT g.id, g.documentId, g.title, g.content, g.version, g.status, g.generatedBy, g.createdAt, g.updatedAt,
+                d.id as docId, d.fileName as docFileName, d.fileType as docFileType, d.fileCategory as docFileCategory
+         FROM UserGuide g LEFT JOIN Document d ON g.documentId = d.id
+         ORDER BY g.createdAt DESC`
+      );
+    }
+    // Shape the response to match expected format
+    const result = guides.map(g => ({
+      id: g.id, documentId: g.documentId, title: g.title, content: g.content,
+      version: g.version, status: g.status, generatedBy: g.generatedBy,
+      createdAt: g.createdAt, updatedAt: g.updatedAt,
+      document: { id: g.docId || g.documentId, fileName: g.docFileName || '', fileType: g.docFileType || '', fileCategory: g.docFileCategory || '' },
+    }));
+    return NextResponse.json(result);
   } catch (error) {
     console.error('List guides error:', error);
     return NextResponse.json({ error: 'Failed to list guides' }, { status: 500 });
@@ -68,28 +111,29 @@ export async function POST(request: NextRequest) {
     const { documentId, apiKey, customInstructions } = await request.json();
 
     if (!documentId) {
-      return NextResponse.json({ error: 'documentId is required'}, { status: 400 });
+      return NextResponse.json({ error: 'documentId is required' }, { status: 400 });
     }
 
-    // Fetch document
-    const document = await prisma.document.findUnique({ where: { id: documentId } });
-    if (!document) {
+    // Fetch document via raw SQL
+    const docs = await prisma.$queryRawUnsafe<DocRow[]>(
+      `SELECT id, fileName, fileType, fileCategory, fileSize, extractedText FROM Document WHERE id = ?`, documentId
+    );
+    if (docs.length === 0) {
       return NextResponse.json({ error: 'Document not found' }, { status: 404 });
     }
+    const document = docs[0]!;
 
     // Determine next version
-    const latestGuide = await prisma.userGuide.findFirst({
-      where: { documentId },
-      orderBy: { version: 'desc' },
-    });
-    const nextVersion = (latestGuide?.version || 0) + 1;
+    const versionRows = await prisma.$queryRawUnsafe<{ maxVer: number | null }[]>(
+      `SELECT MAX(version) as maxVer FROM UserGuide WHERE documentId = ?`, documentId
+    );
+    const nextVersion = ((versionRows[0]?.maxVer) || 0) + 1;
 
     const key = apiKey || AZURE_AI_KEY;
     if (!key) {
       return NextResponse.json({ error: 'No AI API key configured' }, { status: 400 });
     }
 
-    // Build the generation prompt
     let userPrompt = `Generate a comprehensive, professional user guide from the following uploaded document.
 
 DOCUMENT INFO:
@@ -110,7 +154,6 @@ Generate a complete, professional user guide following all the format requiremen
       userPrompt += `\n\nADDITIONAL INSTRUCTIONS:\n${customInstructions}`;
     }
 
-    // Call Azure AI with streaming to collect full response
     const response = await fetch(`${AZURE_AI_ENDPOINT}/openai/deployments/${AZURE_AI_MODEL}/chat/completions?api-version=2024-10-21`, {
       method: 'POST',
       headers: { 'api-key': key, 'Content-Type': 'application/json' },
@@ -138,22 +181,23 @@ Generate a complete, professional user guide following all the format requiremen
       return NextResponse.json({ error: 'AI returned empty guide content' }, { status: 502 });
     }
 
-    // Extract title from first heading or generate one
     const titleMatch = guideContent.match(/^#\s+(.+)/m);
     const title = titleMatch ? titleMatch[1].replace(/[*_`]/g, '').trim() : `User Guide — ${document.fileName}`;
 
-    // Save guide to database
-    const guide = await prisma.userGuide.create({
-      data: {
-        documentId: document.id,
-        title,
-        content: guideContent,
-        version: nextVersion,
-        status: 'published',
-        generatedBy: 'ai',
-      },
-      include: { document: { select: { id: true, fileName: true, fileType: true, fileCategory: true } } },
-    });
+    const guideId = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO UserGuide (id, documentId, title, content, version, status, generatedBy, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      guideId, document.id, title, guideContent, nextVersion, 'published', 'ai', now, now
+    );
+
+    const guide = {
+      id: guideId, documentId: document.id, title, content: guideContent,
+      version: nextVersion, status: 'published', generatedBy: 'ai',
+      createdAt: now, updatedAt: now,
+      document: { id: document.id, fileName: document.fileName, fileType: document.fileType, fileCategory: document.fileCategory },
+    };
 
     return NextResponse.json(guide, { status: 201 });
   } catch (error) {

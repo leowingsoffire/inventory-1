@@ -209,8 +209,11 @@ export default function AIAssistantPage() {
         }),
       });
       if (res.ok) {
+        const savedDoc = await res.json();
         setDocUploadFile(null);
         fetchDocuments();
+        // Auto-generate guide after saving
+        generateGuide(savedDoc.id);
       } else {
         const err = await res.json();
         alert(err.error || 'Failed to save');
@@ -230,6 +233,7 @@ export default function AIAssistantPage() {
       if (res.ok) {
         const guide = await res.json();
         setViewingGuide(guide);
+        setActiveTab('guides');
         fetchDocuments();
         fetchGuides();
       } else {
@@ -247,6 +251,16 @@ export default function AIAssistantPage() {
       if (viewingGuide?.id === guideId) setViewingGuide(null);
       fetchGuides();
       fetchDocuments();
+    } catch { /* ignore */ }
+  };
+
+  const deleteDocument = async (docId: string) => {
+    if (!confirm(lang === 'en' ? 'Delete this document and all its guides?' : '删除此文档及其所有指南？')) return;
+    try {
+      await fetch('/api/ai/documents', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: docId }) });
+      if (expandedDoc === docId) setExpandedDoc(null);
+      fetchDocuments();
+      fetchGuides();
     } catch { /* ignore */ }
   };
 
@@ -702,7 +716,10 @@ export default function AIAssistantPage() {
                           {isExpanded && (
                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                               <div className="px-3 pb-3 border-t border-white/5 pt-2">
-                                <p className="text-white/30 text-xs mb-2">{lang === 'en' ? 'Extracted content preview:' : '提取内容预览：'}</p>
+                                <div className="flex items-center justify-between mb-2">
+                                  <p className="text-white/30 text-xs">{lang === 'en' ? 'Extracted content preview:' : '提取内容预览：'}</p>
+                                  <button onClick={(e) => { e.stopPropagation(); deleteDocument(doc.id); }} className="px-2 py-1 rounded text-[10px] text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-1"><Trash2 className="w-3 h-3" />{lang === 'en' ? 'Delete' : '删除'}</button>
+                                </div>
                                 <div className="p-2 rounded-lg bg-black/20 max-h-32 overflow-y-auto">
                                   <p className="text-white/30 text-xs font-mono whitespace-pre-wrap">{doc.extractedText.slice(0, 800)}{doc.extractedText.length > 800 ? '...' : ''}</p>
                                 </div>
