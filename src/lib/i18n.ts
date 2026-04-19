@@ -1,0 +1,192 @@
+export type Lang = 'en' | 'zh';
+
+const translations: Record<string, Record<Lang, string>> = {
+  // App
+  'app.title': { en: 'Unitech IT System', zh: 'Unitech IT 系统' },
+  'app.subtitle': { en: 'IT Inventory Management', zh: 'IT 资产管理' },
+  'app.welcome': { en: 'Welcome back', zh: '欢迎回来' },
+  'app.login': { en: 'Sign In', zh: '登录' },
+  'app.logout': { en: 'Sign Out', zh: '退出登录' },
+  'app.search': { en: 'Search...', zh: '搜索...' },
+
+  // Navigation
+  'nav.dashboard': { en: 'Dashboard', zh: '仪表盘' },
+  'nav.assets': { en: 'Assets', zh: '资产管理' },
+  'nav.employees': { en: 'Employees', zh: '员工管理' },
+  'nav.maintenance': { en: 'Maintenance', zh: '维护工单' },
+  'nav.warranty': { en: 'Warranty', zh: '保修监控' },
+  'nav.users': { en: 'Users & Roles', zh: '用户权限' },
+  'nav.reports': { en: 'Reports', zh: '报告分析' },
+  'nav.ai': { en: 'AI Assistant', zh: 'AI 助手' },
+  'nav.settings': { en: 'Settings', zh: '系统设置' },
+  'nav.customers': { en: 'Customers', zh: '客户管理' },
+  'nav.vendors': { en: 'Vendors', zh: '供应商' },
+  'nav.crm': { en: 'CRM', zh: '客户关系' },
+  'nav.finance': { en: 'Finance', zh: '财务管理' },
+  'nav.serviceDesk': { en: 'Service Desk', zh: '服务台' },
+  'nav.changes': { en: 'Change Requests', zh: '变更请求' },
+
+  // Dashboard
+  'dash.totalAssets': { en: 'Total Assets', zh: '资产总数' },
+  'dash.assigned': { en: 'Assigned', zh: '已分配' },
+  'dash.available': { en: 'Available', zh: '可用' },
+  'dash.maintenance': { en: 'In Maintenance', zh: '维护中' },
+  'dash.employees': { en: 'Employees', zh: '员工数' },
+  'dash.openTickets': { en: 'Open Tickets', zh: '待处理工单' },
+  'dash.recentActivity': { en: 'Recent Activity', zh: '最近活动' },
+  'dash.assetOverview': { en: 'Asset Overview', zh: '资产概览' },
+  'dash.quickActions': { en: 'Quick Actions', zh: '快捷操作' },
+  'dash.aiInsights': { en: 'AI Insights', zh: 'AI 洞察' },
+  'dash.assetDistribution': { en: 'Asset Distribution', zh: '资产分布' },
+  'dash.monthlyTrend': { en: 'Monthly Trend', zh: '月度趋势' },
+  'dash.upcomingWarranties': { en: 'Upcoming Warranty Expiry', zh: '即将到期保修' },
+
+  // Assets
+  'asset.title': { en: 'Asset Management', zh: '资产管理' },
+  'asset.add': { en: 'Add Asset', zh: '添加资产' },
+  'asset.edit': { en: 'Edit Asset', zh: '编辑资产' },
+  'asset.delete': { en: 'Delete Asset', zh: '删除资产' },
+  'asset.view': { en: 'View Details', zh: '查看详情' },
+  'asset.tag': { en: 'Asset Tag', zh: '资产编号' },
+  'asset.name': { en: 'Asset Name', zh: '资产名称' },
+  'asset.category': { en: 'Category', zh: '类别' },
+  'asset.type': { en: 'Type', zh: '类型' },
+  'asset.brand': { en: 'Brand', zh: '品牌' },
+  'asset.model': { en: 'Model', zh: '型号' },
+  'asset.serial': { en: 'Serial Number', zh: '序列号' },
+  'asset.status': { en: 'Status', zh: '状态' },
+  'asset.condition': { en: 'Condition', zh: '状况' },
+  'asset.location': { en: 'Location', zh: '位置' },
+  'asset.purchaseDate': { en: 'Purchase Date', zh: '购买日期' },
+  'asset.purchasePrice': { en: 'Purchase Price', zh: '购买价格' },
+  'asset.warranty': { en: 'Warranty End', zh: '保修到期' },
+  'asset.assignedTo': { en: 'Assigned To', zh: '分配给' },
+  'asset.notes': { en: 'Notes', zh: '备注' },
+  'asset.ip': { en: 'IP Address', zh: 'IP 地址' },
+  'asset.mac': { en: 'MAC Address', zh: 'MAC 地址' },
+  'asset.specs': { en: 'Specifications', zh: '规格参数' },
+
+  // Status
+  'status.available': { en: 'Available', zh: '可用' },
+  'status.assigned': { en: 'Assigned', zh: '已分配' },
+  'status.maintenance': { en: 'In Maintenance', zh: '维护中' },
+  'status.retired': { en: 'Retired', zh: '已退役' },
+  'status.disposed': { en: 'Disposed', zh: '已处置' },
+  'status.active': { en: 'Active', zh: '在职' },
+  'status.inactive': { en: 'Inactive', zh: '离职' },
+  'status.open': { en: 'Open', zh: '待处理' },
+  'status.inProgress': { en: 'In Progress', zh: '处理中' },
+  'status.resolved': { en: 'Resolved', zh: '已解决' },
+  'status.closed': { en: 'Closed', zh: '已关闭' },
+
+  // Categories
+  'cat.laptop': { en: 'Laptop', zh: '笔记本电脑' },
+  'cat.desktop': { en: 'Desktop', zh: '台式电脑' },
+  'cat.server': { en: 'Server', zh: '服务器' },
+  'cat.network': { en: 'Network Equipment', zh: '网络设备' },
+  'cat.printer': { en: 'Printer', zh: '打印机' },
+  'cat.phone': { en: 'Phone', zh: '电话' },
+  'cat.monitor': { en: 'Monitor', zh: '显示器' },
+  'cat.peripheral': { en: 'Peripheral', zh: '外设' },
+  'cat.software': { en: 'Software License', zh: '软件许可' },
+  'cat.other': { en: 'Other', zh: '其他' },
+
+  // Employees
+  'emp.title': { en: 'Employee Management', zh: '员工管理' },
+  'emp.add': { en: 'Add Employee', zh: '添加员工' },
+  'emp.edit': { en: 'Edit Employee', zh: '编辑员工' },
+  'emp.delete': { en: 'Delete Employee', zh: '删除员工' },
+  'emp.id': { en: 'Employee ID', zh: '员工编号' },
+  'emp.name': { en: 'Name', zh: '姓名' },
+  'emp.email': { en: 'Email', zh: '邮箱' },
+  'emp.department': { en: 'Department', zh: '部门' },
+  'emp.position': { en: 'Position', zh: '职位' },
+  'emp.phone': { en: 'Phone', zh: '电话' },
+  'emp.status': { en: 'Status', zh: '状态' },
+  'emp.joinDate': { en: 'Join Date', zh: '入职日期' },
+  'emp.assignedAssets': { en: 'Assigned Assets', zh: '分配的资产' },
+
+  // Maintenance
+  'maint.title': { en: 'Maintenance & Tickets', zh: '维护工单' },
+  'maint.add': { en: 'Create Ticket', zh: '创建工单' },
+  'maint.edit': { en: 'Edit Ticket', zh: '编辑工单' },
+  'maint.type': { en: 'Type', zh: '类型' },
+  'maint.priority': { en: 'Priority', zh: '优先级' },
+  'maint.status': { en: 'Status', zh: '状态' },
+  'maint.ticketTitle': { en: 'Title', zh: '标题' },
+  'maint.description': { en: 'Description', zh: '描述' },
+  'maint.asset': { en: 'Related Asset', zh: '相关资产' },
+  'maint.assignedTo': { en: 'Assigned To', zh: '负责人' },
+  'maint.cost': { en: 'Cost (SGD)', zh: '费用 (新元)' },
+  'maint.repair': { en: 'Repair', zh: '维修' },
+  'maint.replacement': { en: 'Replacement', zh: '替换' },
+  'maint.upgrade': { en: 'Upgrade', zh: '升级' },
+  'maint.inspection': { en: 'Inspection', zh: '检查' },
+
+  // Priority
+  'priority.low': { en: 'Low', zh: '低' },
+  'priority.medium': { en: 'Medium', zh: '中' },
+  'priority.high': { en: 'High', zh: '高' },
+  'priority.critical': { en: 'Critical', zh: '紧急' },
+
+  // AI
+  'ai.title': { en: 'AI Assistant', zh: 'AI 助手' },
+  'ai.subtitle': { en: 'Powered by AI - Ask anything about your IT inventory', zh: '由 AI 驱动 - 询问有关 IT 资产的任何问题' },
+  'ai.placeholder': { en: 'Ask me about your inventory, maintenance, or get recommendations...', zh: '向我询问资产、维护相关问题，或获取建议...' },
+  'ai.send': { en: 'Send', zh: '发送' },
+  'ai.thinking': { en: 'AI is thinking...', zh: 'AI 正在思考...' },
+  'ai.suggestions': { en: 'Suggested Questions', zh: '推荐问题' },
+  'ai.noKey': { en: 'AI API key not configured. Please add your API key in Settings.', zh: 'AI API 密钥未配置。请在设置中添加您的 API 密钥。' },
+
+  // Reports
+  'reports.title': { en: 'Reports & Analytics', zh: '报告与分析' },
+  'reports.subtitle': { en: 'Comprehensive data analysis and visual insights', zh: '全面的数据分析和可视化洞察' },
+  'report.title': { en: 'Reports & Analytics', zh: '报告与分析' },
+  'report.assetByCategory': { en: 'Assets by Category', zh: '按类别资产分布' },
+  'report.assetByStatus': { en: 'Assets by Status', zh: '按状态资产分布' },
+  'report.assetByDepartment': { en: 'Assets by Department', zh: '按部门资产分布' },
+  'report.maintenanceCost': { en: 'Maintenance Costs', zh: '维护费用' },
+  'report.assetValue': { en: 'Total Asset Value', zh: '资产总值' },
+  'report.export': { en: 'Export Report', zh: '导出报告' },
+
+  // Settings
+  'settings.title': { en: 'Settings', zh: '系统设置' },
+  'settings.subtitle': { en: 'Configure your system preferences', zh: '配置系统偏好设置' },
+  'settings.theme': { en: 'Theme', zh: '主题' },
+  'settings.language': { en: 'Language', zh: '语言' },
+  'settings.aiConfig': { en: 'AI Configuration', zh: 'AI 配置' },
+  'settings.apiKey': { en: 'API Key', zh: 'API 密钥' },
+  'settings.company': { en: 'Company Settings', zh: '公司设置' },
+  'settings.companyName': { en: 'Company Name', zh: '公司名称' },
+  'settings.save': { en: 'Save Changes', zh: '保存更改' },
+  'settings.saved': { en: 'Settings saved successfully', zh: '设置保存成功' },
+
+  // Common
+  'common.save': { en: 'Save', zh: '保存' },
+  'common.cancel': { en: 'Cancel', zh: '取消' },
+  'common.delete': { en: 'Delete', zh: '删除' },
+  'common.edit': { en: 'Edit', zh: '编辑' },
+  'common.add': { en: 'Add', zh: '添加' },
+  'common.search': { en: 'Search', zh: '搜索' },
+  'common.filter': { en: 'Filter', zh: '筛选' },
+  'common.export': { en: 'Export', zh: '导出' },
+  'common.import': { en: 'Import', zh: '导入' },
+  'common.refresh': { en: 'Refresh', zh: '刷新' },
+  'common.loading': { en: 'Loading...', zh: '加载中...' },
+  'common.noData': { en: 'No data found', zh: '暂无数据' },
+  'common.confirm': { en: 'Are you sure?', zh: '确定要执行此操作吗？' },
+  'common.success': { en: 'Success', zh: '成功' },
+  'common.error': { en: 'Error', zh: '错误' },
+  'common.actions': { en: 'Actions', zh: '操作' },
+  'common.all': { en: 'All', zh: '全部' },
+  'common.total': { en: 'Total', zh: '总计' },
+  'common.close': { en: 'Close', zh: '关闭' },
+};
+
+export function t(key: string, lang: Lang): string {
+  return translations[key]?.[lang] || key;
+}
+
+export function useTranslations(lang: Lang) {
+  return (key: string) => t(key, lang);
+}

@@ -1,0 +1,281 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      String   @default("engineer")
+  avatar    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  permissions Permission[]
+}
+
+model Permission {
+  id         String  @id @default(uuid())
+  userId     String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource   String
+  canCreate  Boolean @default(false)
+  canRead    Boolean @default(true)
+  canUpdate  Boolean @default(false)
+  canDelete  Boolean @default(false)
+
+  @@unique([userId, resource])
+}
+
+model Role {
+  id          String @id @default(uuid())
+  name        String @unique
+  label       String
+  description String?
+  isSystem    Boolean @default(false)
+  permissions String
+}
+
+model Asset {
+  id            String   @id @default(uuid())
+  assetTag      String   @unique
+  name          String
+  category      String
+  type          String
+  brand         String?
+  model         String?
+  serialNumber  String?
+  barcode       String?
+  status        String   @default("available")
+  condition     String   @default("good")
+  location      String?
+  purchaseDate  DateTime?
+  purchasePrice Float?
+  warrantyEnd   DateTime?
+  assignedTo    String?
+  assignedDate  DateTime?
+  notes         String?
+  ipAddress     String?
+  macAddress    String?
+  specifications String?
+  customerEmail  String?
+  customerName   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  maintenanceRecords Maintenance[]
+  warrantyAlerts     WarrantyAlert[]
+}
+
+model Employee {
+  id         String   @id @default(uuid())
+  employeeId String   @unique
+  name       String
+  email      String   @unique
+  department String
+  position   String
+  phone      String?
+  status     String   @default("active")
+  joinDate   DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Maintenance {
+  id          String   @id @default(uuid())
+  assetId     String
+  asset       Asset    @relation(fields: [assetId], references: [id])
+  type        String
+  priority    String   @default("medium")
+  status      String   @default("open")
+  title       String
+  description String?
+  assignedTo  String?
+  resolvedAt  DateTime?
+  cost        Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  userId    String?
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+}
+
+model WarrantyAlert {
+  id           String   @id @default(uuid())
+  assetId      String
+  asset        Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  alertType    String
+  daysBefore   Int
+  sentAt       DateTime?
+  recipientEmail String
+  ccEmails     String?
+  status       String   @default("pending")
+  attempts     Int      @default(0)
+  maxAttempts  Int      @default(5)
+  lastAttempt  DateTime?
+  nextAttempt  DateTime?
+  subject      String?
+  body         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SystemConfig {
+  id          String @id @default(uuid())
+  category    String
+  key         String
+  value       String
+  description String?
+  editable    Boolean @default(true)
+
+  @@unique([category, key])
+}
+
+model EmailTemplate {
+  id          String @id @default(uuid())
+  name        String @unique
+  subject     String
+  body        String
+  variables   String?
+  lang        String @default("en")
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Customer {
+  id              String   @id @default(uuid())
+  companyName     String
+  uen             String?  @unique // Singapore UEN / BRN
+  address         String?
+  postalCode      String?
+  country         String   @default("Singapore")
+  contactPerson   String?
+  contactEmail    String?
+  contactPhone    String?
+  website         String?
+  industry        String?
+  companySize     String?
+  contractType    String?  // retainer, project, ad-hoc
+  contractValue   Float?
+  contractStart   DateTime?
+  contractEnd     DateTime?
+  status          String   @default("active") // active, inactive, prospect
+  notes           String?
+  gstRegistered   Boolean  @default(false)
+  gstNumber       String?
+  paymentTerms    Int      @default(30) // days
+  creditLimit     Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  invoices        Invoice[]
+  crmActivities   CRMActivity[]
+}
+
+model Vendor {
+  id              String   @id @default(uuid())
+  companyName     String
+  uen             String?  @unique
+  address         String?
+  postalCode      String?
+  country         String   @default("Singapore")
+  contactPerson   String?
+  contactEmail    String?
+  contactPhone    String?
+  website         String?
+  category        String?  // hardware, software, services, telecom
+  rating          Int?     // 1-5
+  status          String   @default("active")
+  paymentTerms    Int      @default(30)
+  notes           String?
+  gstRegistered   Boolean  @default(false)
+  gstNumber       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Invoice {
+  id              String   @id @default(uuid())
+  invoiceNumber   String   @unique
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type            String   @default("invoice") // invoice, quotation, credit-note
+  status          String   @default("draft") // draft, sent, paid, overdue, cancelled
+  issueDate       DateTime @default(now())
+  dueDate         DateTime?
+  subtotal        Float    @default(0)
+  gstRate         Float    @default(9) // Singapore GST 9%
+  gstAmount       Float    @default(0)
+  totalAmount     Float    @default(0)
+  paidAmount      Float    @default(0)
+  currency        String   @default("SGD")
+  items           String?  // JSON string of line items
+  notes           String?
+  paymentMethod   String?
+  paidAt          DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model CRMActivity {
+  id              String   @id @default(uuid())
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type            String   // call, email, meeting, site-visit, follow-up, support
+  title           String
+  description     String?
+  contactPerson   String?
+  status          String   @default("completed") // scheduled, completed, cancelled
+  scheduledAt     DateTime?
+  completedAt     DateTime?
+  followUpDate    DateTime?
+  assignedTo      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model ChangeRequest {
+  id              String   @id @default(uuid())
+  number          String   @unique // CHG0000001
+  shortDescription String
+  description     String?
+  approval        String   @default("not-yet-requested") // requested, not-yet-requested, rejected, approved
+  type            String   @default("normal") // normal, standard, emergency
+  state           String   @default("new") // new, review, authorize, scheduled, implement, closed, cancelled
+  priority        String   @default("medium") // low, medium, high, critical
+  risk            String   @default("moderate") // low, moderate, high
+  impact          String   @default("medium") // low, medium, high
+  category        String?  // hardware, software, network, security, other
+  plannedStartDate DateTime?
+  plannedEndDate  DateTime?
+  assignedTo      String?
+  requestedBy     String?
+  implementationPlan String?
+  backoutPlan     String?
+  testPlan        String?
+  closureCode     String?  // successful, unsuccessful, incomplete
+  closureNotes    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
