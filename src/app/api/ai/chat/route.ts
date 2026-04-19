@@ -126,7 +126,7 @@ function buildAppContext(appData: Record<string, unknown>): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, apiKey, currentPage, appContext, trainingContext } = await request.json();
+    const { messages, apiKey, currentPage, appContext, trainingContext, stream: useStream, maxTokens } = await request.json();
 
     const key = apiKey || AZURE_AI_KEY;
 
@@ -148,9 +148,59 @@ export async function POST(request: NextRequest) {
       systemPrompt += `\n\n--- USER TRAINING CONTEXT ---\n${trainingContext}\n--- END TRAINING CONTEXT ---`;
     }
 
+    const tokenLimit = maxTokens || 1024;
+
     // PRIMARY: Azure OpenAI API
     if (key) {
       try {
+        // STREAMING MODE — return Server-Sent Events for faster perceived response
+        if (useStream) {
+          const response = await fetch(`${AZURE_AI_ENDPOINT}/openai/deployments/${AZURE_AI_MODEL}/chat/completions?api-version=2024-10-21`, {
+            method: 'POST',
+            headers: { 'api-key': key, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: AZURE_AI_MODEL,
+              messages: [{ role: 'system', content: systemPrompt }, ...messages],
+              temperature: 0.7,
+              max_tokens: tokenLimit,
+              stream: true,
+            }),
+          });
+
+          if (response.ok && response.body) {
+            const encoder = new TextEncoder();
+            const readable = new ReadableStream({
+              async start(controller) {
+                const reader = response.body!.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                try {
+                  while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    for (const line of lines) {
+                      const trimmed = line.trim();
+                      if (!trimmed || !trimmed.startsWith('data: ')) continue;
+                      const data = trimmed.slice(6);
+                      if (data === '[DONE]') { controller.enqueue(encoder.encode('data: [DONE]\n\n')); continue; }
+                      try {
+                        const parsed = JSON.parse(data);
+                        const content = parsed.choices?.[0]?.delta?.content;
+                        if (content) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+                      } catch { /* skip malformed chunks */ }
+                    }
+                  }
+                } finally { controller.close(); }
+              },
+            });
+            return new Response(readable, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' } });
+          }
+        }
+
+        // NON-STREAMING MODE — standard request/response
         const response = await fetch(`${AZURE_AI_ENDPOINT}/openai/deployments/${AZURE_AI_MODEL}/chat/completions?api-version=2024-10-21`, {
           method: 'POST',
           headers: {
@@ -164,7 +214,7 @@ export async function POST(request: NextRequest) {
               ...messages,
             ],
             temperature: 0.7,
-            max_tokens: 1024,
+            max_tokens: tokenLimit,
           }),
         });
 

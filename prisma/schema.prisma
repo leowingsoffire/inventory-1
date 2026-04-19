@@ -325,3 +325,30 @@ model PDPAAssessment {
 
   @@unique([category, controlRef])
 }
+
+model Document {
+  id            String   @id @default(uuid())
+  fileName      String
+  fileType      String
+  fileCategory  String
+  fileSize      Int
+  extractedText String
+  uploadedBy    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  guides        UserGuide[]
+}
+
+model UserGuide {
+  id            String   @id @default(uuid())
+  documentId    String
+  document      Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  title         String
+  content       String
+  version       Int      @default(1)
+  status        String   @default("draft")
+  generatedBy   String   @default("ai")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
