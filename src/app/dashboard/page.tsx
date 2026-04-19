@@ -6,11 +6,14 @@ import {
   TrendingUp, Package, Plus, Bot, ArrowUpRight,
   Laptop, Server, Printer, Smartphone, HardDrive, Clock,
   Shield, ExternalLink, Building2, DollarSign, GitBranch,
+  Activity, Zap, Target, BarChart3, PieChart as PieChartIcon,
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
 import { t } from '@/lib/i18n';
+import { getAvatar } from '@/lib/ai-avatars';
+import KoreanFaceAvatar from '@/components/KoreanFaceAvatar';
 import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
 import { CyberWorkflow } from '@/components/CyberWorkflow';
 import { getModuleWorkflows } from '@/lib/workflow-definitions';
@@ -78,11 +81,12 @@ const emptyStats: DashboardStats = {
 };
 
 export default function DashboardPage() {
-  const { lang, theme } = useApp();
+  const { lang, theme, aiAvatar } = useApp();
   const { user } = useAuth();
   const router = useRouter();
   const [data, setData] = useState<DashboardStats>(emptyStats);
   const [loading, setLoading] = useState(true);
+  const currentAvatar = getAvatar(aiAvatar);
 
   useEffect(() => {
     fetch('/api/dashboard/stats')
@@ -119,17 +123,17 @@ export default function DashboardPage() {
     <MainLayout>
       <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
         {/* Page Title */}
-        <motion.div variants={itemVariants} className="flex items-center justify-between">
+        <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <div>
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-xl sm:text-2xl font-bold text-white">
               {t('app.welcome', lang)}, {user?.displayName || user?.name || 'Admin'} 👋
             </h1>
-            <p className="text-white/50 text-sm mt-1">
+            <p className="text-white/50 text-xs sm:text-sm mt-1">
               {lang === 'en' ? "Here's what's happening with your IT inventory today." : '以下是您今天的 IT 资产概况。'}
             </p>
           </div>
-          <div className="text-right">
-            <p className="text-white/50 text-xs">
+          <div className="text-left sm:text-right">
+            <p className="text-white/50 text-[10px] sm:text-xs">
               {new Date().toLocaleDateString(lang === 'en' ? 'en-SG' : 'zh-SG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
             <p className="text-white/25 text-[10px] font-mono mt-0.5">v{APP_VERSION}</p>
@@ -137,7 +141,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Stats Grid */}
-        <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9 gap-4">
+        <motion.div variants={itemVariants} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-9 gap-3 sm:gap-4">
           {stats.map((stat, i) => {
             const Icon = stat.icon;
             return (
@@ -181,6 +185,118 @@ export default function DashboardPage() {
           </motion.div>
         ) : (
         <>
+        {/* KPI Cards Row */}
+        <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Asset Utilization Rate */}
+          <motion.div className="glass-card p-5 relative overflow-hidden" whileHover={{ scale: 1.02 }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg">
+                <Target className="w-5 h-5 text-white" />
+              </div>
+              <motion.div 
+                className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                {lang === 'en' ? 'Live' : '实时'}
+              </motion.div>
+            </div>
+            <p className="text-white/50 text-xs mb-1">{lang === 'en' ? 'Asset Utilization' : '资产利用率'}</p>
+            <div className="flex items-end gap-2">
+              <p className="text-3xl font-bold text-white">
+                {data.totalAssets > 0 ? Math.round((data.assigned / data.totalAssets) * 100) : 0}
+                <span className="text-lg text-white/50">%</span>
+              </p>
+            </div>
+            {/* Progress bar */}
+            <div className="mt-3 h-2 rounded-full bg-white/10 overflow-hidden">
+              <motion.div 
+                className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500"
+                initial={{ width: 0 }}
+                animate={{ width: `${data.totalAssets > 0 ? (data.assigned / data.totalAssets) * 100 : 0}%` }}
+                transition={{ duration: 1.5, ease: "easeOut" }}
+              />
+            </div>
+            <p className="text-white/30 text-[10px] mt-1.5">{data.assigned} / {data.totalAssets} {lang === 'en' ? 'assigned' : '已分配'}</p>
+          </motion.div>
+
+          {/* Service Health */}
+          <motion.div className="glass-card p-5 relative overflow-hidden" whileHover={{ scale: 1.02 }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
+                <Activity className="w-5 h-5 text-white" />
+              </div>
+              <motion.div 
+                animate={{ opacity: [1, 0.5, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className={`w-2.5 h-2.5 rounded-full ${data.openTickets > 5 ? 'bg-red-400' : data.openTickets > 0 ? 'bg-amber-400' : 'bg-emerald-400'}`}
+              />
+            </div>
+            <p className="text-white/50 text-xs mb-1">{lang === 'en' ? 'Service Health' : '服务健康'}</p>
+            <p className="text-3xl font-bold text-white">
+              {data.openTickets === 0 ? '100' : data.openTickets <= 3 ? '95' : data.openTickets <= 5 ? '85' : '70'}
+              <span className="text-lg text-white/50">%</span>
+            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <Zap className={`w-3 h-3 ${data.openTickets === 0 ? 'text-emerald-400' : 'text-amber-400'}`} />
+              <span className="text-white/40 text-[10px]">
+                {data.openTickets === 0 
+                  ? (lang === 'en' ? 'All systems operational' : '所有系统正常运行')
+                  : `${data.openTickets} ${lang === 'en' ? 'open tickets' : '个待处理工单'}`}
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Warranty Risk Score */}
+          <motion.div className="glass-card p-5 relative overflow-hidden" whileHover={{ scale: 1.02 }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg">
+                <Shield className="w-5 h-5 text-white" />
+              </div>
+              {data.warrantyExpiring30 > 0 && (
+                <motion.div 
+                  animate={{ rotate: [0, -10, 10, -10, 0] }}
+                  transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 3 }}
+                >
+                  <AlertTriangle className="w-4 h-4 text-amber-400" />
+                </motion.div>
+              )}
+            </div>
+            <p className="text-white/50 text-xs mb-1">{lang === 'en' ? 'Warranty Risk' : '保修风险'}</p>
+            <p className={`text-3xl font-bold ${data.warrantyExpiring30 > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+              {data.warrantyExpiring30 + data.warrantyExpiring90}
+              <span className="text-lg text-white/50 ml-1">{lang === 'en' ? 'at risk' : '项风险'}</span>
+            </p>
+            <div className="flex gap-3 mt-2 text-[10px]">
+              <span className="text-red-400">● {data.warrantyExpiring30} {lang === 'en' ? 'critical' : '紧急'}</span>
+              <span className="text-amber-400">● {data.warrantyExpiring90} {lang === 'en' ? 'warning' : '警告'}</span>
+            </div>
+          </motion.div>
+
+          {/* Revenue & Growth */}
+          <motion.div className="glass-card p-5 relative overflow-hidden" whileHover={{ scale: 1.02 }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <BarChart3 className="w-5 h-5 text-white" />
+              </div>
+              <motion.div 
+                className="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-400 flex items-center gap-0.5"
+                animate={{ y: [0, -2, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                <ArrowUpRight className="w-2.5 h-2.5" /> {lang === 'en' ? 'Growth' : '增长'}
+              </motion.div>
+            </div>
+            <p className="text-white/50 text-xs mb-1">{lang === 'en' ? 'Total Revenue' : '总收入'}</p>
+            <p className="text-3xl font-bold text-white">
+              ${data.revenue > 1000 ? `${(data.revenue / 1000).toFixed(1)}K` : data.revenue.toLocaleString()}
+            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-white/40 text-[10px]">{data.customers} {lang === 'en' ? 'active clients' : '个活跃客户'}</span>
+            </div>
+          </motion.div>
+        </motion.div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Asset Distribution Pie */}
           <motion.div variants={itemVariants} className="glass-card p-6">
@@ -233,11 +349,48 @@ export default function DashboardPage() {
             )}
           </motion.div>
 
-          {/* Monthly Trend */}
-          <motion.div variants={itemVariants} className="glass-card p-6">
-            <h3 className="text-white font-semibold mb-4">{t('dash.monthlyTrend', lang)}</h3>
-            <div className="h-64 flex items-center justify-center">
-              <p className="text-white/30 text-sm">{lang === 'en' ? 'Trend data will populate as you use the system' : '使用系统后趋势数据将自动填充'}</p>
+          {/* Monthly Trend / Asset Overview */}
+          <motion.div variants={itemVariants} className="glass-card p-4 sm:p-6">
+            <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-accent-400" />
+              {lang === 'en' ? 'Asset Overview' : '资产概览'}
+            </h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={[
+                  { name: lang === 'en' ? 'Assigned' : '已分配', value: data.assigned, fill: '#10b981' },
+                  { name: lang === 'en' ? 'Available' : '可用', value: data.available, fill: '#8b5cf6' },
+                  { name: lang === 'en' ? 'Maintenance' : '维护中', value: data.maintenance, fill: '#f59e0b' },
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }} axisLine={{ stroke: 'rgba(255,255,255,0.1)' }} />
+                  <YAxis tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11 }} axisLine={{ stroke: 'rgba(255,255,255,0.1)' }} />
+                  <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px', color: 'white' }} />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                    {[
+                      { fill: '#10b981' },
+                      { fill: '#8b5cf6' },
+                      { fill: '#f59e0b' },
+                    ].map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="grid grid-cols-3 gap-2 mt-3">
+              <div className="text-center p-2 rounded-lg bg-emerald-500/10">
+                <p className="text-emerald-400 text-lg font-bold">{data.assigned}</p>
+                <p className="text-white/40 text-[10px]">{lang === 'en' ? 'Assigned' : '已分配'}</p>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-violet-500/10">
+                <p className="text-violet-400 text-lg font-bold">{data.available}</p>
+                <p className="text-white/40 text-[10px]">{lang === 'en' ? 'Available' : '可用'}</p>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-amber-500/10">
+                <p className="text-amber-400 text-lg font-bold">{data.maintenance}</p>
+                <p className="text-white/40 text-[10px]">{lang === 'en' ? 'Maintenance' : '维护中'}</p>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -280,6 +433,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-3 gap-3">
                 {quickActions.map((action) => {
                   const Icon = action.icon;
+                  const isAI = action.href === '/ai-assistant';
                   return (
                     <Link key={action.href} href={action.href}>
                       <motion.div
@@ -287,7 +441,7 @@ export default function DashboardPage() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
-                        <Icon className="w-5 h-5 text-accent-400" />
+                        {isAI ? <KoreanFaceAvatar avatar={currentAvatar} size="xs" animate={false} /> : <Icon className="w-5 h-5 text-accent-400" />}
                         <span className="text-xs">{action.label}</span>
                       </motion.div>
                     </Link>
@@ -299,9 +453,7 @@ export default function DashboardPage() {
             {/* AI Insights */}
             <motion.div variants={itemVariants} className="glass-card p-6">
               <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-                <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ duration: 2, repeat: Infinity }}>
-                  <Bot className="w-4 h-4 text-violet-400" />
-                </motion.div>
+                <KoreanFaceAvatar avatar={currentAvatar} size="xs" animate={true} animation="pulse" />
                 {t('dash.aiInsights', lang)}
               </h3>
               <div className="space-y-2">

@@ -7,12 +7,16 @@ import {
   Mail, MessageSquare, Bell, Shield, Database, Cloud, Webhook, Link2,
   Monitor, Users, Wrench, TrendingUp, ScanLine, ArrowRight, Sparkles,
   ArrowDown, LayoutDashboard, FileText, ShieldCheck, Upload, Image, AlertCircle, CheckCircle,
-  RotateCcw, Droplets, Layers,
+  RotateCcw, Droplets, Layers, Server, GitBranch, Clock, Zap, HardDrive,
+  DollarSign, Activity, Tag, History,
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useApp } from '@/lib/context';
 import { t } from '@/lib/i18n';
+import { getAvatar } from '@/lib/ai-avatars';
+import KoreanFaceAvatar from '@/components/KoreanFaceAvatar';
 import { themes, type ThemeKey } from '@/lib/themes';
+import { APP_VERSION } from '@/lib/version';
 import Link from 'next/link';
 
 const cardVariants = {
@@ -21,7 +25,8 @@ const cardVariants = {
 };
 
 export default function SettingsPage() {
-  const { themeKey, setTheme, lang, setLang, aiApiKey, setAiApiKey, themeOverrides, setThemeOverrides } = useApp();
+  const { themeKey, setTheme, lang, setLang, aiApiKey, setAiApiKey, themeOverrides, setThemeOverrides, aiAvatar } = useApp();
+  const currentAvatar = getAvatar(aiAvatar);
   const [apiKeyInput, setApiKeyInput] = useState(aiApiKey);
   const [showApiKey, setShowApiKey] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -93,7 +98,7 @@ export default function SettingsPage() {
   const [slackWebhook, setSlackWebhook] = useState('');
 
   // Active tab
-  const [activeTab, setActiveTab] = useState<'general' | 'integrations' | 'workflow' | 'guide'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'integrations' | 'infrastructure' | 'workflow' | 'guide'>('general');
 
   const themeEntries: { key: ThemeKey; label: string; preview: string }[] = [
     { key: 'carbon', label: lang === 'en' ? 'Carbon' : '碳黑', preview: 'from-[#1a1a2e] via-[#16213e] to-[#0f3460]' },
@@ -110,6 +115,7 @@ export default function SettingsPage() {
   const tabs = [
     { key: 'general' as const, label: lang === 'en' ? 'General' : '常规', icon: SettingsIcon },
     { key: 'integrations' as const, label: lang === 'en' ? 'Integrations' : '集成', icon: Link2 },
+    { key: 'infrastructure' as const, label: lang === 'en' ? 'Infrastructure' : '基础设施', icon: Server },
     { key: 'workflow' as const, label: lang === 'en' ? 'Architecture' : '架构', icon: Database },
     { key: 'guide' as const, label: lang === 'en' ? 'Quick Guide' : '快速指南', icon: Sparkles },
   ];
@@ -150,14 +156,14 @@ export default function SettingsPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 glass-card p-1.5">
+        <div className="flex gap-1 glass-card p-1.5 overflow-x-auto">
           {tabs.map(tab => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all flex-1 justify-center ${
+                className={`relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-medium transition-all flex-1 justify-center whitespace-nowrap ${
                   activeTab === tab.key ? 'text-white' : 'text-white/40 hover:text-white/70'
                 }`}
               >
@@ -382,7 +388,7 @@ export default function SettingsPage() {
             {/* AI Config */}
             <motion.div className="glass-card p-5" custom={2} variants={cardVariants} initial="hidden" animate="visible">
               <h2 className="text-white font-semibold mb-2 flex items-center gap-2 text-sm">
-                <Bot className="w-4 h-4 text-violet-400" />
+                <KoreanFaceAvatar avatar={currentAvatar} size="xs" animate={false} />
                 {lang === 'en' ? 'AI Configuration' : 'AI 配置'}
               </h2>
               <p className="text-white/40 text-xs mb-3">
@@ -625,6 +631,235 @@ export default function SettingsPage() {
             <motion.button onClick={handleSave} className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-medium text-sm transition-all flex items-center gap-2" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
               <Save className="w-4 h-4" /> {lang === 'en' ? 'Save Integrations' : '保存集成'}
             </motion.button>
+          </motion.div>
+        )}
+
+        {/* Infrastructure Tab */}
+        {activeTab === 'infrastructure' && (
+          <motion.div className="space-y-5" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            {/* Vercel Deployment Info */}
+            <motion.div className="glass-card p-5" custom={0} variants={cardVariants} initial="hidden" animate="visible">
+              <h2 className="text-white font-semibold mb-3 flex items-center gap-2 text-sm">
+                <Cloud className="w-4 h-4 text-blue-400" />
+                {lang === 'en' ? 'Vercel Deployment' : 'Vercel 部署'}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <div className="flex items-center gap-2 mb-1">
+                    <motion.div animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-2 h-2 rounded-full bg-emerald-400" />
+                    <span className="text-white/40 text-[10px]">{lang === 'en' ? 'STATUS' : '状态'}</span>
+                  </div>
+                  <p className="text-emerald-400 text-sm font-medium">{lang === 'en' ? 'Production — Live' : '生产环境 — 在线'}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-white/40 text-[10px]">{lang === 'en' ? 'PLATFORM' : '平台'}</span>
+                  <p className="text-white text-sm font-medium mt-1">Vercel Edge Network</p>
+                </div>
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-white/40 text-[10px]">{lang === 'en' ? 'REGION' : '区域'}</span>
+                  <p className="text-white text-sm font-medium mt-1">Washington D.C. (iad1)</p>
+                </div>
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-white/40 text-[10px]">{lang === 'en' ? 'FRAMEWORK' : '框架'}</span>
+                  <p className="text-white text-sm font-medium mt-1">Next.js 16.2.4</p>
+                </div>
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-white/40 text-[10px]">{lang === 'en' ? 'PRODUCTION URL' : '生产地址'}</span>
+                  <p className="text-blue-400 text-sm font-medium mt-1 truncate">inventory-1-lac.vercel.app</p>
+                </div>
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <span className="text-white/40 text-[10px]">{lang === 'en' ? 'GIT BRANCH' : 'Git 分支'}</span>
+                  <p className="text-white text-sm font-medium mt-1 flex items-center gap-1">
+                    <GitBranch className="w-3 h-3 text-violet-400" /> main
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Vercel Services & Resources */}
+            <motion.div className="glass-card p-5" custom={1} variants={cardVariants} initial="hidden" animate="visible">
+              <h2 className="text-white font-semibold mb-3 flex items-center gap-2 text-sm">
+                <Server className="w-4 h-4 text-violet-400" />
+                {lang === 'en' ? 'Infrastructure Services' : '基础设施服务'}
+              </h2>
+              <div className="space-y-3">
+                {[
+                  { name: 'Serverless Functions', desc: lang === 'en' ? 'API routes (19 endpoints) — Node.js 20.x runtime' : 'API 路由 (19 个端点) — Node.js 20.x 运行时', icon: Zap, color: 'text-amber-400', status: lang === 'en' ? 'Active' : '活跃', tier: lang === 'en' ? 'Hobby: 100GB-hrs/mo' : 'Hobby: 100GB-hrs/月' },
+                  { name: 'Edge Network (CDN)', desc: lang === 'en' ? 'Static assets, JS bundles, CSS — global edge caching' : '静态资源, JS包, CSS — 全球边缘缓存', icon: Activity, color: 'text-blue-400', status: lang === 'en' ? 'Active' : '活跃', tier: lang === 'en' ? 'Hobby: 100GB bandwidth/mo' : 'Hobby: 100GB带宽/月' },
+                  { name: 'Build Pipeline', desc: lang === 'en' ? 'Turbopack builds on each git push — auto-deploys' : '每次 git push 时 Turbopack 构建 — 自动部署', icon: GitBranch, color: 'text-emerald-400', status: lang === 'en' ? 'Active' : '活跃', tier: lang === 'en' ? 'Hobby: 6000 min/mo' : 'Hobby: 6000分钟/月' },
+                  { name: 'SQLite (Prisma)', desc: lang === 'en' ? 'Embedded database via Prisma ORM — file-based in /tmp' : '通过 Prisma ORM 的嵌入式数据库 — 基于 /tmp 文件', icon: Database, color: 'text-cyan-400', status: lang === 'en' ? 'Active' : '活跃', tier: lang === 'en' ? 'Bundled (no cost)' : '内置 (无费用)' },
+                  { name: 'Azure AI Integration', desc: lang === 'en' ? 'Grok-4-20-reasoning model — streaming SSE responses' : 'Grok-4-20-reasoning 模型 — 流式 SSE 响应', icon: Bot, color: 'text-violet-400', status: lang === 'en' ? 'Connected' : '已连接', tier: lang === 'en' ? 'Pay-per-token (Azure)' : '按令牌计费 (Azure)' },
+                  { name: 'Environment Variables', desc: lang === 'en' ? 'AZURE_AI_ENDPOINT, AZURE_AI_MODEL, AZURE_AI_KEY' : 'AZURE_AI_ENDPOINT, AZURE_AI_MODEL, AZURE_AI_KEY', icon: Shield, color: 'text-rose-400', status: lang === 'en' ? 'Encrypted' : '已加密', tier: lang === 'en' ? 'Secure vault' : '安全保管库' },
+                ].map((service, i) => {
+                  const SvcIcon = service.icon;
+                  return (
+                    <motion.div 
+                      key={service.name} 
+                      className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/[0.08] transition-all"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.08 }}
+                    >
+                      <div className={`w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 ${service.color}`}>
+                        <SvcIcon className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-white text-xs font-medium">{service.name}</p>
+                          <span className="text-emerald-400 text-[9px] bg-emerald-500/10 px-1.5 py-0.5 rounded">{service.status}</span>
+                        </div>
+                        <p className="text-white/40 text-[10px] mt-0.5">{service.desc}</p>
+                        <p className="text-white/25 text-[9px] mt-0.5">{service.tier}</p>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.div>
+
+            {/* Cost Estimation */}
+            <motion.div className="glass-card p-5" custom={2} variants={cardVariants} initial="hidden" animate="visible">
+              <h2 className="text-white font-semibold mb-3 flex items-center gap-2 text-sm">
+                <DollarSign className="w-4 h-4 text-emerald-400" />
+                {lang === 'en' ? 'Estimated Monthly Costs' : '预估月度费用'}
+              </h2>
+              <div className="space-y-2">
+                {[
+                  { item: 'Vercel Hobby Plan', cost: '$0', detail: lang === 'en' ? 'Free tier — Personal & hobby projects' : '免费层 — 个人和业余项目' },
+                  { item: lang === 'en' ? 'Custom Domain (optional)' : '自定义域名 (可选)', cost: '$0', detail: lang === 'en' ? 'Included with Vercel deployment' : 'Vercel 部署包含' },
+                  { item: 'Vercel Analytics (optional)', cost: '$0', detail: lang === 'en' ? 'Free tier: 2,500 events/mo' : '免费层: 2,500 事件/月' },
+                  { item: 'Azure AI (Grok-4)', cost: lang === 'en' ? 'Pay-per-use' : '按用量', detail: lang === 'en' ? '~$0.01-0.05 per AI chat request' : '~$0.01-0.05 每次 AI 聊天请求' },
+                  { item: 'GitHub Repository', cost: '$0', detail: lang === 'en' ? 'Free — public/private repos' : '免费 — 公开/私有仓库' },
+                  { item: 'SQLite Database', cost: '$0', detail: lang === 'en' ? 'Embedded — no external DB service' : '内嵌 — 无外部数据库服务' },
+                ].map((row, i) => (
+                  <motion.div 
+                    key={row.item}
+                    className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 hover:bg-white/[0.08] transition-all"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.06 }}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white text-xs">{row.item}</p>
+                      <p className="text-white/30 text-[10px]">{row.detail}</p>
+                    </div>
+                    <span className="text-emerald-400 text-sm font-mono font-bold ml-3 whitespace-nowrap">{row.cost}</span>
+                  </motion.div>
+                ))}
+                <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mt-2">
+                  <div>
+                    <p className="text-white text-xs font-semibold">{lang === 'en' ? 'Total Estimated' : '预估总计'}</p>
+                    <p className="text-white/40 text-[10px]">{lang === 'en' ? 'Excluding AI usage' : '不含 AI 使用费'}</p>
+                  </div>
+                  <span className="text-emerald-400 text-xl font-bold font-mono">$0</span>
+                </div>
+              </div>
+              <div className="mt-3 p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                <p className="text-blue-300 text-[10px] flex items-start gap-1.5">
+                  <Sparkles className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                  {lang === 'en' ? 'Pro Plan ($20/mo) recommended for production: Team collaboration, more bandwidth, password protection, analytics.' : 'Pro 计划 ($20/月) 推荐用于生产环境：团队协作、更多带宽、密码保护、分析。'}
+                </p>
+              </div>
+            </motion.div>
+
+            {/* App Version History */}
+            <motion.div className="glass-card p-5" custom={3} variants={cardVariants} initial="hidden" animate="visible">
+              <h2 className="text-white font-semibold mb-3 flex items-center gap-2 text-sm">
+                <History className="w-4 h-4 text-amber-400" />
+                {lang === 'en' ? 'App Version History' : '应用版本历史'}
+              </h2>
+              <div className="mb-3 flex items-center gap-3">
+                <div className="px-3 py-1.5 bg-accent-500/20 border border-accent-500/30 rounded-lg">
+                  <span className="text-accent-400 text-xs font-mono font-bold">v{APP_VERSION}</span>
+                </div>
+                <span className="text-white/50 text-xs">{lang === 'en' ? 'Current Version' : '当前版本'}</span>
+              </div>
+              <div className="relative">
+                {/* Timeline line */}
+                <div className="absolute left-4 top-6 bottom-0 w-px bg-white/10" />
+                <div className="space-y-4">
+                  {[
+                    { version: '1.0.0', date: '2025-01', title: lang === 'en' ? 'Production Release' : '正式发布', changes: [
+                      lang === 'en' ? 'AI Assistant with streaming SSE + document upload + auto guide generation' : 'AI 助手：流式 SSE + 文档上传 + 自动指南生成',
+                      lang === 'en' ? 'KPI dashboard with animated analytics' : 'KPI 仪表板带动画分析',
+                      lang === 'en' ? 'Vercel infrastructure settings & cost tracking' : 'Vercel 基础设施设置和成本追踪',
+                      lang === 'en' ? 'Fully responsive UI — mobile, tablet, desktop' : '全响应式 UI — 手机、平板、桌面',
+                      lang === 'en' ? 'Azure AI (Grok-4-20-reasoning) integration' : 'Azure AI (Grok-4-20-reasoning) 集成',
+                    ], tag: 'latest' },
+                    { version: '0.9.0', date: '2025-01', title: lang === 'en' ? 'AI & Document System' : 'AI 和文档系统', changes: [
+                      lang === 'en' ? 'AI streaming chat with Azure AI' : 'AI 流式聊天与 Azure AI',
+                      lang === 'en' ? 'Document upload (DOCX, PDF, XLSX, PPTX) with auto-parsing' : '文档上传 (DOCX, PDF, XLSX, PPTX) 自动解析',
+                      lang === 'en' ? 'Auto user guide generation from documents' : '从文档自动生成用户指南',
+                      lang === 'en' ? 'Voice input/output support' : '语音输入/输出支持',
+                    ] },
+                    { version: '0.8.0', date: '2025-01', title: lang === 'en' ? 'Cyber Login & Theme Engine' : '赛博登录和主题引擎', changes: [
+                      lang === 'en' ? 'Niagara Falls waterfall login animation' : '尼亚加拉瀑布登录动画',
+                      lang === 'en' ? '3D AI avatar with voice support' : '3D AI 虚拟形象和语音支持',
+                      lang === 'en' ? 'Custom theme engine: accent colors, gradient presets, glass opacity' : '自定义主题引擎：强调色、渐变预设、玻璃透明度',
+                      lang === 'en' ? 'Demo data removal & PDPA compliance' : '演示数据移除和 PDPA 合规',
+                    ] },
+                    { version: '0.7.0', date: '2024-12', title: lang === 'en' ? 'Service Desk & Change Management' : '服务台和变更管理', changes: [
+                      lang === 'en' ? 'ServiceNow-inspired Service Desk with ITSM categories' : 'ServiceNow 风格服务台与 ITSM 分类',
+                      lang === 'en' ? 'Change Request module with state machine workflow' : '变更请求模块与状态机工作流',
+                      lang === 'en' ? 'CyberWorkflow visual pipeline component' : 'CyberWorkflow 可视化管线组件',
+                      lang === 'en' ? 'AI Form Assist for auto-fill suggestions' : 'AI 表单辅助自动填充建议',
+                    ] },
+                    { version: '0.6.0', date: '2024-12', title: lang === 'en' ? 'RBAC & User Management' : '权限和用户管理', changes: [
+                      lang === 'en' ? 'Role-based access control (Admin/Manager/Staff)' : '基于角色的访问控制（管理员/经理/员工）',
+                      lang === 'en' ? 'User management with auth system & seed users' : '用户管理与认证系统及种子用户',
+                      lang === 'en' ? 'Collapsible sidebar with module navigation' : '可折叠侧边栏与模块导航',
+                      lang === 'en' ? 'FeatureGuide onboarding system' : 'FeatureGuide 入门引导系统',
+                    ] },
+                    { version: '0.5.0', date: '2024-12', title: lang === 'en' ? 'CRM & Finance Modules' : 'CRM 和财务模块', changes: [
+                      lang === 'en' ? 'Customer management with AI company detection' : '客户管理与 AI 公司检测',
+                      lang === 'en' ? 'CRM activity tracking (calls, meetings, emails)' : 'CRM 活动追踪（电话、会议、邮件）',
+                      lang === 'en' ? 'Invoice & quotation system with PDF export' : '发票和报价系统与 PDF 导出',
+                      lang === 'en' ? 'Vendor management with rating system' : '供应商管理与评分系统',
+                    ] },
+                    { version: '0.1.0', date: '2024-11', title: lang === 'en' ? 'Initial Release' : '初始版本', changes: [
+                      lang === 'en' ? 'Asset management with barcode scanning' : '资产管理与条码扫描',
+                      lang === 'en' ? 'Employee directory & asset assignment' : '员工目录和资产分配',
+                      lang === 'en' ? 'Maintenance ticket system' : '维护工单系统',
+                      lang === 'en' ? 'Warranty tracking & alerts' : '保修追踪和提醒',
+                      lang === 'en' ? 'Glassmorphism UI with 3 themes, bilingual i18n' : '玻璃拟态 UI 含 3 主题、双语国际化',
+                    ] },
+                  ].map((release, i) => (
+                    <motion.div 
+                      key={release.version}
+                      className="relative pl-10"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08 }}
+                    >
+                      {/* Timeline dot */}
+                      <div className={`absolute left-2.5 top-1.5 w-3 h-3 rounded-full border-2 ${i === 0 ? 'bg-accent-500 border-accent-400' : 'bg-white/10 border-white/20'}`} />
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`font-mono text-xs font-bold ${i === 0 ? 'text-accent-400' : 'text-white/60'}`}>v{release.version}</span>
+                        <span className="text-white/25 text-[10px]">{release.date}</span>
+                        {release.tag && (
+                          <motion.span 
+                            className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                            animate={{ scale: [1, 1.05, 1] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                          >
+                            {release.tag}
+                          </motion.span>
+                        )}
+                      </div>
+                      <p className="text-white text-xs font-medium mt-0.5">{release.title}</p>
+                      <ul className="mt-1 space-y-0.5">
+                        {release.changes.map((change, j) => (
+                          <li key={j} className="text-white/40 text-[10px] flex items-start gap-1.5">
+                            <span className="text-white/20 mt-1">•</span>
+                            {change}
+                          </li>
+                        ))}
+                      </ul>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
 

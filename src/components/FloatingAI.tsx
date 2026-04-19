@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/lib/context';
 import { aiAvatars, aiChatThemes, getAvatar, getChatTheme } from '@/lib/ai-avatars';
+import KoreanFaceAvatar from '@/components/KoreanFaceAvatar';
 
 interface FileAttachment {
   fileName: string;
@@ -390,28 +391,11 @@ export default function FloatingAI() {
     setLoading(false);
   };
 
-  // 3D Animated Avatar component — CSS gradients + perspective transforms
+  // 3D Animated Avatar component — Korean model face SVG
   const Avatar3D = ({ size = 'md', animate = true }: { size?: 'sm' | 'md' | 'lg'; animate?: boolean }) => {
-    const sizeMap = { sm: 'w-8 h-8 text-lg', md: 'w-12 h-12 text-2xl', lg: 'w-16 h-16 text-3xl' };
-    const comp = (
-      <div className={`${sizeMap[size]} rounded-2xl bg-gradient-to-br ${avatar.gradient} flex items-center justify-center shadow-lg ${avatar.glow} relative overflow-hidden`}
-        style={{ perspective: '500px', transformStyle: 'preserve-3d' }}>
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/30 via-transparent to-white/20" />
-        <div className="absolute inset-0.5 rounded-[14px] border border-white/30" />
-        <div className="absolute top-0 left-1/4 w-1/2 h-1/3 bg-white/15 rounded-b-full blur-sm" />
-        <span className="relative z-10 drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>{avatar.emoji}</span>
-      </div>
-    );
-    if (!animate) return comp;
-    return (
-      <motion.div
-        animate={{ rotateY: [0, 8, -8, 0], rotateX: [0, -4, 4, 0] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ transformStyle: 'preserve-3d' }}
-      >
-        {comp}
-      </motion.div>
-    );
+    const sizeMap = { sm: 'sm' as const, md: 'md' as const, lg: 'lg' as const };
+    const animMap = { sm: 'breathe' as const, md: 'rotate3d' as const, lg: 'float' as const };
+    return <KoreanFaceAvatar avatar={avatar} size={sizeMap[size]} animate={animate} animation={animMap[size]} />;
   };
 
   const alertIcons = { warning: AlertTriangle, security: Shield, info: Bell };
@@ -536,10 +520,7 @@ export default function FloatingAI() {
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                             >
-                              <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${av.gradient} flex items-center justify-center text-sm shadow-md relative overflow-hidden`}>
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-white/15 rounded-xl" />
-                                <span className="relative z-10">{av.emoji}</span>
-                              </div>
+                              <KoreanFaceAvatar avatar={av} size="sm" animate={false} />
                               <span className="text-white/50 text-[9px]">{av.name}</span>
                             </motion.button>
                           ))}
@@ -677,9 +658,8 @@ export default function FloatingAI() {
                   animate={{ opacity: 1, y: 0 }}
                 >
                   {msg.role === 'assistant' && (
-                    <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${avatar.gradient} flex items-center justify-center text-xs flex-shrink-0 mt-1 relative overflow-hidden`}>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-white/15" />
-                      <span className="relative z-10">{avatar.emoji}</span>
+                    <div className="flex-shrink-0 mt-1">
+                      <KoreanFaceAvatar avatar={avatar} size="xs" animate={false} />
                     </div>
                   )}
                   <div className="max-w-[82%] space-y-1.5">
@@ -769,9 +749,8 @@ export default function FloatingAI() {
               {/* Loading indicator with animated avatar */}
               {loading && (
                 <motion.div className="flex items-start gap-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${avatar.gradient} flex items-center justify-center text-xs relative overflow-hidden`}>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-white/15" />
-                    <motion.span className="relative z-10" animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 1, repeat: Infinity }}>{avatar.emoji}</motion.span>
+                  <div className="flex-shrink-0">
+                    <KoreanFaceAvatar avatar={avatar} size="xs" animate={true} animation="bounce" />
                   </div>
                   <div className={`${chatTheme.aiBubble} border border-white/5 p-3 rounded-xl rounded-tl-md flex items-center gap-1.5`}>
                     {[0, 1, 2].map(i => (

@@ -7,6 +7,7 @@ import MainLayout from '@/components/MainLayout';
 import { useApp } from '@/lib/context';
 import { t } from '@/lib/i18n';
 import { getAvatar, getChatTheme } from '@/lib/ai-avatars';
+import KoreanFaceAvatar from '@/components/KoreanFaceAvatar';
 
 interface FileAttachment {
   fileName: string;
@@ -466,15 +467,7 @@ export default function AIAssistantPage() {
         <div className="mb-3 flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-              <motion.div
-                className={`w-9 h-9 rounded-xl bg-gradient-to-br ${avatar.gradient} flex items-center justify-center shadow-lg ${avatar.glow} relative overflow-hidden`}
-                animate={{ rotateY: [0, 8, -8, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                style={{ transformStyle: 'preserve-3d' }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-white/15 rounded-xl" />
-                <span className="relative z-10 text-lg">{avatar.emoji}</span>
-              </motion.div>
+              <KoreanFaceAvatar avatar={avatar} size="sm" animate={true} animation="rotate3d" />
               Uni AI — {avatar.name}
             </h1>
             <p className="text-white/50 text-sm mt-1">
@@ -509,16 +502,9 @@ export default function AIAssistantPage() {
             <div className="flex-1 overflow-y-auto space-y-4 pr-2">
               {messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full text-center">
-                  <motion.div
-                    className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${avatar.gradient} ${avatar.glow} flex items-center justify-center mb-6 relative overflow-hidden`}
-                    animate={{ y: [0, -10, 0], rotateY: [0, 10, -10, 0] }}
-                    transition={{ duration: 4, repeat: Infinity }}
-                    style={{ transformStyle: 'preserve-3d' }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-white/20 rounded-2xl" />
-                    <div className="absolute inset-0.5 rounded-[14px] border border-white/30" />
-                    <span className="relative z-10 text-4xl drop-shadow-lg">{avatar.emoji}</span>
-                  </motion.div>
+                  <div className="mb-6">
+                    <KoreanFaceAvatar avatar={avatar} size="xl" animate={true} animation="float" />
+                  </div>
                   <h3 className="text-white font-semibold text-lg mb-2">
                     {lang === 'en' ? `Hi! I'm ${avatar.name} — your Uni AI` : `嗨！我是${avatar.name} — 您的Uni AI`}
                   </h3>
@@ -541,9 +527,8 @@ export default function AIAssistantPage() {
               {messages.map((msg) => (
                 <motion.div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                   {msg.role === 'assistant' && (
-                    <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${avatar.gradient} ${avatar.glow} flex items-center justify-center flex-shrink-0 relative overflow-hidden`}>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-white/15 rounded-xl" />
-                      <span className="relative z-10 text-sm">{avatar.emoji}</span>
+                    <div className="flex-shrink-0">
+                      <KoreanFaceAvatar avatar={avatar} size="sm" animate={false} />
                     </div>
                   )}
                   <div className="max-w-[80%] space-y-2">
@@ -583,9 +568,8 @@ export default function AIAssistantPage() {
 
               {isTyping && (
                 <motion.div className="flex gap-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${avatar.gradient} flex items-center justify-center relative overflow-hidden`}>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-white/15 rounded-xl" />
-                    <motion.span className="relative z-10 text-sm" animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 1, repeat: Infinity }}>{avatar.emoji}</motion.span>
+                  <div className="flex-shrink-0">
+                    <KoreanFaceAvatar avatar={avatar} size="sm" animate={true} animation="bounce" />
                   </div>
                   <div className={`p-4 rounded-2xl ${chatTheme.aiBubble} border border-white/5 rounded-tl-md`}>
                     <div className="flex gap-1">

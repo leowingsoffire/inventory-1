@@ -276,8 +276,8 @@ export default function CRMPage() {
         {/* Add/Edit Modal */}
         <AnimatePresence>
           {showModal && (
-            <motion.div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setShowModal(false); setEditingActivity(null); }}>
-              <motion.div className="glass-card p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
+            <motion.div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setShowModal(false); setEditingActivity(null); }}>
+              <motion.div className="glass-card p-4 sm:p-6 w-full max-w-[95vw] sm:max-w-xl md:max-w-2xl max-h-[90vh] sm:max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
                 <div className="flex items-center justify-between mb-5">
                   <h2 className="text-white font-bold text-lg">{editingActivity ? (lang === 'en' ? 'Edit Activity' : '编辑活动') : (lang === 'en' ? 'Log Activity' : '记录活动')}</h2>
                   <button onClick={() => { setShowModal(false); setEditingActivity(null); }} className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white"><X className="w-4 h-4" /></button>

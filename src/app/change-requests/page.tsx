@@ -515,7 +515,7 @@ export default function ChangeRequestsPage() {
               onClick={() => setDetailItem(null)}
             >
               <motion.div
-                className="glass-card w-full max-w-2xl max-h-[80vh] overflow-y-auto m-4 p-6"
+                className="glass-card w-full max-w-[95vw] sm:max-w-xl md:max-w-2xl max-h-[90vh] sm:max-h-[80vh] overflow-y-auto m-2 sm:m-4 p-4 sm:p-6"
                 initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -643,7 +643,7 @@ export default function ChangeRequestsPage() {
               onClick={() => { setShowForm(false); setEditItem(null); }}
             >
               <motion.div
-                className="glass-card w-full max-w-2xl max-h-[85vh] overflow-y-auto m-4 p-6"
+                className="glass-card w-full max-w-[95vw] sm:max-w-xl md:max-w-2xl max-h-[90vh] sm:max-h-[85vh] overflow-y-auto m-2 sm:m-4 p-4 sm:p-6"
                 initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
               >

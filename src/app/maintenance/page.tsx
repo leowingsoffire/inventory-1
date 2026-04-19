@@ -236,9 +236,9 @@ export default function MaintenancePage() {
         {/* Add/Edit Modal */}
         <AnimatePresence>
           {showModal && (
-            <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-              <motion.div className="glass-card p-6 w-full max-w-lg relative z-10" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
+              <motion.div className="glass-card p-4 sm:p-6 w-full max-w-[95vw] sm:max-w-lg relative z-10 max-h-[90vh] overflow-y-auto" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-white">
                     {editingTicket ? t('maint.edit', lang) : t('maint.add', lang)}

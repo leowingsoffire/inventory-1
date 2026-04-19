@@ -322,14 +322,14 @@ export default function AssetsPage() {
         <AnimatePresence>
           {showDetail && (
             <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
               <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowDetail(null)} />
               <motion.div
-                className="glass-card p-6 w-full max-w-2xl relative z-10 max-h-[85vh] overflow-y-auto"
+                className="glass-card p-4 sm:p-6 w-full max-w-[95vw] sm:max-w-xl md:max-w-2xl relative z-10 max-h-[90vh] sm:max-h-[85vh] overflow-y-auto"
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
@@ -447,14 +447,14 @@ export default function AssetsPage() {
         <AnimatePresence>
           {showModal && (
             <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
               <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowModal(false)} />
               <motion.div
-                className="glass-card p-6 w-full max-w-2xl relative z-10 max-h-[85vh] overflow-y-auto"
+                className="glass-card p-4 sm:p-6 w-full max-w-[95vw] sm:max-w-xl md:max-w-2xl relative z-10 max-h-[90vh] sm:max-h-[85vh] overflow-y-auto"
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}

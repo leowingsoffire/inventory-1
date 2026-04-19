@@ -33,6 +33,8 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/lib/context';
 import { t } from '@/lib/i18n';
+import { getAvatar } from '@/lib/ai-avatars';
+import KoreanFaceAvatar from '@/components/KoreanFaceAvatar';
 
 interface SubItem {
   href: string;
@@ -90,8 +92,9 @@ const navItems: NavItem[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { lang, sidebarOpen, setSidebarOpen } = useApp();
+  const { lang, sidebarOpen, setSidebarOpen, aiAvatar } = useApp();
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+  const currentAvatar = getAvatar(aiAvatar);
 
   function toggleGroup(href: string) {
     setExpandedGroups((prev) =>
@@ -162,7 +165,11 @@ export default function Sidebar() {
                             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                           />
                         )}
-                        <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-accent-400' : ''}`} />
+                        {item.href === '/ai-assistant' ? (
+                          <div className="w-5 h-5 flex-shrink-0"><KoreanFaceAvatar avatar={currentAvatar} size="xs" animate={false} /></div>
+                        ) : (
+                          <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-accent-400' : ''}`} />
+                        )}
                         <AnimatePresence>
                           {sidebarOpen && (
                             <motion.span

@@ -193,15 +193,15 @@ export default function CustomersPage() {
   return (
     <MainLayout>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Building2 className="w-7 h-7 text-blue-400" />
+            <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+              <Building2 className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
               {lang === 'en' ? 'Customer Management' : '客户管理'}
             </h1>
-            <p className="text-white/50 text-sm mt-1">{lang === 'en' ? 'Manage your SME clients and contracts' : '管理您的中小企业客户和合同'}</p>
+            <p className="text-white/50 text-xs sm:text-sm mt-1">{lang === 'en' ? 'Manage your SME clients and contracts' : '管理您的中小企业客户和合同'}</p>
           </div>
-          <motion.button onClick={() => { resetForm(); setEditingCustomer(null); setShowModal(true); }} className="px-4 py-2.5 bg-accent-500 hover:bg-accent-600 text-white rounded-xl text-sm font-medium flex items-center gap-2" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
+          <motion.button onClick={() => { resetForm(); setEditingCustomer(null); setShowModal(true); }} className="px-4 py-2.5 bg-accent-500 hover:bg-accent-600 text-white rounded-xl text-sm font-medium flex items-center gap-2 w-full sm:w-auto justify-center" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
             <Plus className="w-4 h-4" /> {lang === 'en' ? 'Add Customer' : '添加客户'}
           </motion.button>
         </div>
@@ -286,8 +286,8 @@ export default function CustomersPage() {
         {/* Detail Modal */}
         <AnimatePresence>
           {showDetail && (
-            <motion.div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowDetail(null)}>
-              <motion.div className="glass-card p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
+            <motion.div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowDetail(null)}>
+              <motion.div className="glass-card p-4 sm:p-6 w-full max-w-[95vw] sm:max-w-lg max-h-[90vh] sm:max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-lg">{showDetail.companyName.charAt(0)}</div>
@@ -349,8 +349,8 @@ export default function CustomersPage() {
         {/* Add/Edit Modal */}
         <AnimatePresence>
           {showModal && (
-            <motion.div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setShowModal(false); setEditingCustomer(null); }}>
-              <motion.div className="glass-card p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
+            <motion.div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setShowModal(false); setEditingCustomer(null); }}>
+              <motion.div className="glass-card p-4 sm:p-6 w-full max-w-[95vw] sm:max-w-xl md:max-w-2xl max-h-[90vh] sm:max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
                 <div className="flex items-center justify-between mb-5">
                   <h2 className="text-white font-bold text-lg">{editingCustomer ? (lang === 'en' ? 'Edit Customer' : '编辑客户') : (lang === 'en' ? 'Add Customer' : '添加客户')}</h2>
                   <button onClick={() => { setShowModal(false); setEditingCustomer(null); }} className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white"><X className="w-4 h-4" /></button>
