@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, Users, Plus, Edit2, Trash2, X, Check, ChevronDown,
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useApp } from '@/lib/context';
+import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
 import { t } from '@/lib/i18n';
 import {
   ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS, RESOURCES, RESOURCE_LABELS,
@@ -24,13 +25,7 @@ interface UserAccount {
   lastLogin?: string;
 }
 
-const sampleUsers: UserAccount[] = [
-  { id: '1', name: 'Admin User', email: 'admin@unitech.sg', role: 'dev_admin', isActive: true, permissions: {}, lastLogin: '2026-04-19 09:30' },
-  { id: '2', name: 'Sarah Lim', email: 'sarah@unitech.sg', role: 'tenant_admin', isActive: true, permissions: {}, lastLogin: '2026-04-18 14:20' },
-  { id: '3', name: 'Tan Wei Ming', email: 'weiming@unitech.sg', role: 'engineer', isActive: true, permissions: {}, lastLogin: '2026-04-19 08:45' },
-  { id: '4', name: 'Ahmad Rahman', email: 'ahmad@unitech.sg', role: 'engineer', isActive: true, permissions: {}, lastLogin: '2026-04-17 16:10' },
-  { id: '5', name: 'Kumar Patel', email: 'kumar@unitech.sg', role: 'engineer', isActive: false, permissions: {}, lastLogin: '2026-03-25 11:00' },
-];
+
 
 const PERM_LABELS = {
   canCreate: { en: 'Create', zh: '创建' },
@@ -52,7 +47,8 @@ function getEffectivePermissions(user: UserAccount): RolePermissions {
 
 export default function RBACPage() {
   const { lang } = useApp();
-  const [users, setUsers] = useState<UserAccount[]>(sampleUsers);
+  const [users, setUsers] = useState<UserAccount[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserAccount | null>(null);
   const [showAddUser, setShowAddUser] = useState(false);
   const [editPerms, setEditPerms] = useState<RolePermissions | null>(null);
@@ -62,6 +58,27 @@ export default function RBACPage() {
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newRole, setNewRole] = useState<RoleKey>('engineer');
+
+  // Fetch users from API
+  useEffect(() => {
+    fetch('/api/users')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setUsers(data.map((u: Record<string, unknown>) => ({
+            id: String(u.id),
+            name: (u.displayName || u.username) as string,
+            email: (u.personalEmail || u.email || '') as string,
+            role: (u.role || 'engineer') as RoleKey,
+            isActive: u.isActive !== false,
+            permissions: {},
+            lastLogin: u.lastLogin as string | undefined,
+          })));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleToggleActive = (userId: string) => {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, isActive: !u.isActive } : u));
@@ -133,6 +150,7 @@ export default function RBACPage() {
   const roleColors: Record<RoleKey, string> = {
     dev_admin: 'bg-red-500/20 text-red-300 border-red-500/30',
     tenant_admin: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    finance_controller: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
     engineer: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
   };
 
@@ -180,6 +198,9 @@ export default function RBACPage() {
         </div>
 
         {/* Main Grid */}
+        {users.length === 0 && !loading ? (
+          <FeatureGuide {...MODULE_GUIDES.users} lang={lang} />
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* User List */}
           <div className="lg:col-span-1 space-y-3">
@@ -344,6 +365,7 @@ export default function RBACPage() {
             )}
           </div>
         </div>
+        )}
 
         {/* Add User Modal */}
         <AnimatePresence>

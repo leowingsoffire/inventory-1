@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, AlertTriangle, Clock, Mail, Send, CheckCircle, XCircle,
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useApp } from '@/lib/context';
+import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
 
 type AlertStatus = 'pending' | 'sent' | 'acknowledged' | 'escalated' | 'expired';
 
@@ -39,20 +40,7 @@ interface AlertRecord {
   subject: string;
 }
 
-const sampleWarrantyAssets: WarrantyAsset[] = [
-  { id: '5', assetTag: 'UT-PR-001', name: 'HP LaserJet Pro M404dn', brand: 'HP', warrantyEnd: '2025-05-15', customerEmail: 'customer1@example.com', customerName: 'ABC Corp Pte Ltd', assignedTo: 'Shared', daysLeft: 12 },
-  { id: '7', assetTag: 'UT-PH-001', name: 'iPhone 15 Pro', brand: 'Apple', warrantyEnd: '2025-10-01', customerEmail: 'mike@clientco.sg', customerName: 'Mike Wong', assignedTo: 'Mike Wong', daysLeft: 151 },
-  { id: '4', assetTag: 'UT-SV-001', name: 'Dell PowerEdge R740', brand: 'Dell', warrantyEnd: '2026-08-01', customerEmail: 'it@bigclient.sg', customerName: 'Big Client Pte Ltd', assignedTo: 'IT Department', daysLeft: 456 },
-  { id: '8', assetTag: 'UT-NW-001', name: 'Cisco Catalyst 9200', brand: 'Cisco', warrantyEnd: '2026-11-01', customerEmail: 'infra@techfirm.sg', customerName: 'Tech Firm Pte Ltd', assignedTo: 'IT Department', daysLeft: 548 },
-  { id: '1', assetTag: 'UT-LT-001', name: 'MacBook Pro 16"', brand: 'Apple', warrantyEnd: '2027-06-15', customerEmail: 'john@company.sg', customerName: 'John Tan', assignedTo: 'John Tan', daysLeft: 774 },
-];
 
-const sampleAlerts: AlertRecord[] = [
-  { id: 'a1', assetId: '5', assetTag: 'UT-PR-001', assetName: 'HP LaserJet Pro M404dn', alertType: '7_day', status: 'sent', recipientEmail: 'customer1@example.com', ccEmails: 'admin@unitech.sg', sentAt: '2025-05-03', attempts: 2, maxAttempts: 5, nextAttempt: '2025-05-06', subject: 'Warranty Expiring in 7 Days - HP LaserJet Pro M404dn' },
-  { id: 'a2', assetId: '5', assetTag: 'UT-PR-001', assetName: 'HP LaserJet Pro M404dn', alertType: '30_day', status: 'sent', recipientEmail: 'customer1@example.com', ccEmails: '', sentAt: '2025-04-15', attempts: 1, maxAttempts: 5, nextAttempt: null, subject: 'Warranty Expiring in 30 Days - HP LaserJet Pro M404dn' },
-  { id: 'a3', assetId: '5', assetTag: 'UT-PR-001', assetName: 'HP LaserJet Pro M404dn', alertType: '60_day', status: 'acknowledged', recipientEmail: 'customer1@example.com', ccEmails: '', sentAt: '2025-03-16', attempts: 1, maxAttempts: 5, nextAttempt: null, subject: 'Warranty Expiring in 60 Days - HP LaserJet Pro M404dn' },
-  { id: 'a4', assetId: '7', assetTag: 'UT-PH-001', assetName: 'iPhone 15 Pro', alertType: '60_day', status: 'pending', recipientEmail: 'mike@clientco.sg', ccEmails: '', sentAt: null, attempts: 0, maxAttempts: 5, nextAttempt: '2025-08-02', subject: 'Warranty Reminder - iPhone 15 Pro (60 Days)' },
-];
 
 const alertTypeLabels: Record<string, Record<string, string>> = {
   '60_day': { en: '60-Day Warning', zh: '60天预警' },
@@ -101,14 +89,28 @@ const defaultConfig: WarrantyConfig = {
 export default function WarrantyPage() {
   const { lang } = useApp();
   const [tab, setTab] = useState<'monitor' | 'alerts' | 'config'>('monitor');
-  const [alerts, setAlerts] = useState<AlertRecord[]>(sampleAlerts);
+  const [warrantyAssets, setWarrantyAssets] = useState<WarrantyAsset[]>([]);
+  const [alerts, setAlerts] = useState<AlertRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState<WarrantyConfig>(defaultConfig);
   const [showCompose, setShowCompose] = useState<WarrantyAsset | null>(null);
   const [configSaved, setConfigSaved] = useState(false);
 
+  // Fetch warranty data from API
+  useEffect(() => {
+    fetch('/api/warranty')
+      .then(res => res.json())
+      .then(data => {
+        if (data.assets) setWarrantyAssets(data.assets);
+        if (data.alerts) setAlerts(data.alerts);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   const urgentAssets = useMemo(() =>
-    sampleWarrantyAssets.filter(a => a.daysLeft <= 60).sort((a, b) => a.daysLeft - b.daysLeft),
-  []);
+    warrantyAssets.filter(a => a.daysLeft <= 60).sort((a, b) => a.daysLeft - b.daysLeft),
+  [warrantyAssets]);
 
   const handleSendAlert = (asset: WarrantyAsset, alertType: string) => {
     const newAlert: AlertRecord = {
@@ -157,9 +159,9 @@ export default function WarrantyPage() {
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           {[
-            { label: lang === 'en' ? 'Expiring < 7 Days' : '7天内到期', count: sampleWarrantyAssets.filter(a => a.daysLeft <= 7).length, color: 'text-red-400', bg: 'bg-red-500/10' },
-            { label: lang === 'en' ? 'Expiring < 30 Days' : '30天内到期', count: sampleWarrantyAssets.filter(a => a.daysLeft <= 30 && a.daysLeft > 7).length, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-            { label: lang === 'en' ? 'Expiring < 60 Days' : '60天内到期', count: sampleWarrantyAssets.filter(a => a.daysLeft <= 60 && a.daysLeft > 30).length, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+            { label: lang === 'en' ? 'Expiring < 7 Days' : '7天内到期', count: warrantyAssets.filter(a => a.daysLeft <= 7).length, color: 'text-red-400', bg: 'bg-red-500/10' },
+            { label: lang === 'en' ? 'Expiring < 30 Days' : '30天内到期', count: warrantyAssets.filter(a => a.daysLeft <= 30 && a.daysLeft > 7).length, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+            { label: lang === 'en' ? 'Expiring < 60 Days' : '60天内到期', count: warrantyAssets.filter(a => a.daysLeft <= 60 && a.daysLeft > 30).length, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
             { label: lang === 'en' ? 'Alerts Sent' : '已发送提醒', count: alerts.filter(a => a.status === 'sent').length, color: 'text-blue-400', bg: 'bg-blue-500/10' },
           ].map((card, i) => (
             <motion.div key={i} className={`glass-card p-4 ${card.bg}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
@@ -244,7 +246,11 @@ export default function WarrantyPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sampleWarrantyAssets.map(asset => {
+                  {warrantyAssets.length === 0 && !loading ? (
+                    <tr><td colSpan={6} className="py-8">
+                      <FeatureGuide {...MODULE_GUIDES.warranty} lang={lang} />
+                    </td></tr>
+                  ) : warrantyAssets.map(asset => {
                     const urgency = asset.daysLeft <= 7 ? 'critical' : asset.daysLeft <= 30 ? 'warning' : asset.daysLeft <= 60 ? 'caution' : 'safe';
                     const urgencyColors = {
                       critical: 'text-red-400',

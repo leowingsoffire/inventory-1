@@ -9,7 +9,9 @@ import {
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useApp } from '@/lib/context';
+import { useAuth } from '@/lib/auth-context';
 import { t } from '@/lib/i18n';
+import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -51,59 +53,54 @@ function AnimatedNumber({ value, duration = 1.5 }: { value: number; duration?: n
   return <>{current}</>;
 }
 
-const categoryData = [
-  { name: 'Laptops', value: 45, icon: Laptop },
-  { name: 'Desktops', value: 28, icon: Monitor },
-  { name: 'Servers', value: 12, icon: Server },
-  { name: 'Printers', value: 8, icon: Printer },
-  { name: 'Phones', value: 15, icon: Smartphone },
-  { name: 'Others', value: 10, icon: HardDrive },
-];
+const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  laptop: Laptop, desktop: Monitor, server: Server, printer: Printer,
+  phone: Smartphone, monitor: Monitor, network: HardDrive, other: HardDrive,
+};
 
-const monthlyData = [
-  { month: 'Jan', assets: 85, tickets: 12 },
-  { month: 'Feb', assets: 92, tickets: 8 },
-  { month: 'Mar', assets: 98, tickets: 15 },
-  { month: 'Apr', assets: 105, tickets: 10 },
-  { month: 'May', assets: 110, tickets: 7 },
-  { month: 'Jun', assets: 118, tickets: 13 },
-];
+interface DashboardStats {
+  totalAssets: number; assigned: number; available: number; maintenance: number;
+  employees: number; openTickets: number; changes: number; customers: number;
+  vendors: number; revenue: number; warrantyExpiring30: number; warrantyExpiring90: number;
+  categoryData: { name: string; value: number }[];
+  recentActivity: { action: string; entity: string; details?: string; time: string; user: string }[];
+  changesByState: { state: string; count: number }[];
+}
 
-const recentActivities = [
-  { action: 'New laptop assigned', entity: 'MacBook Pro 16"', user: 'John Tan', time: '5 min ago', type: 'assign', href: '/assets?search=MacBook' },
-  { action: 'Maintenance completed', entity: 'HP LaserJet Pro', user: 'Sarah Lim', time: '1 hour ago', type: 'maintenance', href: '/maintenance?search=HP+LaserJet' },
-  { action: 'New asset registered', entity: 'Dell Monitor U2723QE', user: 'Admin', time: '2 hours ago', type: 'new', href: '/assets?search=Dell+Monitor' },
-  { action: 'Warranty expiring', entity: 'Lenovo ThinkPad X1', user: 'System', time: '3 hours ago', type: 'warning', href: '/warranty' },
-  { action: 'Ticket resolved', entity: 'Network Switch #5', user: 'Mike Wong', time: '5 hours ago', type: 'resolve', href: '/maintenance?search=Network+Switch' },
-];
-
-const aiInsights = [
-  { text: '3 laptops have warranties expiring in 30 days', type: 'warning', href: '/warranty' },
-  { text: 'Server room temperature trend is optimal', type: 'success', href: '/reports' },
-  { text: 'Recommend upgrading 5 desktops with >4 years age', type: 'info', href: '/assets?status=assigned&category=desktop' },
-  { text: 'Monthly maintenance costs decreased by 15%', type: 'success', href: '/reports' },
-];
-
-const warrantyAlerts = [
-  { name: 'iPhone 15 Pro', tag: 'UT-PH-001', daysLeft: 12, status: 'critical' },
-  { name: 'HP LaserJet Pro', tag: 'UT-PR-001', daysLeft: 28, status: 'warning' },
-  { name: 'Dell PowerEdge R740', tag: 'UT-SV-001', daysLeft: 90, status: 'info' },
-];
+const emptyStats: DashboardStats = {
+  totalAssets: 0, assigned: 0, available: 0, maintenance: 0,
+  employees: 0, openTickets: 0, changes: 0, customers: 0,
+  vendors: 0, revenue: 0, warrantyExpiring30: 0, warrantyExpiring90: 0,
+  categoryData: [], recentActivity: [], changesByState: [],
+};
 
 export default function DashboardPage() {
   const { lang, theme } = useApp();
+  const { user } = useAuth();
   const router = useRouter();
+  const [data, setData] = useState<DashboardStats>(emptyStats);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/dashboard/stats')
+      .then(r => r.json())
+      .then(d => setData(d))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const isEmpty = data.totalAssets === 0 && data.employees === 0 && data.openTickets === 0;
 
   const stats = [
-    { label: t('dash.totalAssets', lang), value: 118, icon: Monitor, color: 'from-accent-500 to-accent-600', glow: 'rgba(34,211,238,0.15)', href: '/assets' },
-    { label: t('dash.assigned', lang), value: 89, icon: CheckCircle, color: 'from-emerald-500 to-green-600', glow: 'rgba(52,211,153,0.15)', href: '/assets?status=assigned' },
-    { label: t('dash.available', lang), value: 21, icon: Package, color: 'from-violet-500 to-purple-600', glow: 'rgba(167,139,250,0.15)', href: '/assets?status=available' },
-    { label: t('dash.maintenance', lang), value: 8, icon: Wrench, color: 'from-amber-500 to-orange-600', glow: 'rgba(251,191,36,0.15)', href: '/maintenance' },
-    { label: t('dash.employees', lang), value: 52, icon: Users, color: 'from-pink-500 to-rose-600', glow: 'rgba(236,72,153,0.15)', href: '/employees' },
-    { label: t('dash.openTickets', lang), value: 5, icon: AlertTriangle, color: 'from-red-500 to-rose-600', glow: 'rgba(239,68,68,0.15)', href: '/maintenance?status=open' },
-    { label: lang === 'en' ? 'Changes' : '变更', value: 12, icon: GitBranch, color: 'from-indigo-500 to-blue-600', glow: 'rgba(99,102,241,0.15)', href: '/change-requests' },
-    { label: lang === 'en' ? 'Customers' : '客户', value: 5, icon: Building2, color: 'from-fuchsia-500 to-pink-600', glow: 'rgba(217,70,239,0.15)', href: '/customers' },
-    { label: lang === 'en' ? 'Revenue' : '收入', value: 15800, icon: DollarSign, color: 'from-lime-500 to-emerald-600', glow: 'rgba(132,204,22,0.15)', href: '/finance' },
+    { label: t('dash.totalAssets', lang), value: data.totalAssets, icon: Monitor, color: 'from-accent-500 to-accent-600', glow: 'rgba(34,211,238,0.15)', href: '/assets' },
+    { label: t('dash.assigned', lang), value: data.assigned, icon: CheckCircle, color: 'from-emerald-500 to-green-600', glow: 'rgba(52,211,153,0.15)', href: '/assets?status=assigned' },
+    { label: t('dash.available', lang), value: data.available, icon: Package, color: 'from-violet-500 to-purple-600', glow: 'rgba(167,139,250,0.15)', href: '/assets?status=available' },
+    { label: t('dash.maintenance', lang), value: data.maintenance, icon: Wrench, color: 'from-amber-500 to-orange-600', glow: 'rgba(251,191,36,0.15)', href: '/maintenance' },
+    { label: t('dash.employees', lang), value: data.employees, icon: Users, color: 'from-pink-500 to-rose-600', glow: 'rgba(236,72,153,0.15)', href: '/employees' },
+    { label: t('dash.openTickets', lang), value: data.openTickets, icon: AlertTriangle, color: 'from-red-500 to-rose-600', glow: 'rgba(239,68,68,0.15)', href: '/maintenance?status=open' },
+    { label: lang === 'en' ? 'Changes' : '变更', value: data.changes, icon: GitBranch, color: 'from-indigo-500 to-blue-600', glow: 'rgba(99,102,241,0.15)', href: '/change-requests' },
+    { label: lang === 'en' ? 'Customers' : '客户', value: data.customers, icon: Building2, color: 'from-fuchsia-500 to-pink-600', glow: 'rgba(217,70,239,0.15)', href: '/customers' },
+    { label: lang === 'en' ? 'Revenue' : '收入', value: data.revenue, icon: DollarSign, color: 'from-lime-500 to-emerald-600', glow: 'rgba(132,204,22,0.15)', href: '/finance' },
   ];
 
   const quickActions = [
@@ -122,7 +119,7 @@ export default function DashboardPage() {
         <motion.div variants={itemVariants} className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white">
-              {t('app.welcome', lang)}, Admin 👋
+              {t('app.welcome', lang)}, {user?.displayName || user?.name || 'Admin'} 👋
             </h1>
             <p className="text-white/50 text-sm mt-1">
               {lang === 'en' ? "Here's what's happening with your IT inventory today." : '以下是您今天的 IT 资产概况。'}
@@ -157,10 +154,10 @@ export default function DashboardPage() {
                     </div>
                     <ExternalLink className="w-3.5 h-3.5 text-white/0 group-hover:text-white/40 transition-all" />
                   </div>
-                  <p className="text-2xl font-bold text-white">
+                  <p className="text-2xl font-bold text-white drop-shadow-sm">
                     <AnimatedNumber value={stat.value} />
                   </p>
-                  <p className="text-white/50 text-xs mt-1">{stat.label}</p>
+                  <p className="text-white/60 text-xs mt-1 font-medium">{stat.label}</p>
                 </motion.div>
               </Link>
             );
@@ -168,15 +165,29 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Charts Row */}
+        {isEmpty ? (
+          <motion.div variants={itemVariants}>
+            <FeatureGuide
+              {...MODULE_GUIDES.dashboard}
+              lang={lang}
+              onAction={(action) => {
+                if (action.startsWith('navigate:')) router.push(action.replace('navigate:', ''));
+              }}
+            />
+          </motion.div>
+        ) : (
+        <>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Asset Distribution Pie */}
           <motion.div variants={itemVariants} className="glass-card p-6">
             <h3 className="text-white font-semibold mb-4">{t('dash.assetDistribution', lang)}</h3>
+            {data.categoryData.length > 0 ? (
+            <>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={categoryData}
+                    data={data.categoryData}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -184,7 +195,7 @@ export default function DashboardPage() {
                     paddingAngle={4}
                     dataKey="value"
                   >
-                    {categoryData.map((_, index) => (
+                    {data.categoryData.map((_, index) => (
                       <Cell key={index} fill={theme.chartColors[index % theme.chartColors.length]} />
                     ))}
                   </Pie>
@@ -200,8 +211,8 @@ export default function DashboardPage() {
               </ResponsiveContainer>
             </div>
             <div className="grid grid-cols-3 gap-2 mt-2">
-              {categoryData.map((cat, i) => {
-                const Icon = cat.icon;
+              {data.categoryData.map((cat, i) => {
+                const Icon = categoryIcons[cat.name.toLowerCase()] || HardDrive;
                 return (
                   <div key={cat.name} className="flex items-center gap-2 text-xs">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: theme.chartColors[i % theme.chartColors.length] }} />
@@ -212,35 +223,17 @@ export default function DashboardPage() {
                 );
               })}
             </div>
+            </>
+            ) : (
+              <p className="text-white/30 text-sm text-center py-16">{lang === 'en' ? 'Add assets to see distribution' : '添加资产查看分布'}</p>
+            )}
           </motion.div>
 
           {/* Monthly Trend */}
           <motion.div variants={itemVariants} className="glass-card p-6">
             <h3 className="text-white font-semibold mb-4">{t('dash.monthlyTrend', lang)}</h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={monthlyData}>
-                  <defs>
-                    <linearGradient id="colorAssets" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={theme.chartColors[0]} stopOpacity={0.3} />
-                      <stop offset="95%" stopColor={theme.chartColors[0]} stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="month" stroke="rgba(255,255,255,0.5)" fontSize={12} />
-                  <YAxis stroke="rgba(255,255,255,0.5)" fontSize={12} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'rgba(0,0,0,0.8)',
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      borderRadius: '12px',
-                      color: 'white',
-                    }}
-                  />
-                  <Area type="monotone" dataKey="assets" stroke={theme.chartColors[0]} fillOpacity={1} fill="url(#colorAssets)" strokeWidth={2} />
-                  <Bar dataKey="tickets" fill={theme.chartColors[1]} radius={[4, 4, 0, 0]} opacity={0.7} />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="h-64 flex items-center justify-center">
+              <p className="text-white/30 text-sm">{lang === 'en' ? 'Trend data will populate as you use the system' : '使用系统后趋势数据将自动填充'}</p>
             </div>
           </motion.div>
         </div>
@@ -254,30 +247,24 @@ export default function DashboardPage() {
               {t('dash.recentActivity', lang)}
             </h3>
             <div className="space-y-3">
-              {recentActivities.map((activity, i) => (
+              {data.recentActivity.length > 0 ? data.recentActivity.map((activity, i) => (
                 <motion.div
                   key={i}
                   className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer group"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 + i * 0.05 }}
-                  onClick={() => router.push(activity.href)}
                 >
-                  <div className={`w-2 h-2 rounded-full ${
-                    activity.type === 'assign' ? 'bg-blue-400' :
-                    activity.type === 'maintenance' ? 'bg-amber-400' :
-                    activity.type === 'new' ? 'bg-emerald-400' :
-                    activity.type === 'warning' ? 'bg-red-400' :
-                    'bg-violet-400'
-                  }`} />
+                  <div className="w-2 h-2 rounded-full bg-accent-400" />
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm">{activity.action}</p>
-                    <p className="text-white/40 text-xs truncate">{activity.entity} • {activity.user}</p>
+                    <p className="text-white/40 text-xs truncate">{activity.entity} {activity.details ? `• ${activity.details}` : ''}</p>
                   </div>
-                  <span className="text-white/30 text-xs whitespace-nowrap">{activity.time}</span>
-                  <ArrowUpRight className="w-3.5 h-3.5 text-white/0 group-hover:text-white/40 transition-all flex-shrink-0" />
+                  <span className="text-white/30 text-xs whitespace-nowrap">{new Date(activity.time).toLocaleDateString()}</span>
                 </motion.div>
-              ))}
+              )) : (
+                <p className="text-white/30 text-sm text-center py-8">{lang === 'en' ? 'No activity yet. Start by adding assets or creating tickets.' : '暂无活动。开始添加资产或创建工单。'}</p>
+              )}
             </div>
           </motion.div>
 
@@ -314,31 +301,30 @@ export default function DashboardPage() {
                 {t('dash.aiInsights', lang)}
               </h3>
               <div className="space-y-2">
-                {aiInsights.map((insight, i) => (
-                  <motion.div
-                    key={i}
-                    className={`p-3 rounded-xl text-xs flex items-start gap-2 cursor-pointer group hover:ring-1 hover:ring-white/20 transition-all ${
-                      insight.type === 'warning' ? 'bg-amber-500/10 border border-amber-500/20' :
-                      insight.type === 'success' ? 'bg-emerald-500/10 border border-emerald-500/20' :
-                      'bg-accent-500/10 border border-accent-500/20'
-                    }`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 + i * 0.1 }}
-                    onClick={() => router.push(insight.href)}
-                    whileHover={{ x: 4 }}
-                  >
-                    {insight.type === 'warning' ? <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" /> :
-                     insight.type === 'success' ? <CheckCircle className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" /> :
-                     <ArrowUpRight className="w-3.5 h-3.5 text-accent-400 flex-shrink-0 mt-0.5" />}
-                    <span className="text-white/70 flex-1">{insight.text}</span>
-                    <ExternalLink className="w-3 h-3 text-white/0 group-hover:text-white/40 transition-all flex-shrink-0 mt-0.5" />
+                {data.warrantyExpiring30 > 0 && (
+                  <motion.div className="p-3 rounded-xl text-xs flex items-start gap-2 bg-amber-500/10 border border-amber-500/20" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-white/70">{data.warrantyExpiring30} {lang === 'en' ? 'warranties expiring within 30 days' : '个保修将在30天内到期'}</span>
                   </motion.div>
-                ))}
+                )}
+                {data.openTickets > 0 && (
+                  <motion.div className="p-3 rounded-xl text-xs flex items-start gap-2 bg-accent-500/10 border border-accent-500/20" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                    <ArrowUpRight className="w-3.5 h-3.5 text-accent-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-white/70">{data.openTickets} {lang === 'en' ? 'open tickets need attention' : '个待处理工单需要关注'}</span>
+                  </motion.div>
+                )}
+                {data.totalAssets === 0 && (
+                  <motion.div className="p-3 rounded-xl text-xs flex items-start gap-2 bg-accent-500/10 border border-accent-500/20" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                    <CheckCircle className="w-3.5 h-3.5 text-accent-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-white/70">{lang === 'en' ? 'Get started by adding your first asset' : '开始添加您的第一个资产'}</span>
+                  </motion.div>
+                )}
               </div>
             </motion.div>
           </div>
         </div>
+        </>
+        )}
 
         {/* Change Requests Summary */}
         <motion.div variants={itemVariants} className="glass-card p-6">
@@ -355,12 +341,8 @@ export default function DashboardPage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {[
-              { number: 'CHG0000001', desc: 'Upgrade server room UPS system', state: 'implement', approval: 'approved', type: 'normal' },
-              { number: 'CHG0000002', desc: 'Migrate email to Microsoft 365', state: 'scheduled', approval: 'approved', type: 'normal' },
-              { number: 'CHG0000004', desc: 'Deploy endpoint protection', state: 'implement', approval: 'approved', type: 'standard' },
-            ].map((cr, i) => (
-              <Link key={cr.number} href="/change-requests">
+            {data.changesByState.length > 0 ? data.changesByState.map((cr, i) => (
+              <Link key={cr.state} href="/change-requests">
                 <motion.div
                   className="p-4 rounded-xl bg-white/5 border border-white/10 cursor-pointer group hover:bg-white/[0.08] hover:border-white/20 transition-all"
                   initial={{ opacity: 0, y: 10 }}
@@ -369,25 +351,18 @@ export default function DashboardPage() {
                   whileHover={{ scale: 1.02 }}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-accent-400 text-xs font-mono">{cr.number}</span>
+                    <span className="text-accent-400 text-xs font-mono capitalize">{cr.state}</span>
                     <ExternalLink className="w-3 h-3 text-white/0 group-hover:text-white/40 transition-all" />
                   </div>
-                  <p className="text-white text-sm mb-2 truncate">{cr.desc}</p>
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] border ${
-                      cr.state === 'implement' ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' :
-                      cr.state === 'scheduled' ? 'bg-accent-500/20 text-accent-400 border-accent-500/30' :
-                      'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                    }`}>
-                      {cr.state.charAt(0).toUpperCase() + cr.state.slice(1)}
-                    </span>
-                    <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] border bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-                      {cr.approval.charAt(0).toUpperCase() + cr.approval.slice(1)}
-                    </span>
-                  </div>
+                  <p className="text-white text-2xl font-bold">{cr.count}</p>
+                  <p className="text-white/40 text-xs mt-1">{lang === 'en' ? 'change requests' : '变更请求'}</p>
                 </motion.div>
               </Link>
-            ))}
+            )) : (
+              <div className="col-span-3 text-center py-6">
+                <p className="text-white/30 text-sm">{lang === 'en' ? 'No change requests yet' : '暂无变更请求'}</p>
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -406,34 +381,26 @@ export default function DashboardPage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {warrantyAlerts.map((alert, i) => (
-              <Link key={i} href={`/warranty`}>
-                <motion.div
-                  className={`p-4 rounded-xl border cursor-pointer group hover:ring-1 hover:ring-white/20 transition-all ${
-                    alert.status === 'critical' ? 'bg-red-500/10 border-red-500/20' :
-                    alert.status === 'warning' ? 'bg-amber-500/10 border-amber-500/20' :
-                    'bg-accent-500/10 border-accent-500/20'
-                  }`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 + i * 0.1 }}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-white text-sm font-medium">{alert.name}</span>
-                    <ExternalLink className="w-3 h-3 text-white/0 group-hover:text-white/40 transition-all" />
-                  </div>
-                  <p className="text-white/40 text-xs font-mono mb-2">{alert.tag}</p>
-                  <div className={`text-xs font-medium ${
-                    alert.status === 'critical' ? 'text-red-400' :
-                    alert.status === 'warning' ? 'text-amber-400' :
-                    'text-accent-400'
-                  }`}>
-                    {alert.daysLeft} {lang === 'en' ? 'days remaining' : '天剩余'}
-                  </div>
-                </motion.div>
-              </Link>
-            ))}
+            {data.warrantyExpiring30 > 0 || data.warrantyExpiring90 > 0 ? (
+              <>
+                <Link href="/warranty">
+                  <motion.div className="p-4 rounded-xl border bg-red-500/10 border-red-500/20 cursor-pointer group hover:ring-1 hover:ring-white/20 transition-all" whileHover={{ scale: 1.02 }}>
+                    <span className="text-white text-sm font-medium">{lang === 'en' ? 'Critical (≤30 days)' : '紧急（≤30天）'}</span>
+                    <p className="text-red-400 text-2xl font-bold mt-2">{data.warrantyExpiring30}</p>
+                  </motion.div>
+                </Link>
+                <Link href="/warranty">
+                  <motion.div className="p-4 rounded-xl border bg-amber-500/10 border-amber-500/20 cursor-pointer group hover:ring-1 hover:ring-white/20 transition-all" whileHover={{ scale: 1.02 }}>
+                    <span className="text-white text-sm font-medium">{lang === 'en' ? 'Warning (≤90 days)' : '警告（≤90天）'}</span>
+                    <p className="text-amber-400 text-2xl font-bold mt-2">{data.warrantyExpiring90}</p>
+                  </motion.div>
+                </Link>
+              </>
+            ) : (
+              <div className="col-span-3 text-center py-6">
+                <p className="text-white/30 text-sm">{lang === 'en' ? 'No warranty alerts. Add assets with warranty dates to enable tracking.' : '无保修提醒。添加含保修日期的资产以启用追踪。'}</p>
+              </div>
+            )}
           </div>
         </motion.div>
       </motion.div>

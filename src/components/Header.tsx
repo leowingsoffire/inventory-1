@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Bell, Globe, User, Shield, Wrench, Monitor, X, ArrowRight } from 'lucide-react';
+import { Search, Bell, Globe, User, Shield, Wrench, Monitor, X, ArrowRight, LogOut } from 'lucide-react';
 import { useApp } from '@/lib/context';
+import { useAuth } from '@/lib/auth-context';
 import { t } from '@/lib/i18n';
 import { useRouter } from 'next/navigation';
 import WeatherCard from './WeatherCard';
@@ -25,15 +26,11 @@ const searchRoutes = [
   { keywords: ['invoice', 'finance', 'payment', 'billing', 'quotation', 'gst', 'revenue'], route: '/finance', label: 'Finance' },
 ];
 
-const notifications = [
-  { id: 1, text: 'iPhone 15 Pro warranty expires in 12 days', type: 'warning', href: '/warranty', time: '2h ago' },
-  { id: 2, text: 'Server RAM upgrade ticket is open', type: 'alert', href: '/maintenance?search=Server+RAM', time: '4h ago' },
-  { id: 3, text: 'HP LaserJet Pro needs maintenance', type: 'alert', href: '/maintenance?search=HP+LaserJet', time: '1d ago' },
-  { id: 4, text: '3 assets available for assignment', type: 'info', href: '/assets?status=available', time: '1d ago' },
-];
+const notifications: { id: number; text: string; type: string; href: string; time: string }[] = [];
 
 export default function Header() {
   const { lang, setLang, sidebarOpen } = useApp();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -172,13 +169,21 @@ export default function Header() {
           </AnimatePresence>
         </div>
 
-        {/* User */}
+        {/* User & Sign Out */}
         <div className="flex items-center gap-2 glass-button px-2.5 py-1.5">
           <div className="w-6 h-6 rounded-full bg-accent-500/30 flex items-center justify-center">
             <User className="w-3.5 h-3.5 text-accent-300" />
           </div>
-          <span className="text-xs text-white/80">Admin</span>
+          <span className="text-xs text-white/80">{user?.displayName || user?.username || 'Admin'}</span>
         </div>
+        <button
+          onClick={() => { logout(); router.push('/'); }}
+          className="glass-button flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all"
+          title={t('app.logout', lang)}
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>{t('app.logout', lang)}</span>
+        </button>
       </div>
     </motion.header>
   );

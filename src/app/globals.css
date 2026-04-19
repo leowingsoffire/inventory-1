@@ -93,12 +93,12 @@
 
 @layer components {
   .glass-card {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(15, 23, 42, 0.82);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 
   .glass-card-hover {
@@ -106,17 +106,17 @@
   }
 
   .glass-card-hover:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    background: rgba(15, 23, 42, 0.9);
+    border-color: var(--accent-400, rgba(255, 255, 255, 0.25));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--accent-100, rgba(255,255,255,0.08));
     transform: translateY(-2px);
   }
 
   .glass-input {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 12px;
     color: white;
     transition: all 0.2s ease;
@@ -124,20 +124,20 @@
 
   .glass-input:focus {
     outline: none;
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(15, 23, 42, 0.85);
+    border-color: var(--accent-400, rgba(255, 255, 255, 0.4));
     box-shadow: 0 0 0 3px var(--accent-100);
   }
 
   .glass-input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.45);
   }
 
   .glass-button {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 12px;
     color: white;
     font-weight: 500;
@@ -145,17 +145,17 @@
   }
 
   .glass-button:hover {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(30, 41, 59, 0.9);
+    border-color: var(--accent-400, rgba(255, 255, 255, 0.3));
     transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
   }
 
   .glass-sidebar {
-    background: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(2, 6, 23, 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .animated-gradient {
@@ -173,6 +173,49 @@
 
   .pulse-glow {
     animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  /* Important task animations */
+  .task-critical {
+    animation: taskCriticalPulse 2s ease-in-out infinite;
+    position: relative;
+  }
+
+  .task-critical::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(239,68,68,0) 60%);
+    pointer-events: none;
+    animation: criticalBorderGlow 2s ease-in-out infinite;
+  }
+
+  .task-followup {
+    animation: followupPulse 3s ease-in-out infinite;
+    position: relative;
+  }
+
+  .task-followup::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(251,191,36,0.25), rgba(251,191,36,0) 60%);
+    pointer-events: none;
+    animation: followupBorderGlow 3s ease-in-out infinite;
+  }
+
+  .task-overdue {
+    animation: overduePulse 1.5s ease-in-out infinite;
+  }
+
+  .badge-pulse {
+    animation: badgePulse 2s ease-in-out infinite;
+  }
+
+  .attention-dot {
+    animation: attentionDot 1.5s ease-in-out infinite;
   }
 }
 
@@ -197,14 +240,49 @@
 }
 
 @keyframes cardGlow {
-  0%, 100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1); }
-  50% { box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+  0%, 100% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06); }
+  50% { box-shadow: 0 6px 28px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1); }
 }
 
 @keyframes borderShine {
-  0% { border-color: rgba(255, 255, 255, 0.15); }
-  50% { border-color: rgba(255, 255, 255, 0.3); }
-  100% { border-color: rgba(255, 255, 255, 0.15); }
+  0% { border-color: rgba(255, 255, 255, 0.12); }
+  50% { border-color: rgba(255, 255, 255, 0.22); }
+  100% { border-color: rgba(255, 255, 255, 0.12); }
+}
+
+@keyframes taskCriticalPulse {
+  0%, 100% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), 0 0 0 0 rgba(239, 68, 68, 0); }
+  50% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), 0 0 20px 2px rgba(239, 68, 68, 0.15); }
+}
+
+@keyframes criticalBorderGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes followupPulse {
+  0%, 100% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), 0 0 0 0 rgba(251, 191, 36, 0); }
+  50% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), 0 0 15px 1px rgba(251, 191, 36, 0.12); }
+}
+
+@keyframes followupBorderGlow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes overduePulse {
+  0%, 100% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35); border-color: rgba(239, 68, 68, 0.3); }
+  50% { box-shadow: 0 4px 24px rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.5); }
+}
+
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+@keyframes attentionDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.5); }
 }
 
 @keyframes spin-slow {

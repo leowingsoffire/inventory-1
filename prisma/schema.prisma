@@ -8,15 +8,21 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      String   @default("engineer")
-  avatar    String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(uuid())
+  username        String   @unique
+  email           String   @unique
+  name            String
+  displayName     String?
+  password        String
+  role            String   @default("engineer")
+  avatar          String?
+  profilePhoto    String?
+  personalEmail   String?
+  isActive        Boolean  @default(true)
+  resetToken      String?
+  resetTokenExpiry DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   permissions Permission[]
 }

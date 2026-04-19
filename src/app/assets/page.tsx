@@ -12,6 +12,7 @@ import MainLayout from '@/components/MainLayout';
 import BarcodeScanner from '@/components/BarcodeScanner';
 import { useApp } from '@/lib/context';
 import { t } from '@/lib/i18n';
+import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
@@ -36,16 +37,7 @@ interface Asset {
   macAddress: string;
 }
 
-const sampleAssets: Asset[] = [
-  { id: '1', assetTag: 'UT-LT-001', name: 'MacBook Pro 16"', category: 'laptop', type: 'Laptop', brand: 'Apple', model: 'MacBook Pro 16 M3 Pro', serialNumber: 'C02FN1XXXXX', status: 'assigned', condition: 'excellent', location: 'Office A', purchaseDate: '2024-06-15', purchasePrice: 3899, warrantyEnd: '2027-06-15', assignedTo: 'John Tan', notes: '32GB RAM, 1TB SSD', ipAddress: '192.168.1.101', macAddress: 'AA:BB:CC:DD:EE:01' },
-  { id: '2', assetTag: 'UT-LT-002', name: 'ThinkPad X1 Carbon', category: 'laptop', type: 'Laptop', brand: 'Lenovo', model: 'X1 Carbon Gen 11', serialNumber: 'PF3XXXXX', status: 'assigned', condition: 'good', location: 'Office B', purchaseDate: '2024-03-20', purchasePrice: 2599, warrantyEnd: '2027-03-20', assignedTo: 'Sarah Lim', notes: '16GB RAM, 512GB SSD', ipAddress: '192.168.1.102', macAddress: 'AA:BB:CC:DD:EE:02' },
-  { id: '3', assetTag: 'UT-DT-001', name: 'Dell OptiPlex 7010', category: 'desktop', type: 'Desktop', brand: 'Dell', model: 'OptiPlex 7010 Tower', serialNumber: 'DL7XXXXX', status: 'available', condition: 'good', location: 'Store Room', purchaseDate: '2024-01-10', purchasePrice: 1499, warrantyEnd: '2027-01-10', assignedTo: '', notes: 'i7-13700, 32GB RAM', ipAddress: '', macAddress: 'AA:BB:CC:DD:EE:03' },
-  { id: '4', assetTag: 'UT-SV-001', name: 'Dell PowerEdge R740', category: 'server', type: 'Server', brand: 'Dell', model: 'PowerEdge R740', serialNumber: 'SVR7XXXXX', status: 'assigned', condition: 'good', location: 'Server Room', purchaseDate: '2023-08-01', purchasePrice: 8500, warrantyEnd: '2026-08-01', assignedTo: 'IT Department', notes: 'Production server', ipAddress: '10.0.0.1', macAddress: 'AA:BB:CC:DD:EE:04' },
-  { id: '5', assetTag: 'UT-PR-001', name: 'HP LaserJet Pro M404dn', category: 'printer', type: 'Printer', brand: 'HP', model: 'LaserJet Pro M404dn', serialNumber: 'HP4XXXXX', status: 'maintenance', condition: 'fair', location: 'Office A', purchaseDate: '2023-05-15', purchasePrice: 450, warrantyEnd: '2025-05-15', assignedTo: 'Shared', notes: 'Toner replacement needed', ipAddress: '192.168.1.200', macAddress: 'AA:BB:CC:DD:EE:05' },
-  { id: '6', assetTag: 'UT-MN-001', name: 'Dell U2723QE Monitor', category: 'monitor', type: 'Monitor', brand: 'Dell', model: 'U2723QE', serialNumber: 'MN2XXXXX', status: 'available', condition: 'excellent', location: 'Store Room', purchaseDate: '2024-09-01', purchasePrice: 699, warrantyEnd: '2027-09-01', assignedTo: '', notes: '4K USB-C Monitor', ipAddress: '', macAddress: '' },
-  { id: '7', assetTag: 'UT-PH-001', name: 'iPhone 15 Pro', category: 'phone', type: 'Phone', brand: 'Apple', model: 'iPhone 15 Pro 256GB', serialNumber: 'IP15XXXXX', status: 'assigned', condition: 'excellent', location: 'N/A', purchaseDate: '2024-10-01', purchasePrice: 1649, warrantyEnd: '2025-10-01', assignedTo: 'Mike Wong', notes: 'Company phone', ipAddress: '', macAddress: 'AA:BB:CC:DD:EE:07' },
-  { id: '8', assetTag: 'UT-NW-001', name: 'Cisco Catalyst 9200', category: 'network', type: 'Network Switch', brand: 'Cisco', model: 'Catalyst 9200L', serialNumber: 'CS9XXXXX', status: 'assigned', condition: 'good', location: 'Server Room', purchaseDate: '2023-11-01', purchasePrice: 2200, warrantyEnd: '2026-11-01', assignedTo: 'IT Department', notes: '48-port PoE switch', ipAddress: '10.0.0.2', macAddress: 'AA:BB:CC:DD:EE:08' },
-];
+const sampleAssets: Asset[] = [];
 
 const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   laptop: Laptop,
@@ -68,14 +60,8 @@ const statusColors: Record<string, string> = {
   disposed: 'bg-red-500/20 text-red-300 border-red-500/30',
 };
 
-// Maintenance tickets that reference assets
-const relatedTickets: Record<string, { id: string; title: string; status: string; priority: string }[]> = {
-  'UT-PR-001': [{ id: '1', title: 'Printer paper jam', status: 'open', priority: 'high' }],
-  'UT-LT-002': [{ id: '2', title: 'Laptop battery replacement', status: 'inProgress', priority: 'medium' }],
-  'UT-SV-001': [{ id: '3', title: 'Server RAM upgrade', status: 'open', priority: 'high' }],
-  'UT-NW-001': [{ id: '4', title: 'Network switch inspection', status: 'resolved', priority: 'low' }],
-  'UT-MN-001': [{ id: '5', title: 'Monitor flickering', status: 'inProgress', priority: 'medium' }],
-};
+// Related tickets fetched from API
+const relatedTickets: Record<string, { id: string; title: string; status: string; priority: string }[]> = {};
 
 function getWarrantyStatus(warrantyEnd: string): { label: string; color: string; daysLeft: number } {
   if (!warrantyEnd) return { label: 'N/A', color: 'text-white/40', daysLeft: -1 };
@@ -91,7 +77,8 @@ function getWarrantyStatus(warrantyEnd: string): { label: string; color: string;
 export default function AssetsPage() {
   const { lang } = useApp();
   const searchParams = useSearchParams();
-  const [assets, setAssets] = useState<Asset[]>(sampleAssets);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -100,6 +87,15 @@ export default function AssetsPage() {
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [formData, setFormData] = useState<Partial<Asset>>({});
   const [showScanner, setShowScanner] = useState(false);
+
+  // Fetch assets from API
+  useEffect(() => {
+    fetch('/api/assets')
+      .then(r => r.json())
+      .then(data => setAssets(Array.isArray(data) ? data : []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   // Handle URL query params for cross-page navigation
   useEffect(() => {
@@ -238,6 +234,9 @@ export default function AssetsPage() {
         </div>
 
         {/* Assets Table */}
+        {assets.length === 0 && !loading ? (
+          <FeatureGuide {...MODULE_GUIDES.assets} lang={lang} onAction={(a) => { if (a === 'add') openAddModal(); }} />
+        ) : (
         <div className="glass-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -316,6 +315,7 @@ export default function AssetsPage() {
             </div>
           )}
         </div>
+        )}
 
         {/* Detail Modal */}
         <AnimatePresence>

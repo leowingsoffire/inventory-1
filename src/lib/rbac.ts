@@ -3,6 +3,7 @@
 export const ROLES = {
   DEV_ADMIN: 'dev_admin',
   TENANT_ADMIN: 'tenant_admin',
+  FINANCE_CONTROLLER: 'finance_controller',
   ENGINEER: 'engineer',
 } as const;
 
@@ -11,6 +12,7 @@ export type RoleKey = (typeof ROLES)[keyof typeof ROLES];
 export const ROLE_LABELS: Record<RoleKey, { en: string; zh: string }> = {
   dev_admin: { en: 'Dev Admin', zh: '开发管理员' },
   tenant_admin: { en: 'Tenant Admin', zh: '租户管理员' },
+  finance_controller: { en: 'Finance Controller', zh: '财务总监' },
   engineer: { en: 'Engineer', zh: '工程师' },
 };
 
@@ -22,6 +24,10 @@ export const ROLE_DESCRIPTIONS: Record<RoleKey, { en: string; zh: string }> = {
   tenant_admin: {
     en: 'Manage company assets, employees, and tickets. Cannot modify system settings or roles.',
     zh: '管理公司资产、员工和工单。无法修改系统设置或角色。',
+  },
+  finance_controller: {
+    en: 'Full access to finance, invoices, vendors, and reports. Limited system administration.',
+    zh: '完全访问财务、发票、供应商和报告。有限的系统管理权限。',
   },
   engineer: {
     en: 'View and update assigned assets and tickets. Limited create/delete permissions.',
@@ -85,6 +91,20 @@ export const DEFAULT_PERMISSIONS: Record<RoleKey, RolePermissions> = {
     roles: { canCreate: false, canRead: true, canUpdate: false, canDelete: false },
     warranty_alerts: { canCreate: true, canRead: true, canUpdate: true, canDelete: false },
     system_config: { canCreate: false, canRead: true, canUpdate: false, canDelete: false },
+    barcode_scanner: { canCreate: false, canRead: true, canUpdate: false, canDelete: false },
+  },
+
+  finance_controller: {
+    assets: { canCreate: false, canRead: true, canUpdate: false, canDelete: false },
+    employees: { canCreate: false, canRead: true, canUpdate: false, canDelete: false },
+    maintenance: { canCreate: false, canRead: true, canUpdate: false, canDelete: false },
+    reports: { canCreate: true, canRead: true, canUpdate: true, canDelete: true },
+    ai_assistant: { canCreate: false, canRead: true, canUpdate: false, canDelete: false },
+    settings: { canCreate: false, canRead: true, canUpdate: true, canDelete: false },
+    users: { canCreate: false, canRead: true, canUpdate: false, canDelete: false },
+    roles: { canCreate: false, canRead: true, canUpdate: false, canDelete: false },
+    warranty_alerts: { canCreate: false, canRead: true, canUpdate: false, canDelete: false },
+    system_config: { canCreate: false, canRead: false, canUpdate: false, canDelete: false },
     barcode_scanner: { canCreate: false, canRead: true, canUpdate: false, canDelete: false },
   },
 

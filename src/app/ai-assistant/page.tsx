@@ -2,11 +2,20 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Send, User, Sparkles, Lightbulb, Mic, MicOff, Volume2 } from 'lucide-react';
+import { Send, User, Sparkles, Lightbulb, Mic, MicOff, Volume2, Paperclip, FileText, FileSpreadsheet, FileImage, File, X } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useApp } from '@/lib/context';
 import { t } from '@/lib/i18n';
 import { getAvatar, getChatTheme } from '@/lib/ai-avatars';
+
+interface FileAttachment {
+  fileName: string;
+  fileType: string;
+  fileCategory: string;
+  fileSize: number;
+  extractedText: string;
+  previewDataUrl?: string | null;
+}
 
 interface Message {
   id: string;
@@ -14,6 +23,7 @@ interface Message {
   content: string;
   timestamp: Date;
   suggestions?: string[];
+  attachment?: FileAttachment;
 }
 
 const suggestedQuestions = {
@@ -76,8 +86,13 @@ export default function AIAssistantPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [appContext, setAppContext] = useState<Record<string, unknown> | null>(null);
+  const [aiSource, setAiSource] = useState<string>('');
+  const [pendingFile, setPendingFile] = useState<FileAttachment | null>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const questions = suggestedQuestions[lang];
   const avatar = getAvatar(aiAvatar);
   const chatTheme = getChatTheme(aiChatTheme);
@@ -85,6 +100,58 @@ export default function AIAssistantPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Fetch live app data context for AI
+  useEffect(() => {
+    const fetchContext = async () => {
+      try {
+        const res = await fetch('/api/ai/context');
+        if (res.ok) setAppContext(await res.json());
+      } catch { /* use cached */ }
+    };
+    fetchContext();
+    const interval = setInterval(fetchContext, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // File upload handler
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingFile(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/ai/upload', { method: 'POST', body: formData });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || 'Upload failed');
+        return;
+      }
+      const data = await res.json();
+      setPendingFile(data);
+    } catch {
+      alert(lang === 'en' ? 'Failed to upload file' : '文件上传失败');
+    } finally {
+      setUploadingFile(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const getFileIcon = (category: string) => {
+    switch (category) {
+      case 'word': case 'pdf': case 'text': return FileText;
+      case 'excel': case 'spreadsheet': return FileSpreadsheet;
+      case 'image': return FileImage;
+      default: return File;
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   const toggleVoice = useCallback(() => {
     if (isListening) {
@@ -121,28 +188,53 @@ export default function AIAssistantPage() {
   };
 
   const sendMessage = async (text: string) => {
-    if (!text.trim()) return;
-    const userMsg: Message = { id: String(Date.now()), role: 'user', content: text, timestamp: new Date() };
+    if (!text.trim() && !pendingFile) return;
+
+    let messageContent = text.trim();
+    const attachment = pendingFile || undefined;
+
+    if (pendingFile) {
+      const filePrefix = pendingFile.fileCategory === 'image'
+        ? `[Attached image: ${pendingFile.fileName}]`
+        : `[Attached ${pendingFile.fileCategory} file: ${pendingFile.fileName}]`;
+      messageContent = messageContent ? `${filePrefix}\n${messageContent}` : `${filePrefix}\nPlease analyze this file.`;
+      setPendingFile(null);
+    }
+
+    const userMsg: Message = { id: String(Date.now()), role: 'user', content: messageContent, timestamp: new Date(), attachment };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsTyping(true);
 
+    // Inject file content into AI context
+    let aiMessageContent = messageContent;
+    if (attachment && attachment.extractedText) {
+      aiMessageContent = `${messageContent}\n\n--- FILE CONTENT (${attachment.fileName}) ---\n${attachment.extractedText}\n--- END FILE ---`;
+    }
+
     let responseText: string;
     try {
-      const chatHistory = [...messages, userMsg].map(m => ({
+      const chatHistory = [...messages, { role: 'user' as const, content: aiMessageContent }].map(m => ({
         role: m.role,
         content: m.content,
       }));
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: chatHistory, apiKey: aiApiKey || undefined }),
+        body: JSON.stringify({
+          messages: chatHistory,
+          apiKey: aiApiKey || undefined,
+          currentPage: '/ai-assistant',
+          appContext: appContext || undefined,
+        }),
       });
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
       responseText = data.content || data.message;
+      if (data.source) setAiSource(data.source);
     } catch {
       responseText = getOfflineResponse(text, lang);
+      setAiSource('local-fallback');
     }
 
     const suggestions = extractSuggestions(responseText);
@@ -173,7 +265,14 @@ export default function AIAssistantPage() {
             </motion.div>
             Uni AI — {avatar.name}
           </h1>
-          <p className="text-white/50 text-sm mt-1">{avatar.personality} • {t('ai.subtitle', lang)}</p>
+          <p className="text-white/50 text-sm mt-1">
+            {avatar.personality} • {t('ai.subtitle', lang)}
+            {aiSource && (
+              <span className={`ml-2 text-xs ${aiSource === 'azure-openai' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                {aiSource === 'azure-openai' ? '• Azure AI ✓' : '• ⚡ Offline'}
+              </span>
+            )}
+          </p>
         </div>
 
         {/* Chat Area */}
@@ -232,6 +331,20 @@ export default function AIAssistantPage() {
                   </div>
                 )}
                 <div className="max-w-[80%] space-y-2">
+                  {/* File attachment card */}
+                  {msg.attachment && (
+                    <div className={`p-3 rounded-xl border border-white/10 ${msg.role === 'user' ? 'bg-white/5' : 'bg-white/[0.03]'} flex items-center gap-3`}>
+                      {msg.attachment.previewDataUrl ? (
+                        <img src={msg.attachment.previewDataUrl} alt={msg.attachment.fileName} className="w-12 h-12 rounded-lg object-cover" />
+                      ) : (
+                        (() => { const FIcon = getFileIcon(msg.attachment.fileCategory); return <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center"><FIcon className="w-6 h-6 text-white/50" /></div>; })()
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white/70 text-xs font-medium truncate">{msg.attachment.fileName}</p>
+                        <p className="text-white/30 text-[10px]">{formatFileSize(msg.attachment.fileSize)}</p>
+                      </div>
+                    </div>
+                  )}
                   <div className={`p-4 rounded-2xl ${
                     msg.role === 'user'
                       ? `bg-gradient-to-r ${chatTheme.userBubble} border border-white/10 rounded-tr-md`
@@ -291,35 +404,78 @@ export default function AIAssistantPage() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input with Voice */}
-          <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
-            <motion.button
-              type="button"
-              onClick={toggleVoice}
-              className={`px-3 py-3 rounded-xl transition-all ${isListening ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/5 text-white/30 hover:text-white/50 border border-white/10'}`}
-              whileTap={{ scale: 0.9 }}
-              title={lang === 'en' ? 'Voice input' : '语音输入'}
-            >
-              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-            </motion.button>
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={isListening ? (lang === 'en' ? '🎙 Listening...' : '🎙 聆听中...') : (lang === 'en' ? 'Ask Uni AI...' : '问 Uni AI...')}
-              className={`glass-input flex-1 px-4 py-3 text-sm ${chatTheme.inputBorder}`}
-              disabled={isTyping}
-            />
-            <motion.button
-              type="submit"
-              disabled={!input.trim() || isTyping}
-              className={`px-4 py-3 bg-gradient-to-r ${avatar.gradient} disabled:opacity-40 text-white rounded-xl transition-all flex items-center gap-2 shadow-md`}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Send className="w-4 h-4" />
-            </motion.button>
-          </form>
+          {/* Input with Voice + Attach */}
+          <div className="mt-4 space-y-2">
+            {/* Pending file preview */}
+            {pendingFile && (
+              <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+                {pendingFile.previewDataUrl ? (
+                  <img src={pendingFile.previewDataUrl} alt={pendingFile.fileName} className="w-10 h-10 rounded-lg object-cover" />
+                ) : (
+                  (() => { const FIcon = getFileIcon(pendingFile.fileCategory); return <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center"><FIcon className="w-5 h-5 text-white/50" /></div>; })()
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-white/60 text-xs truncate">{pendingFile.fileName}</p>
+                  <p className="text-white/30 text-[10px]">{formatFileSize(pendingFile.fileSize)}</p>
+                </div>
+                <button onClick={() => setPendingFile(null)} className="p-1.5 rounded-lg hover:bg-white/10 text-white/30 hover:text-white/50 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            {/* Uploading indicator */}
+            {uploadingFile && (
+              <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+                <motion.div className="w-5 h-5 border-2 border-white/20 border-t-white/60 rounded-full" animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} />
+                <p className="text-white/40 text-xs">{lang === 'en' ? 'Processing file...' : '处理文件中...'}</p>
+              </div>
+            )}
+            <form onSubmit={handleSubmit} className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept=".docx,.doc,.xlsx,.xls,.pptx,.ppt,.pdf,.jpg,.jpeg,.png,.gif,.webp,.svg,.csv,.txt"
+                onChange={handleFileUpload}
+              />
+              <motion.button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className={`px-3 py-3 rounded-xl transition-all ${pendingFile ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 text-white/30 hover:text-white/50 border border-white/10'}`}
+                whileTap={{ scale: 0.9 }}
+                title={lang === 'en' ? 'Attach file (Word, Excel, PPT, PDF, Images)' : '附加文件 (Word, Excel, PPT, PDF, 图片)'}
+                disabled={isTyping || uploadingFile}
+              >
+                <Paperclip className="w-4 h-4" />
+              </motion.button>
+              <motion.button
+                type="button"
+                onClick={toggleVoice}
+                className={`px-3 py-3 rounded-xl transition-all ${isListening ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/5 text-white/30 hover:text-white/50 border border-white/10'}`}
+                whileTap={{ scale: 0.9 }}
+                title={lang === 'en' ? 'Voice input' : '语音输入'}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </motion.button>
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={isListening ? (lang === 'en' ? '🎙 Listening...' : '🎙 聆听中...') : pendingFile ? (lang === 'en' ? 'Ask about this file...' : '询问此文件...') : (lang === 'en' ? 'Ask Uni AI...' : '问 Uni AI...')}
+                className={`glass-input flex-1 px-4 py-3 text-sm ${chatTheme.inputBorder}`}
+                disabled={isTyping}
+              />
+              <motion.button
+                type="submit"
+                disabled={(!input.trim() && !pendingFile) || isTyping}
+                className={`px-4 py-3 bg-gradient-to-r ${avatar.gradient} disabled:opacity-40 text-white rounded-xl transition-all flex items-center gap-2 shadow-md`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Send className="w-4 h-4" />
+              </motion.button>
+            </form>
+          </div>
         </div>
       </motion.div>
     </MainLayout>

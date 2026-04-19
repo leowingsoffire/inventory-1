@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, X, Wrench, AlertTriangle, Clock, CheckCircle, ChevronDown, ExternalLink } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useApp } from '@/lib/context';
+import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
 import { t } from '@/lib/i18n';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -23,13 +24,7 @@ interface Ticket {
   createdAt: string;
 }
 
-const sampleTickets: Ticket[] = [
-  { id: '1', title: 'Printer paper jam', description: 'HP LaserJet Pro frequently jamming on A4 paper', type: 'repair', priority: 'high', status: 'open', assetName: 'HP LaserJet Pro M404dn', assetTag: 'UT-PR-001', assignedTo: 'IT Support', cost: 0, createdAt: '2026-04-18' },
-  { id: '2', title: 'Laptop battery replacement', description: 'Battery health at 65%, needs replacement', type: 'replacement', priority: 'medium', status: 'inProgress', assetName: 'ThinkPad X1 Carbon', assetTag: 'UT-LT-002', assignedTo: 'Sarah Lim', cost: 150, createdAt: '2026-04-17' },
-  { id: '3', title: 'Server RAM upgrade', description: 'Upgrade from 64GB to 128GB for production server', type: 'upgrade', priority: 'high', status: 'open', assetName: 'Dell PowerEdge R740', assetTag: 'UT-SV-001', assignedTo: 'Kevin Teo', cost: 800, createdAt: '2026-04-16' },
-  { id: '4', title: 'Network switch inspection', description: 'Quarterly inspection and firmware update', type: 'inspection', priority: 'low', status: 'resolved', assetName: 'Cisco Catalyst 9200', assetTag: 'UT-NW-001', assignedTo: 'IT Support', cost: 0, createdAt: '2026-04-15' },
-  { id: '5', title: 'Monitor flickering', description: 'Intermittent screen flickering reported', type: 'repair', priority: 'medium', status: 'inProgress', assetName: 'Dell U2723QE Monitor', assetTag: 'UT-MN-001', assignedTo: 'IT Support', cost: 0, createdAt: '2026-04-14' },
-];
+
 
 const priorityColors: Record<string, string> = {
   low: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
@@ -48,13 +43,23 @@ const statusConfig: Record<string, { color: string; icon: React.ComponentType<{ 
 export default function MaintenancePage() {
   const { lang } = useApp();
   const searchParams = useSearchParams();
-  const [tickets, setTickets] = useState<Ticket[]>(sampleTickets);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
   const [formData, setFormData] = useState<Partial<Ticket>>({});
+
+  // Fetch tickets from API
+  useEffect(() => {
+    fetch('/api/maintenance')
+      .then(res => res.json())
+      .then(data => { if (Array.isArray(data)) setTickets(data); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   // Handle URL query params for cross-page navigation
   useEffect(() => {
@@ -169,6 +174,9 @@ export default function MaintenancePage() {
         </div>
 
         {/* Tickets List */}
+        {tickets.length === 0 && !loading ? (
+          <FeatureGuide {...MODULE_GUIDES.maintenance} lang={lang} />
+        ) : (
         <div className="space-y-3">
           {filtered.map((ticket, i) => {
             const StatusIcon = statusConfig[ticket.status]?.icon || Clock;
@@ -215,8 +223,9 @@ export default function MaintenancePage() {
             );
           })}
         </div>
+        )}
 
-        {filtered.length === 0 && (
+        {filtered.length === 0 && tickets.length > 0 && (
           <div className="text-center py-12 glass-card">
             <Wrench className="w-12 h-12 text-white/20 mx-auto mb-3" />
             <p className="text-white/40">{t('common.noData', lang)}</p>

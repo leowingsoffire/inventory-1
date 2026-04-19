@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Edit2, Trash2, Eye, X, Users, Mail, Phone, Building2, ChevronDown, ExternalLink, Monitor } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useApp } from '@/lib/context';
+import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
 import { t } from '@/lib/i18n';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -22,23 +23,15 @@ interface Employee {
   assignedAssets: number;
 }
 
-const sampleEmployees: Employee[] = [
-  { id: '1', employeeId: 'UT-E001', name: 'John Tan', email: 'john.tan@unitech.sg', department: 'Engineering', position: 'Senior Developer', phone: '+65 9123 4567', status: 'active', joinDate: '2022-01-15', assignedAssets: 3 },
-  { id: '2', employeeId: 'UT-E002', name: 'Sarah Lim', email: 'sarah.lim@unitech.sg', department: 'Engineering', position: 'DevOps Engineer', phone: '+65 9234 5678', status: 'active', joinDate: '2022-03-20', assignedAssets: 2 },
-  { id: '3', employeeId: 'UT-E003', name: 'Mike Wong', email: 'mike.wong@unitech.sg', department: 'Sales', position: 'Sales Manager', phone: '+65 9345 6789', status: 'active', joinDate: '2021-06-10', assignedAssets: 2 },
-  { id: '4', employeeId: 'UT-E004', name: 'Lisa Chen', email: 'lisa.chen@unitech.sg', department: 'HR', position: 'HR Manager', phone: '+65 9456 7890', status: 'active', joinDate: '2021-09-01', assignedAssets: 1 },
-  { id: '5', employeeId: 'UT-E005', name: 'David Lee', email: 'david.lee@unitech.sg', department: 'Finance', position: 'Accountant', phone: '+65 9567 8901', status: 'active', joinDate: '2023-01-10', assignedAssets: 1 },
-  { id: '6', employeeId: 'UT-E006', name: 'Amy Ng', email: 'amy.ng@unitech.sg', department: 'Marketing', position: 'Marketing Executive', phone: '+65 9678 9012', status: 'active', joinDate: '2023-04-15', assignedAssets: 2 },
-  { id: '7', employeeId: 'UT-E007', name: 'Kevin Teo', email: 'kevin.teo@unitech.sg', department: 'Engineering', position: 'Junior Developer', phone: '+65 9789 0123', status: 'active', joinDate: '2024-01-08', assignedAssets: 2 },
-  { id: '8', employeeId: 'UT-E008', name: 'Rachel Goh', email: 'rachel.goh@unitech.sg', department: 'Operations', position: 'Office Manager', phone: '+65 9890 1234', status: 'inactive', joinDate: '2020-05-01', assignedAssets: 0 },
-];
+
 
 const departments = ['All', 'Engineering', 'Sales', 'HR', 'Finance', 'Marketing', 'Operations', 'IT'];
 
 export default function EmployeesPage() {
   const { lang } = useApp();
   const searchParams = useSearchParams();
-  const [employees, setEmployees] = useState<Employee[]>(sampleEmployees);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDept, setFilterDept] = useState('All');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -46,6 +39,15 @@ export default function EmployeesPage() {
   const [showDetail, setShowDetail] = useState<Employee | null>(null);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [formData, setFormData] = useState<Partial<Employee>>({});
+
+  // Fetch employees from API
+  useEffect(() => {
+    fetch('/api/employees')
+      .then(res => res.json())
+      .then(data => { if (Array.isArray(data)) setEmployees(data); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   // Handle URL query params for cross-page navigation
   useEffect(() => {
@@ -143,6 +145,9 @@ export default function EmployeesPage() {
         </div>
 
         {/* Employee Cards Grid */}
+        {employees.length === 0 && !loading ? (
+          <FeatureGuide {...MODULE_GUIDES.employees} lang={lang} />
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map((emp, i) => (
             <motion.div
@@ -203,8 +208,9 @@ export default function EmployeesPage() {
             </motion.div>
           ))}
         </div>
+        )}
 
-        {filtered.length === 0 && (
+        {filtered.length === 0 && employees.length > 0 && (
           <div className="text-center py-12 glass-card">
             <Users className="w-12 h-12 text-white/20 mx-auto mb-3" />
             <p className="text-white/40">{t('common.noData', lang)}</p>

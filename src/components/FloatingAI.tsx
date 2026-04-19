@@ -4,16 +4,27 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send, X, Sparkles, Minimize2, Settings2, Mic, MicOff,
-  AlertTriangle, Shield, Bell, ChevronRight, Volume2,
+  AlertTriangle, Shield, Bell, ChevronRight, Volume2, Paperclip,
+  FileText, FileSpreadsheet, FileImage, File,
 } from 'lucide-react';
 import { useApp } from '@/lib/context';
 import { aiAvatars, aiChatThemes, getAvatar, getChatTheme } from '@/lib/ai-avatars';
+
+interface FileAttachment {
+  fileName: string;
+  fileType: string;
+  fileCategory: string;
+  fileSize: number;
+  extractedText: string;
+  previewDataUrl?: string | null;
+}
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   suggestions?: string[];
+  attachment?: FileAttachment;
 }
 
 interface AlertTip {
@@ -124,8 +135,13 @@ export default function FloatingAI() {
   const [currentPath, setCurrentPath] = useState('/dashboard');
   const [activeAlert, setActiveAlert] = useState<AlertTip | null>(null);
   const [alertQueue, setAlertQueue] = useState<AlertTip[]>([...smartAlerts]);
+  const [appContext, setAppContext] = useState<Record<string, unknown> | null>(null);
+  const [aiSource, setAiSource] = useState<string>('');
+  const [pendingFile, setPendingFile] = useState<FileAttachment | null>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const avatar = getAvatar(aiAvatar);
@@ -134,6 +150,32 @@ export default function FloatingAI() {
   useEffect(() => { setCurrentPath(window.location.pathname); }, []);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
   useEffect(() => { if (open && !showSettings) inputRef.current?.focus(); }, [open, showSettings]);
+
+  // Fetch live app data context for AI — refreshes every 60 seconds and when chat opens
+  useEffect(() => {
+    const fetchContext = async () => {
+      try {
+        const res = await fetch('/api/ai/context');
+        if (res.ok) {
+          const data = await res.json();
+          setAppContext(data);
+        }
+      } catch { /* silent — will use cached context */ }
+    };
+    fetchContext();
+    const interval = setInterval(fetchContext, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Refresh context when chat opens
+  useEffect(() => {
+    if (open) {
+      setCurrentPath(window.location.pathname);
+      fetch('/api/ai/context').then(r => r.ok ? r.json() : null).then(data => {
+        if (data) setAppContext(data);
+      }).catch(() => {});
+    }
+  }, [open]);
 
   // Smart alert tooltip system — show alerts near button, dismiss after 5s, reappear up to 2 more times
   useEffect(() => {
@@ -197,26 +239,92 @@ export default function FloatingAI() {
   const pathKey = Object.keys(contextSuggestions).find(k => currentPath.startsWith(k)) || 'default';
   const currentSuggestions = contextSuggestions[pathKey]![lang as 'en' | 'zh'] || contextSuggestions.default!.en;
 
+  // File upload handler
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingFile(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/ai/upload', { method: 'POST', body: formData });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || 'Upload failed');
+        return;
+      }
+      const data = await res.json();
+      setPendingFile(data);
+    } catch {
+      alert(lang === 'en' ? 'Failed to upload file' : '文件上传失败');
+    } finally {
+      setUploadingFile(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const getFileIcon = (category: string) => {
+    switch (category) {
+      case 'word': case 'pdf': case 'text': return FileText;
+      case 'excel': case 'spreadsheet': return FileSpreadsheet;
+      case 'image': return FileImage;
+      default: return File;
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   const sendMessage = async (text: string) => {
-    if (!text.trim()) return;
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text.trim() };
+    if (!text.trim() && !pendingFile) return;
+    
+    // Build message content: if file is attached, prefix with file context
+    let messageContent = text.trim();
+    const attachment = pendingFile || undefined;
+    
+    if (pendingFile) {
+      const filePrefix = pendingFile.fileCategory === 'image'
+        ? `[Attached image: ${pendingFile.fileName}]`
+        : `[Attached ${pendingFile.fileCategory} file: ${pendingFile.fileName}]`;
+      messageContent = messageContent ? `${filePrefix}\n${messageContent}` : `${filePrefix}\nPlease analyze this file.`;
+      setPendingFile(null);
+    }
+
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: messageContent, attachment };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
 
+    // Build chat history — inject file content as context
+    let aiMessageContent = messageContent;
+    if (attachment && attachment.extractedText) {
+      aiMessageContent = `${messageContent}\n\n--- FILE CONTENT (${attachment.fileName}) ---\n${attachment.extractedText}\n--- END FILE ---`;
+    }
+
     let responseText: string;
     try {
-      const chatHistory = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
+      const chatHistory = [...messages, { role: 'user' as const, content: aiMessageContent }]
+        .map(m => ({ role: m.role, content: m.content }));
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: chatHistory, apiKey: aiApiKey || undefined }),
+        body: JSON.stringify({
+          messages: chatHistory,
+          apiKey: aiApiKey || undefined,
+          currentPage: currentPath,
+          appContext: appContext || undefined,
+        }),
       });
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
       responseText = data.content || data.message;
+      if (data.source) setAiSource(data.source);
     } catch {
       responseText = getOfflineResponse(text, lang as 'en' | 'zh');
+      setAiSource('local-fallback');
     }
 
     const suggestions = extractSuggestions(responseText);
@@ -323,7 +431,12 @@ export default function FloatingAI() {
                 <Avatar3D size="sm" animate={false} />
                 <div>
                   <h3 className="text-white text-sm font-semibold">Uni AI — {avatar.name}</h3>
-                  <p className="text-white/35 text-[10px]">{lang === 'en' ? `${avatar.personality} • always here` : '随时为您服务'}</p>
+                  <p className="text-white/35 text-[10px]">
+                    {aiSource === 'local-fallback'
+                      ? (lang === 'en' ? '⚡ Offline mode' : '⚡ 离线模式')
+                      : (lang === 'en' ? `${avatar.personality} • Azure AI ✓` : `Azure AI ✓ • 随时为您服务`)
+                    }
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-0.5">
@@ -450,6 +563,20 @@ export default function FloatingAI() {
                     </div>
                   )}
                   <div className="max-w-[82%] space-y-1.5">
+                    {/* File attachment card */}
+                    {msg.attachment && (
+                      <div className={`p-2.5 rounded-xl border border-white/10 ${msg.role === 'user' ? 'bg-white/5' : 'bg-white/[0.03]'} flex items-center gap-2.5 mb-1`}>
+                        {msg.attachment.previewDataUrl ? (
+                          <img src={msg.attachment.previewDataUrl} alt={msg.attachment.fileName} className="w-10 h-10 rounded-lg object-cover" />
+                        ) : (
+                          (() => { const FIcon = getFileIcon(msg.attachment.fileCategory); return <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center"><FIcon className="w-5 h-5 text-white/50" /></div>; })()
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white/70 text-[10px] font-medium truncate">{msg.attachment.fileName}</p>
+                          <p className="text-white/30 text-[9px]">{formatFileSize(msg.attachment.fileSize)}</p>
+                        </div>
+                      </div>
+                    )}
                     <div className={`p-3 rounded-xl text-[11px] leading-relaxed whitespace-pre-wrap ${
                       msg.role === 'user'
                         ? `bg-gradient-to-r ${chatTheme.userBubble} text-white border border-white/10 rounded-tr-md`
@@ -511,12 +638,53 @@ export default function FloatingAI() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area with Voice + Send */}
+            {/* Input Area with Voice + Attach + Send */}
             <div className="relative p-3 border-t border-white/10">
+              {/* Pending file preview */}
+              {pendingFile && (
+                <div className="mb-2 p-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2">
+                  {pendingFile.previewDataUrl ? (
+                    <img src={pendingFile.previewDataUrl} alt={pendingFile.fileName} className="w-8 h-8 rounded-lg object-cover" />
+                  ) : (
+                    (() => { const FIcon = getFileIcon(pendingFile.fileCategory); return <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center"><FIcon className="w-4 h-4 text-white/50" /></div>; })()
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white/60 text-[10px] truncate">{pendingFile.fileName}</p>
+                    <p className="text-white/30 text-[9px]">{formatFileSize(pendingFile.fileSize)}</p>
+                  </div>
+                  <button onClick={() => setPendingFile(null)} className="p-1 rounded-lg hover:bg-white/10 text-white/30 hover:text-white/50">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+              {/* Uploading indicator */}
+              {uploadingFile && (
+                <div className="mb-2 p-2 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2">
+                  <motion.div className="w-4 h-4 border-2 border-white/20 border-t-white/60 rounded-full" animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} />
+                  <p className="text-white/40 text-[10px]">{lang === 'en' ? 'Processing file...' : '处理文件中...'}</p>
+                </div>
+              )}
               <form
                 onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
                 className="flex items-center gap-2"
               >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".docx,.doc,.xlsx,.xls,.pptx,.ppt,.pdf,.jpg,.jpeg,.png,.gif,.webp,.svg,.csv,.txt"
+                  onChange={handleFileUpload}
+                />
+                <motion.button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`p-2 rounded-xl transition-all ${pendingFile ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 text-white/30 hover:text-white/50 border border-white/10'}`}
+                  whileTap={{ scale: 0.9 }}
+                  title={lang === 'en' ? 'Attach file' : '附加文件'}
+                  disabled={loading || uploadingFile}
+                >
+                  <Paperclip className="w-3.5 h-3.5" />
+                </motion.button>
                 <motion.button
                   type="button"
                   onClick={toggleVoice}
@@ -531,13 +699,13 @@ export default function FloatingAI() {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder={isListening ? (lang === 'en' ? '🎙 Listening...' : '🎙 聆听中...') : (lang === 'en' ? 'Ask Uni AI...' : '问 Uni AI...')}
+                  placeholder={isListening ? (lang === 'en' ? '🎙 Listening...' : '🎙 聆听中...') : pendingFile ? (lang === 'en' ? 'Ask about this file...' : '询问此文件...') : (lang === 'en' ? 'Ask Uni AI...' : '问 Uni AI...')}
                   className={`flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-xs placeholder:text-white/25 focus:outline-none ${chatTheme.inputBorder}`}
                   disabled={loading}
                 />
                 <motion.button
                   type="submit"
-                  disabled={!input.trim() || loading}
+                  disabled={(!input.trim() && !pendingFile) || loading}
                   className={`p-2 rounded-xl bg-gradient-to-r ${avatar.gradient} text-white disabled:opacity-30 shadow-md`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.93 }}

@@ -1,68 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart3, Download, PieChart as PieChartIcon, TrendingUp, DollarSign, Calendar, Cpu } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, AreaChart, Area, Legend } from 'recharts';
 import MainLayout from '@/components/MainLayout';
 import { useApp } from '@/lib/context';
+import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
 import { t } from '@/lib/i18n';
 
-const categoryData = [
-  { name: 'Laptops', value: 35, color: '#3b82f6' },
-  { name: 'Desktops', value: 22, color: '#8b5cf6' },
-  { name: 'Servers', value: 8, color: '#ef4444' },
-  { name: 'Printers', value: 12, color: '#f59e0b' },
-  { name: 'Monitors', value: 18, color: '#10b981' },
-  { name: 'Phones', value: 15, color: '#ec4899' },
-  { name: 'Network', value: 8, color: '#06b6d4' },
-];
-
-const statusData = [
-  { name: 'Active', value: 85, color: '#10b981' },
-  { name: 'In Storage', value: 15, color: '#3b82f6' },
-  { name: 'Maintenance', value: 8, color: '#f59e0b' },
-  { name: 'Retired', value: 10, color: '#6b7280' },
-];
-
-const monthlyData = [
-  { month: 'Jan', acquisitions: 5, disposals: 2, maintenance: 3 },
-  { month: 'Feb', acquisitions: 8, disposals: 1, maintenance: 5 },
-  { month: 'Mar', acquisitions: 3, disposals: 4, maintenance: 2 },
-  { month: 'Apr', acquisitions: 12, disposals: 3, maintenance: 7 },
-  { month: 'May', acquisitions: 6, disposals: 2, maintenance: 4 },
-  { month: 'Jun', acquisitions: 9, disposals: 5, maintenance: 6 },
-];
-
-const costData = [
-  { month: 'Jan', acquisition: 12500, maintenance: 1800, total: 14300 },
-  { month: 'Feb', acquisition: 25600, maintenance: 3200, total: 28800 },
-  { month: 'Mar', acquisition: 8200, maintenance: 1500, total: 9700 },
-  { month: 'Apr', acquisition: 42000, maintenance: 4800, total: 46800 },
-  { month: 'May', acquisition: 18500, maintenance: 2600, total: 21100 },
-  { month: 'Jun', acquisition: 31000, maintenance: 3900, total: 34900 },
-];
-
-const departmentData = [
-  { dept: 'Engineering', assets: 38, value: 145200 },
-  { dept: 'IT', assets: 25, value: 89500 },
-  { dept: 'Sales', assets: 18, value: 42300 },
-  { dept: 'Marketing', assets: 12, value: 28800 },
-  { dept: 'HR', assets: 8, value: 15600 },
-  { dept: 'Finance', assets: 7, value: 12400 },
-  { dept: 'Operations', assets: 10, value: 18200 },
-];
-
-const summaryStats = [
-  { key: 'totalAssets', value: '118', icon: Cpu, change: '+12%' },
-  { key: 'totalValue', value: 'S$352K', icon: DollarSign, change: '+8%' },
-  { key: 'avgAge', value: '2.3 yrs', icon: Calendar, change: '-5%' },
-  { key: 'utilization', value: '75.4%', icon: TrendingUp, change: '+3%' },
-];
+const monthlyData: {month: string; acquisitions: number; disposals: number; maintenance: number}[] = [];
+const costData: {month: string; acquisition: number; maintenance: number; total: number}[] = [];
+const departmentData: {dept: string; assets: number; value: number}[] = [];
 
 export default function ReportsPage() {
   const { lang } = useApp();
   const [activeTab, setActiveTab] = useState<'overview' | 'assets' | 'costs' | 'department'>('overview');
+  const [loading, setLoading] = useState(true);
+  const [hasData, setHasData] = useState(false);
+  const [categoryData, setCategoryData] = useState<{name: string; value: number; color: string}[]>([]);
+  const [statusData, setStatusData] = useState<{name: string; value: number; color: string}[]>([]);
+  const [summaryStats, setSummaryStats] = useState<{key: string; value: string; icon: typeof Cpu; change: string}[]>([]);
+
+  useEffect(() => {
+    fetch('/api/dashboard/stats')
+      .then(res => res.json())
+      .then(data => {
+        if (data.totalAssets > 0) {
+          setHasData(true);
+          if (data.categoryData) setCategoryData(data.categoryData.map((c: { name: string; count: number }, i: number) => ({ name: c.name, value: c.count, color: ['#3b82f6','#8b5cf6','#ef4444','#f59e0b','#10b981','#ec4899','#06b6d4'][i % 7] })));
+          if (data.assetsByStatus) {
+            const colors: Record<string, string> = { active: '#10b981', in_storage: '#3b82f6', maintenance: '#f59e0b', retired: '#6b7280' };
+            setStatusData(Object.entries(data.assetsByStatus as Record<string, number>).map(([k, v]) => ({ name: k, value: v, color: colors[k] || '#6b7280' })));
+          }
+          setSummaryStats([
+            { key: 'totalAssets', value: String(data.totalAssets), icon: Cpu, change: '' },
+            { key: 'totalValue', value: `S$${(data.revenue / 1000).toFixed(0)}K`, icon: DollarSign, change: '' },
+            { key: 'openTickets', value: String(data.openTickets), icon: Calendar, change: '' },
+            { key: 'employees', value: String(data.activeEmployees), icon: TrendingUp, change: '' },
+          ]);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   const tabs = [
     { id: 'overview' as const, label: lang === 'en' ? 'Overview' : '概况' },
@@ -99,6 +80,10 @@ export default function ReportsPage() {
         </div>
 
         {/* Stats */}
+        {!hasData && !loading ? (
+          <FeatureGuide {...MODULE_GUIDES.reports} lang={lang} />
+        ) : (
+        <>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {summaryStats.map((stat, i) => (
             <motion.div
@@ -118,8 +103,8 @@ export default function ReportsPage() {
               <p className="text-white/40 text-xs mt-1">
                 {stat.key === 'totalAssets' && (lang === 'en' ? 'Total Assets' : '资产总数')}
                 {stat.key === 'totalValue' && (lang === 'en' ? 'Total Value' : '总价值')}
-                {stat.key === 'avgAge' && (lang === 'en' ? 'Average Age' : '平均年龄')}
-                {stat.key === 'utilization' && (lang === 'en' ? 'Utilization' : '利用率')}
+                {stat.key === 'openTickets' && (lang === 'en' ? 'Open Tickets' : '工单数')}
+                {stat.key === 'employees' && (lang === 'en' ? 'Employees' : '员工数')}
               </p>
             </motion.div>
           ))}
@@ -262,6 +247,8 @@ export default function ReportsPage() {
               </table>
             </div>
           </motion.div>
+        )}
+        </>
         )}
       </motion.div>
     </MainLayout>
