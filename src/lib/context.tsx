@@ -14,6 +14,10 @@ interface AppContextType {
   setSidebarOpen: (open: boolean) => void;
   aiApiKey: string;
   setAiApiKey: (key: string) => void;
+  aiAvatar: string;
+  setAiAvatar: (id: string) => void;
+  aiChatTheme: string;
+  setAiChatTheme: (id: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -23,6 +27,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>('en');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [aiApiKey, setAiApiKey] = useState('');
+  const [aiAvatar, setAiAvatarState] = useState('avatar-01');
+  const [aiChatTheme, setAiChatThemeState] = useState('theme-rose');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -30,30 +36,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const savedTheme = localStorage.getItem('unitech-theme') as ThemeKey;
     const savedLang = localStorage.getItem('unitech-lang') as Lang;
     const savedKey = localStorage.getItem('unitech-ai-key');
+    const savedAvatar = localStorage.getItem('unitech-ai-avatar');
+    const savedChatTheme = localStorage.getItem('unitech-ai-chat-theme');
     if (savedTheme && themes[savedTheme]) setThemeKey(savedTheme);
     if (savedLang) setLang(savedLang);
     if (savedKey) setAiApiKey(savedKey);
+    if (savedAvatar) setAiAvatarState(savedAvatar);
+    if (savedChatTheme) setAiChatThemeState(savedChatTheme);
   }, []);
 
-  // Sync data-theme attribute on <html> for CSS variable overrides
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', themeKey);
   }, [themeKey]);
 
-  const setTheme = (key: ThemeKey) => {
-    setThemeKey(key);
-    localStorage.setItem('unitech-theme', key);
-  };
-
-  const handleSetLang = (l: Lang) => {
-    setLang(l);
-    localStorage.setItem('unitech-lang', l);
-  };
-
-  const handleSetAiKey = (key: string) => {
-    setAiApiKey(key);
-    localStorage.setItem('unitech-ai-key', key);
-  };
+  const setTheme = (key: ThemeKey) => { setThemeKey(key); localStorage.setItem('unitech-theme', key); };
+  const handleSetLang = (l: Lang) => { setLang(l); localStorage.setItem('unitech-lang', l); };
+  const handleSetAiKey = (key: string) => { setAiApiKey(key); localStorage.setItem('unitech-ai-key', key); };
+  const setAiAvatar = (id: string) => { setAiAvatarState(id); localStorage.setItem('unitech-ai-avatar', id); };
+  const setAiChatTheme = (id: string) => { setAiChatThemeState(id); localStorage.setItem('unitech-ai-chat-theme', id); };
 
   if (!mounted) {
     return (
@@ -66,15 +66,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AppContext.Provider
       value={{
-        theme: themes[themeKey],
-        themeKey,
-        setTheme,
-        lang,
-        setLang: handleSetLang,
-        sidebarOpen,
-        setSidebarOpen,
-        aiApiKey,
-        setAiApiKey: handleSetAiKey,
+        theme: themes[themeKey], themeKey, setTheme,
+        lang, setLang: handleSetLang,
+        sidebarOpen, setSidebarOpen,
+        aiApiKey, setAiApiKey: handleSetAiKey,
+        aiAvatar, setAiAvatar,
+        aiChatTheme, setAiChatTheme,
       }}
     >
       {children}
@@ -84,8 +81,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
 export function useApp() {
   const context = useContext(AppContext);
-  if (context === undefined) {
-    throw new Error('useApp must be used within an AppProvider');
-  }
+  if (context === undefined) throw new Error('useApp must be used within an AppProvider');
   return context;
 }

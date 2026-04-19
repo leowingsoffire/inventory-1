@@ -1,126 +1,201 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, Send, X, Sparkles, MessageSquare, Minimize2 } from 'lucide-react';
+import {
+  Send, X, Sparkles, Minimize2, Settings2, Mic, MicOff,
+  AlertTriangle, Shield, Bell, ChevronRight, Volume2,
+} from 'lucide-react';
 import { useApp } from '@/lib/context';
+import { aiAvatars, aiChatThemes, getAvatar, getChatTheme } from '@/lib/ai-avatars';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  suggestions?: string[];
 }
 
-const contextHints: Record<string, { en: string[]; zh: string[] }> = {
+interface AlertTip {
+  id: string;
+  text: string;
+  icon: 'warning' | 'security' | 'info';
+  shown: number;
+}
+
+// Context-based suggested replies per page
+const contextSuggestions: Record<string, { en: string[]; zh: string[] }> = {
   '/dashboard': {
-    en: ['Explain the dashboard metrics', 'What needs my attention today?', 'Summarize warranty alerts'],
-    zh: ['解释仪表盘指标', '今天需要注意什么？', '总结保修提醒'],
+    en: ['What needs attention today?', 'Summarize my alerts', 'Show quick stats'],
+    zh: ['今天需要关注什么？', '总结我的提醒', '显示快速统计'],
   },
   '/assets': {
-    en: ['How to add a new asset?', 'Which assets need maintenance?', 'Show asset lifecycle tips'],
-    zh: ['如何添加新资产？', '哪些资产需要维护？', '显示资产生命周期技巧'],
-  },
-  '/employees': {
-    en: ['How to assign assets to employees?', 'Show department breakdown', 'Employee onboarding checklist'],
-    zh: ['如何分配资产给员工？', '显示部门分类', '员工入职清单'],
+    en: ['Assets needing upgrade?', 'Show warranty risks', 'Add new asset guide'],
+    zh: ['需要升级的资产？', '显示保修风险', '添加资产指南'],
   },
   '/maintenance': {
-    en: ['How to create a ticket?', 'What are priority levels?', 'Show SLA guidelines'],
-    zh: ['如何创建工单？', '优先级有哪些？', '显示SLA指南'],
+    en: ['Open high-priority tickets', 'Create a ticket', 'SLA status check'],
+    zh: ['高优先级工单', '创建工单', 'SLA状态检查'],
   },
-  '/change-requests': {
-    en: ['How does the change process work?', 'What approval types exist?', 'Best practices for changes'],
-    zh: ['变更流程如何运作？', '有哪些审批类型？', '变更最佳实践'],
-  },
-  '/warranty': {
-    en: ['Which warranties are expiring?', 'How to renew warranty?', 'Warranty cost analysis'],
-    zh: ['哪些保修即将到期？', '如何续保？', '保修费用分析'],
+  '/compliance': {
+    en: ['PDPA compliance score?', 'What controls need work?', 'Next review dates'],
+    zh: ['PDPA合规评分？', '哪些控制需要改进？', '下次审核日期'],
   },
   '/finance': {
-    en: ['How to create an invoice?', 'Show revenue breakdown', 'GST calculation help'],
-    zh: ['如何创建发票？', '显示收入分类', 'GST计算帮助'],
+    en: ['Create invoice help', 'Revenue overview', 'GST calculation'],
+    zh: ['创建发票帮助', '收入概览', 'GST计算'],
   },
-  '/customers': {
-    en: ['How to add a customer?', 'Show customer status types', 'Contract management tips'],
-    zh: ['如何添加客户？', '显示客户状态类型', '合同管理技巧'],
+  '/warranty': {
+    en: ['Which warranties expiring?', 'Renewal options', 'Warranty cost trend'],
+    zh: ['哪些保修即将到期？', '续保选项', '保修费用趋势'],
   },
-  '/vendors': {
-    en: ['How to manage vendors?', 'Vendor evaluation criteria', 'Procurement workflow'],
-    zh: ['如何管理供应商？', '供应商评估标准', '采购工作流程'],
+  '/employees': {
+    en: ['How to assign assets?', 'Department breakdown', 'Onboarding checklist'],
+    zh: ['如何分配资产？', '部门分类', '入职清单'],
   },
-  '/crm': {
-    en: ['How to log an activity?', 'CRM best practices', 'Follow-up reminders'],
-    zh: ['如何记录活动？', 'CRM最佳实践', '跟进提醒'],
-  },
-  '/reports': {
-    en: ['What reports are available?', 'How to export data?', 'Custom report tips'],
-    zh: ['有哪些报告？', '如何导出数据？', '自定义报告技巧'],
+  '/change-requests': {
+    en: ['Change process overview', 'Pending approvals', 'Best practices'],
+    zh: ['变更流程概述', '待审批项', '最佳实践'],
   },
   '/service-desk': {
-    en: ['How does the service desk work?', 'Incident vs request?', 'Escalation process'],
+    en: ['How does service desk work?', 'Incident vs request?', 'Escalation process'],
     zh: ['服务台如何运作？', '事件与请求的区别？', '升级流程'],
   },
   '/settings': {
-    en: ['How to change theme?', 'Configure notifications', 'System settings overview'],
-    zh: ['如何更改主题？', '配置通知', '系统设置概述'],
-  },
-  '/users': {
-    en: ['How to manage roles?', 'Permission levels explained', 'Add new user guide'],
-    zh: ['如何管理角色？', '权限级别说明', '添加新用户指南'],
-  },
-};
-
-const offlineResponses: Record<string, { en: string; zh: string }> = {
-  asset: {
-    en: '**Asset Management Tips:**\n\n1. **Add Asset** - Click "+ Add Asset" button, fill in details\n2. **Track Status** - Use filters to view by status (Available, Assigned, Maintenance)\n3. **Barcode** - Scan or enter asset tags for quick lookup\n4. **Warranty** - Check warranty dates regularly under the Warranty page\n\n💡 *Tip: Keep serial numbers and purchase receipts updated for warranty claims.*',
-    zh: '**资产管理技巧：**\n\n1. **添加资产** - 点击"+ 添加资产"按钮，填写详情\n2. **跟踪状态** - 使用筛选器按状态查看（可用、已分配、维护中）\n3. **条码** - 扫描或输入资产标签快速查找\n4. **保修** - 在保修页面定期检查保修日期\n\n💡 *提示：保持序列号和购买收据更新，以便保修索赔。*',
-  },
-  employee: {
-    en: '**Employee Management:**\n\n- **Add Employee** - Use the form to register new employees\n- **Assign Assets** - Link assets to employees from the Assets page\n- **Departments** - Filter by department for team views\n- **Status** - Track active/inactive employee status\n\n💡 *Tip: Update employee records when they change departments or leave the company.*',
-    zh: '**员工管理：**\n\n- **添加员工** - 使用表单注册新员工\n- **分配资产** - 从资产页面将资产与员工关联\n- **部门** - 按部门筛选查看团队\n- **状态** - 跟踪在职/离职员工状态\n\n💡 *提示：当员工更换部门或离职时更新员工记录。*',
+    en: ['How to change theme?', 'Configure system', 'Manage integrations'],
+    zh: ['如何更改主题？', '配置系统', '管理集成'],
   },
   default: {
-    en: '**I can help you with:**\n\n🔹 **Assets** - Add, track, and manage IT equipment\n🔹 **Maintenance** - Create and manage support tickets\n🔹 **Warranty** - Monitor warranty expiration dates\n🔹 **Reports** - View analytics and generate reports\n🔹 **Change Requests** - Track IT changes with approval workflows\n\nAsk me anything about the Unitech IT System! You can also visit the **AI Assistant** page for a full chat experience.',
-    zh: '**我可以帮助您：**\n\n🔹 **资产** - 添加、跟踪和管理IT设备\n🔹 **维护** - 创建和管理支持工单\n🔹 **保修** - 监控保修到期日期\n🔹 **报告** - 查看分析和生成报告\n🔹 **变更请求** - 使用审批工作流跟踪IT变更\n\n问我任何关于Unitech IT系统的问题！您也可以访问**AI助手**页面获得完整的聊天体验。',
+    en: ['What can you do?', 'Show my priorities', 'Any security alerts?'],
+    zh: ['你能做什么？', '显示我的优先事项', '有安全提醒吗？'],
   },
 };
 
+// Smart alerts — trusted sources only
+const smartAlerts: AlertTip[] = [
+  { id: 'a1', text: '3 warranties expiring within 30 days — review recommended', icon: 'warning', shown: 0 },
+  { id: 'a2', text: 'PDPA assessment has 5 controls not started — action needed', icon: 'info', shown: 0 },
+  { id: 'a3', text: 'CSA Singapore: New advisory on ransomware targeting SMEs', icon: 'security', shown: 0 },
+  { id: 'a4', text: '2 high-priority maintenance tickets unresolved for 48h+', icon: 'warning', shown: 0 },
+  { id: 'a5', text: 'NIST: Critical CVE published for common enterprise software', icon: 'security', shown: 0 },
+];
+
+// Extract follow-up questions from AI response as suggestion cards
+function extractSuggestions(content: string): string[] {
+  const suggestions: string[] = [];
+  const lines = content.split('\n');
+  for (const line of lines) {
+    if (line.includes('?') && line.length < 80 && !line.startsWith('#')) {
+      const clean = line.replace(/^[-*•]\s*/, '').replace(/\*\*/g, '').trim();
+      if (clean.length > 10 && clean.length < 70) suggestions.push(clean);
+    }
+  }
+  return suggestions.slice(0, 3);
+}
+
+// Offline fallback responses in Uni AI personality
 function getOfflineResponse(input: string, lang: 'en' | 'zh'): string {
   const lower = input.toLowerCase();
   if (lower.includes('asset') || lower.includes('laptop') || lower.includes('equipment') || lower.includes('资产')) {
-    return offlineResponses.asset[lang];
+    return lang === 'en'
+      ? "Hey! Here's what I'd suggest:\n\n- **Check warranty dates** — a few might be expiring soon\n- **Run a quick audit** to spot unused assets\n- Use the barcode scanner for fast lookups\n\nWant me to pull up specific asset details?"
+      : "嗨！这是我的建议：\n\n- **检查保修日期** — 一些可能即将到期\n- **运行快速审计** 以发现闲置资产\n- 使用条码扫描器快速查找\n\n需要我查看具体资产详情吗？";
   }
-  if (lower.includes('employee') || lower.includes('staff') || lower.includes('员工')) {
-    return offlineResponses.employee[lang];
+  if (lower.includes('compliance') || lower.includes('pdpa') || lower.includes('合规')) {
+    return lang === 'en'
+      ? "Good call checking compliance! Your PDPA assessment tracks 22 controls.\n\nI'd recommend:\n- **Review non-compliant controls** first\n- **Assign responsible persons** where missing\n- **Set review dates** for upcoming audits\n\nShall I walk you through the critical ones?"
+      : "检查合规是明智的！您的PDPA评估跟踪22项控制。\n\n我建议：\n- 首先**审查不合规的控制项**\n- **分配负责人**\n- **设置审核日期**\n\n需要我带您了解关键项目吗？";
   }
-  return offlineResponses.default[lang];
+  return lang === 'en'
+    ? "I'm Uni AI — your IT sidekick! 💫\n\nI can help with:\n- **Assets & warranty** tracking\n- **Maintenance** ticket guidance\n- **PDPA compliance** checks\n- **Finance** & invoice questions\n- **Security** awareness tips\n\nWhat would you like to tackle first?"
+    : "我是 Uni AI — 您的IT助手！💫\n\n我可以帮助：\n- **资产和保修** 跟踪\n- **维护** 工单指南\n- **PDPA合规** 检查\n- **财务** 和发票问题\n- **安全** 意识提示\n\n您想先处理什么？";
 }
 
 export default function FloatingAI() {
-  const { lang } = useApp();
+  const { lang, aiApiKey, aiAvatar, setAiAvatar, aiChatTheme, setAiChatTheme } = useApp();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showAvatars, setShowAvatars] = useState(true);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [currentPath, setCurrentPath] = useState('/dashboard');
+  const [activeAlert, setActiveAlert] = useState<AlertTip | null>(null);
+  const [alertQueue, setAlertQueue] = useState<AlertTip[]>([...smartAlerts]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-  // Detect current page path
-  const [currentPath, setCurrentPath] = useState('/dashboard');
+  const avatar = getAvatar(aiAvatar);
+  const chatTheme = getChatTheme(aiChatTheme);
+
+  useEffect(() => { setCurrentPath(window.location.pathname); }, []);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  useEffect(() => { if (open && !showSettings) inputRef.current?.focus(); }, [open, showSettings]);
+
+  // Smart alert tooltip system — show alerts near button, dismiss after 5s, reappear up to 2 more times
   useEffect(() => {
-    setCurrentPath(window.location.pathname);
-  }, []);
+    if (open || activeAlert) return;
+    const interval = setInterval(() => {
+      setAlertQueue(prev => {
+        const next = prev.find(a => a.shown < 3);
+        if (next) {
+          setActiveAlert({ ...next, shown: next.shown + 1 });
+          return prev.map(a => a.id === next.id ? { ...a, shown: a.shown + 1 } : a);
+        }
+        return prev;
+      });
+    }, 20000);
+    return () => clearInterval(interval);
+  }, [open, activeAlert]);
 
+  // Auto-dismiss alert tooltip after 5 seconds
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (!activeAlert) return;
+    const timer = setTimeout(() => setActiveAlert(null), 5000);
+    return () => clearTimeout(timer);
+  }, [activeAlert]);
 
-  useEffect(() => {
-    if (open) inputRef.current?.focus();
-  }, [open]);
+  // Voice recognition using Web Speech API
+  const toggleVoice = useCallback(() => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+    const SR = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
+    if (!SR) return;
+    const recognition = new SR();
+    recognition.lang = lang === 'zh' ? 'zh-CN' : 'en-US';
+    recognition.interimResults = false;
+    recognition.onresult = (e: SpeechRecognitionEvent) => {
+      const text = e.results[0]?.[0]?.transcript || '';
+      if (text) { setInput(text); setIsListening(false); }
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }, [isListening, lang]);
 
-  const hints = contextHints[currentPath] || contextHints['/dashboard'];
-  const currentHints = hints![lang as 'en' | 'zh'] || hints!.en;
+  // Text-to-speech for AI responses
+  const speak = (text: string) => {
+    if (typeof window === 'undefined') return;
+    if (isSpeaking) { window.speechSynthesis.cancel(); setIsSpeaking(false); return; }
+    const clean = text.replace(/[*#_`|]/g, '').replace(/\n+/g, '. ');
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.lang = lang === 'zh' ? 'zh-CN' : 'en-US';
+    utterance.rate = 1;
+    utterance.onend = () => setIsSpeaking(false);
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const pathKey = Object.keys(contextSuggestions).find(k => currentPath.startsWith(k)) || 'default';
+  const currentSuggestions = contextSuggestions[pathKey]![lang as 'en' | 'zh'] || contextSuggestions.default!.en;
 
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
@@ -129,49 +204,96 @@ export default function FloatingAI() {
     setInput('');
     setLoading(true);
 
+    let responseText: string;
     try {
+      const chatHistory = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [...messages, userMsg].map(m => ({ role: m.role, content: m.content })) }),
+        body: JSON.stringify({ messages: chatHistory, apiKey: aiApiKey || undefined }),
       });
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
-      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: data.message }]);
+      responseText = data.content || data.message;
     } catch {
-      const fallback = getOfflineResponse(text, lang as 'en' | 'zh');
-      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: fallback }]);
-    } finally {
-      setLoading(false);
+      responseText = getOfflineResponse(text, lang as 'en' | 'zh');
     }
+
+    const suggestions = extractSuggestions(responseText);
+    const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: responseText, suggestions };
+    setMessages(prev => [...prev, aiMsg]);
+    setLoading(false);
   };
+
+  // 3D Animated Avatar component — CSS gradients + perspective transforms
+  const Avatar3D = ({ size = 'md', animate = true }: { size?: 'sm' | 'md' | 'lg'; animate?: boolean }) => {
+    const sizeMap = { sm: 'w-8 h-8 text-lg', md: 'w-12 h-12 text-2xl', lg: 'w-16 h-16 text-3xl' };
+    const comp = (
+      <div className={`${sizeMap[size]} rounded-2xl bg-gradient-to-br ${avatar.gradient} flex items-center justify-center shadow-lg ${avatar.glow} relative overflow-hidden`}
+        style={{ perspective: '500px', transformStyle: 'preserve-3d' }}>
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/30 via-transparent to-white/20" />
+        <div className="absolute inset-0.5 rounded-[14px] border border-white/30" />
+        <div className="absolute top-0 left-1/4 w-1/2 h-1/3 bg-white/15 rounded-b-full blur-sm" />
+        <span className="relative z-10 drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>{avatar.emoji}</span>
+      </div>
+    );
+    if (!animate) return comp;
+    return (
+      <motion.div
+        animate={{ rotateY: [0, 8, -8, 0], rotateX: [0, -4, 4, 0] }}
+        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ transformStyle: 'preserve-3d' }}
+      >
+        {comp}
+      </motion.div>
+    );
+  };
+
+  const alertIcons = { warning: AlertTriangle, security: Shield, info: Bell };
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Smart Alert Tooltip — appears near floating button */}
+      <AnimatePresence>
+        {activeAlert && !open && (
+          <motion.div
+            className="fixed bottom-24 right-6 z-50 max-w-xs"
+            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+          >
+            <button
+              onClick={() => { setActiveAlert(null); setOpen(true); }}
+              className="flex items-start gap-2.5 p-3 rounded-xl bg-gradient-to-r from-gray-900/95 to-gray-800/95 border border-white/15 shadow-xl backdrop-blur-xl text-left"
+            >
+              {(() => { const Icon = alertIcons[activeAlert.icon]; return <Icon className={`w-4 h-4 flex-shrink-0 mt-0.5 ${activeAlert.icon === 'warning' ? 'text-amber-400' : activeAlert.icon === 'security' ? 'text-red-400' : 'text-blue-400'}`} />; })()}
+              <div>
+                <p className="text-white/80 text-[11px] leading-relaxed">{activeAlert.text}</p>
+                <p className="text-white/30 text-[9px] mt-1">Uni AI • tap to chat</p>
+              </div>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 3D Animated Floating Button */}
       <AnimatePresence>
         {!open && (
           <motion.button
-            className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-accent-500 to-accent-600 shadow-lg shadow-accent-500/25 flex items-center justify-center text-white hover:shadow-xl hover:shadow-accent-500/40 transition-shadow"
-            onClick={() => setOpen(true)}
+            className={`fixed bottom-6 right-6 z-50 rounded-2xl shadow-xl ${avatar.glow} flex items-center justify-center text-white hover:shadow-2xl transition-shadow`}
+            onClick={() => { setOpen(true); setActiveAlert(null); }}
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}
-            title={lang === 'en' ? 'AI Assistant' : 'AI 助手'}
+            title="Uni AI"
           >
+            <Avatar3D size="md" />
             <motion.div
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <Bot className="w-6 h-6" />
-            </motion.div>
-            {/* Pulse ring */}
-            <motion.div
-              className="absolute inset-0 rounded-full border-2 border-accent-400"
-              animate={{ scale: [1, 1.3, 1.3], opacity: [0.6, 0, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
+              className={`absolute inset-0 rounded-2xl border-2 ${avatar.ring}`}
+              animate={{ scale: [1, 1.25, 1.25], opacity: [0.6, 0, 0] }}
+              transition={{ duration: 2.5, repeat: Infinity }}
             />
           </motion.button>
         )}
@@ -181,95 +303,205 @@ export default function FloatingAI() {
       <AnimatePresence>
         {open && (
           <motion.div
-            className="fixed bottom-6 right-6 z-50 w-96 h-[500px] flex flex-col rounded-2xl overflow-hidden"
+            className="fixed bottom-4 right-4 z-50 w-[380px] sm:w-[400px] h-[540px] flex flex-col rounded-2xl overflow-hidden"
             style={{
-              background: 'rgba(15, 23, 42, 0.95)',
               backdropFilter: 'blur(24px)',
-              border: '1px solid rgba(255,255,255,0.15)',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.4), 0 0 40px rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.5), 0 0 40px rgba(255,255,255,0.04)',
             }}
-            initial={{ scale: 0.8, opacity: 0, y: 20 }}
+            initial={{ scale: 0.85, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.8, opacity: 0, y: 20 }}
+            exit={{ scale: 0.85, opacity: 0, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-accent-500/10 to-accent-500/10">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-white" />
-                </div>
+            {/* Theme background gradient */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${chatTheme.bg} opacity-95`} />
+
+            {/* Header with avatar + Uni AI branding */}
+            <div className={`relative flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r ${chatTheme.headerGradient}`}>
+              <div className="flex items-center gap-3">
+                <Avatar3D size="sm" animate={false} />
                 <div>
-                  <h3 className="text-white text-sm font-semibold">{lang === 'en' ? 'AI Assistant' : 'AI 助手'}</h3>
-                  <p className="text-white/40 text-[10px]">{lang === 'en' ? 'Ask me anything' : '有什么可以帮您'}</p>
+                  <h3 className="text-white text-sm font-semibold">Uni AI — {avatar.name}</h3>
+                  <p className="text-white/35 text-[10px]">{lang === 'en' ? `${avatar.personality} • always here` : '随时为您服务'}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
-                <button onClick={() => setOpen(false)} className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-colors">
-                  <Minimize2 className="w-4 h-4" />
+              <div className="flex items-center gap-0.5">
+                <button onClick={() => setShowSettings(!showSettings)} className="p-1.5 rounded-lg hover:bg-white/10 text-white/35 hover:text-white transition-colors" title={lang === 'en' ? 'Settings' : '设置'}>
+                  <Settings2 className="w-3.5 h-3.5" />
                 </button>
-                <button onClick={() => { setOpen(false); setMessages([]); }} className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-colors">
-                  <X className="w-4 h-4" />
+                <button onClick={() => setOpen(false)} className="p-1.5 rounded-lg hover:bg-white/10 text-white/35 hover:text-white transition-colors">
+                  <Minimize2 className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={() => { setOpen(false); setMessages([]); }} className="p-1.5 rounded-lg hover:bg-white/10 text-white/35 hover:text-white transition-colors">
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {messages.length === 0 && (
-                <div className="space-y-3">
-                  <div className="text-center py-4">
-                    <motion.div
-                      className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-br from-accent-500/20 to-accent-500/20 flex items-center justify-center mb-3"
-                      animate={{ y: [0, -4, 0] }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                    >
-                      <MessageSquare className="w-6 h-6 text-accent-400" />
-                    </motion.div>
-                    <p className="text-white/50 text-xs">{lang === 'en' ? 'Try asking:' : '试试问我：'}</p>
+            {/* Settings Panel — Avatar & Chat Theme Picker */}
+            <AnimatePresence>
+              {showSettings && (
+                <motion.div
+                  className="relative border-b border-white/10 overflow-y-auto"
+                  initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
+                  style={{ maxHeight: 320 }}
+                >
+                  <div className="p-3 space-y-3">
+                    {/* Avatar picker */}
+                    <div>
+                      <button onClick={() => setShowAvatars(!showAvatars)} className="flex items-center gap-1.5 text-white/50 text-[10px] font-medium uppercase tracking-wider mb-2">
+                        <ChevronRight className={`w-3 h-3 transition-transform ${showAvatars ? 'rotate-90' : ''}`} />
+                        {lang === 'en' ? 'Choose Avatar' : '选择头像'}
+                      </button>
+                      {showAvatars && (
+                        <div className="grid grid-cols-5 gap-2">
+                          {aiAvatars.map(av => (
+                            <motion.button
+                              key={av.id}
+                              onClick={() => setAiAvatar(av.id)}
+                              className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${
+                                aiAvatar === av.id ? 'border-white/30 bg-white/10' : 'border-white/5 bg-white/[0.02] hover:bg-white/5'
+                              }`}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${av.gradient} flex items-center justify-center text-sm shadow-md relative overflow-hidden`}>
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-white/15 rounded-xl" />
+                                <span className="relative z-10">{av.emoji}</span>
+                              </div>
+                              <span className="text-white/50 text-[9px]">{av.name}</span>
+                            </motion.button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Chat theme picker */}
+                    <div>
+                      <p className="text-white/50 text-[10px] font-medium uppercase tracking-wider mb-2">{lang === 'en' ? 'Chat Theme' : '聊天主题'}</p>
+                      <div className="flex gap-2">
+                        {aiChatThemes.map(th => (
+                          <motion.button
+                            key={th.id}
+                            onClick={() => setAiChatTheme(th.id)}
+                            className={`flex-1 p-2 rounded-xl border transition-all ${
+                              aiChatTheme === th.id ? 'border-white/30 bg-white/10' : 'border-white/5 bg-white/[0.02] hover:bg-white/5'
+                            }`}
+                            whileHover={{ scale: 1.03 }}
+                          >
+                            <div className={`w-full h-5 rounded-lg bg-gradient-to-r ${th.bg} border border-white/10 mb-1`} />
+                            <span className="text-white/50 text-[9px]">{th.name}</span>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                  {currentHints.map((hint, i) => (
-                    <motion.button
-                      key={i}
-                      className="w-full text-left p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white/70 text-xs transition-all"
-                      onClick={() => sendMessage(hint)}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      whileHover={{ x: 4 }}
-                    >
-                      <Sparkles className="w-3 h-3 text-accent-400 inline mr-2" />
-                      {hint}
-                    </motion.button>
-                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Messages Area */}
+            <div className="relative flex-1 overflow-y-auto p-3 space-y-3">
+              {/* Welcome screen with 3D avatar + suggestions */}
+              {messages.length === 0 && !showSettings && (
+                <div className="space-y-3">
+                  <div className="text-center py-3">
+                    <Avatar3D size="lg" />
+                    <h4 className="text-white font-semibold text-sm mt-3">
+                      {lang === 'en' ? `Hi! I'm ${avatar.name} 💫` : `嗨！我是${avatar.name} 💫`}
+                    </h4>
+                    <p className="text-white/40 text-[11px] mt-1">
+                      {lang === 'en' ? 'Your Uni AI assistant — ask me anything!' : '您的 Uni AI 助手 — 问我任何事！'}
+                    </p>
+                  </div>
+                  {/* Context-aware suggestion cards */}
+                  <div className="space-y-1.5">
+                    {currentSuggestions.map((hint, i) => (
+                      <motion.button
+                        key={i}
+                        className="w-full text-left px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:border-white/15 text-white/60 text-[11px] transition-all flex items-center gap-2"
+                        onClick={() => sendMessage(hint)}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.08 }}
+                        whileHover={{ x: 3 }}
+                      >
+                        <Sparkles className="w-3 h-3 text-white/25 flex-shrink-0" />
+                        {hint}
+                      </motion.button>
+                    ))}
+                  </div>
                 </div>
               )}
 
+              {/* Chat messages with avatar + suggested reply cards */}
               {messages.map((msg) => (
                 <motion.div
                   key={msg.id}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  initial={{ opacity: 0, y: 10 }}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'}`}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  <div className={`max-w-[85%] p-3 rounded-xl text-xs leading-relaxed whitespace-pre-wrap ${
-                    msg.role === 'user'
-                      ? 'bg-gradient-to-r from-accent-500/30 to-accent-500/30 text-white border border-accent-500/20'
-                      : 'bg-white/5 text-white/80 border border-white/10'
-                  }`}>
-                    {msg.content}
+                  {msg.role === 'assistant' && (
+                    <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${avatar.gradient} flex items-center justify-center text-xs flex-shrink-0 mt-1 relative overflow-hidden`}>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-white/15" />
+                      <span className="relative z-10">{avatar.emoji}</span>
+                    </div>
+                  )}
+                  <div className="max-w-[82%] space-y-1.5">
+                    <div className={`p-3 rounded-xl text-[11px] leading-relaxed whitespace-pre-wrap ${
+                      msg.role === 'user'
+                        ? `bg-gradient-to-r ${chatTheme.userBubble} text-white border border-white/10 rounded-tr-md`
+                        : `${chatTheme.aiBubble} text-white/80 border border-white/5 rounded-tl-md`
+                    }`}>
+                      {msg.content}
+                    </div>
+                    {/* Read aloud button for AI messages */}
+                    {msg.role === 'assistant' && (
+                      <button
+                        onClick={() => speak(msg.content)}
+                        className="text-white/20 hover:text-white/50 transition-colors p-0.5"
+                        title={lang === 'en' ? 'Read aloud' : '朗读'}
+                      >
+                        <Volume2 className="w-3 h-3" />
+                      </button>
+                    )}
+                    {/* Suggested reply cards after AI response */}
+                    {msg.role === 'assistant' && msg.suggestions && msg.suggestions.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {msg.suggestions.map((s, i) => (
+                          <motion.button
+                            key={i}
+                            onClick={() => sendMessage(s)}
+                            className="px-2.5 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.1] text-white/50 text-[10px] transition-all hover:text-white/70"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: i * 0.05 }}
+                            whileHover={{ scale: 1.03 }}
+                          >
+                            {s}
+                          </motion.button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               ))}
 
+              {/* Loading indicator with animated avatar */}
               {loading && (
-                <motion.div className="flex justify-start" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <div className="bg-white/5 border border-white/10 p-3 rounded-xl flex items-center gap-1.5">
+                <motion.div className="flex items-start gap-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${avatar.gradient} flex items-center justify-center text-xs relative overflow-hidden`}>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-white/15" />
+                    <motion.span className="relative z-10" animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 1, repeat: Infinity }}>{avatar.emoji}</motion.span>
+                  </div>
+                  <div className={`${chatTheme.aiBubble} border border-white/5 p-3 rounded-xl rounded-tl-md flex items-center gap-1.5`}>
                     {[0, 1, 2].map(i => (
                       <motion.div
                         key={i}
-                        className="w-1.5 h-1.5 rounded-full bg-accent-400"
-                        animate={{ y: [0, -6, 0] }}
+                        className="w-1.5 h-1.5 rounded-full bg-white/30"
+                        animate={{ y: [0, -5, 0] }}
                         transition={{ duration: 0.6, delay: i * 0.15, repeat: Infinity }}
                       />
                     ))}
@@ -279,29 +511,38 @@ export default function FloatingAI() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
-            <div className="p-3 border-t border-white/10">
+            {/* Input Area with Voice + Send */}
+            <div className="relative p-3 border-t border-white/10">
               <form
                 onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
                 className="flex items-center gap-2"
               >
+                <motion.button
+                  type="button"
+                  onClick={toggleVoice}
+                  className={`p-2 rounded-xl transition-all ${isListening ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/5 text-white/30 hover:text-white/50 border border-white/10'}`}
+                  whileTap={{ scale: 0.9 }}
+                  title={lang === 'en' ? 'Voice input' : '语音输入'}
+                >
+                  {isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                </motion.button>
                 <input
                   ref={inputRef}
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder={lang === 'en' ? 'Ask AI anything...' : '问AI任何问题...'}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-xs placeholder:text-white/30 focus:outline-none focus:border-accent-500/50"
+                  placeholder={isListening ? (lang === 'en' ? '🎙 Listening...' : '🎙 聆听中...') : (lang === 'en' ? 'Ask Uni AI...' : '问 Uni AI...')}
+                  className={`flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-xs placeholder:text-white/25 focus:outline-none ${chatTheme.inputBorder}`}
                   disabled={loading}
                 />
                 <motion.button
                   type="submit"
                   disabled={!input.trim() || loading}
-                  className="p-2 rounded-xl bg-gradient-to-r from-accent-500 to-accent-600 text-white disabled:opacity-40"
+                  className={`p-2 rounded-xl bg-gradient-to-r ${avatar.gradient} text-white disabled:opacity-30 shadow-md`}
                   whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={{ scale: 0.93 }}
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-3.5 h-3.5" />
                 </motion.button>
               </form>
             </div>
