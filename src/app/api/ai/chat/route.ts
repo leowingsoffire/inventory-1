@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const AZURE_AI_ENDPOINT = process.env.AZURE_AI_ENDPOINT || 'https://lai-grok-4-20-reasoning-resource.services.ai.azure.com/api/projects/lai-grok-4-20-reasoning';
+const AZURE_AI_ENDPOINT = process.env.AZURE_AI_ENDPOINT || 'https://lai-grok-4-20-reasoning-resource.services.ai.azure.com';
 const AZURE_AI_KEY = process.env.AZURE_AI_KEY || '';
 const AZURE_AI_MODEL = process.env.AZURE_AI_MODEL || 'grok-4-20-reasoning';
 
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
     // PRIMARY: Azure OpenAI API
     if (key) {
       try {
-        const response = await fetch(`${AZURE_AI_ENDPOINT}/openai/chat/completions?api-version=2025-01-01`, {
+        const response = await fetch(`${AZURE_AI_ENDPOINT}/openai/deployments/${AZURE_AI_MODEL}/chat/completions?api-version=2024-10-21`, {
           method: 'POST',
           headers: {
             'api-key': key,
