@@ -145,7 +145,7 @@ export default function ReportsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <motion.div className="glass-card p-6" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
               <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-                <PieChartIcon className="w-4 h-4 text-blue-400" />
+                <PieChartIcon className="w-4 h-4 text-cyan-400" />
                 {lang === 'en' ? 'Assets by Category' : '按类别资产'}
               </h3>
               <ResponsiveContainer width="100%" height={280}>

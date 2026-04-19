@@ -95,15 +95,15 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const stats = [
-    { label: t('dash.totalAssets', lang), value: 118, icon: Monitor, color: 'from-blue-500 to-blue-600', href: '/assets' },
-    { label: t('dash.assigned', lang), value: 89, icon: CheckCircle, color: 'from-emerald-500 to-emerald-600', href: '/assets?status=assigned' },
-    { label: t('dash.available', lang), value: 21, icon: Package, color: 'from-violet-500 to-violet-600', href: '/assets?status=available' },
-    { label: t('dash.maintenance', lang), value: 8, icon: Wrench, color: 'from-amber-500 to-amber-600', href: '/maintenance' },
-    { label: t('dash.employees', lang), value: 52, icon: Users, color: 'from-cyan-500 to-cyan-600', href: '/employees' },
-    { label: t('dash.openTickets', lang), value: 5, icon: AlertTriangle, color: 'from-rose-500 to-rose-600', href: '/maintenance?status=open' },
-    { label: lang === 'en' ? 'Changes' : '变更', value: 12, icon: GitBranch, color: 'from-sky-500 to-sky-600', href: '/change-requests' },
-    { label: lang === 'en' ? 'Customers' : '客户', value: 5, icon: Building2, color: 'from-indigo-500 to-indigo-600', href: '/customers' },
-    { label: lang === 'en' ? 'Revenue' : '收入', value: 15800, icon: DollarSign, color: 'from-teal-500 to-teal-600', href: '/finance' },
+    { label: t('dash.totalAssets', lang), value: 118, icon: Monitor, color: 'from-cyan-500 to-teal-600', glow: 'rgba(34,211,238,0.15)', href: '/assets' },
+    { label: t('dash.assigned', lang), value: 89, icon: CheckCircle, color: 'from-emerald-500 to-green-600', glow: 'rgba(52,211,153,0.15)', href: '/assets?status=assigned' },
+    { label: t('dash.available', lang), value: 21, icon: Package, color: 'from-violet-500 to-purple-600', glow: 'rgba(167,139,250,0.15)', href: '/assets?status=available' },
+    { label: t('dash.maintenance', lang), value: 8, icon: Wrench, color: 'from-amber-500 to-orange-600', glow: 'rgba(251,191,36,0.15)', href: '/maintenance' },
+    { label: t('dash.employees', lang), value: 52, icon: Users, color: 'from-pink-500 to-rose-600', glow: 'rgba(236,72,153,0.15)', href: '/employees' },
+    { label: t('dash.openTickets', lang), value: 5, icon: AlertTriangle, color: 'from-red-500 to-rose-600', glow: 'rgba(239,68,68,0.15)', href: '/maintenance?status=open' },
+    { label: lang === 'en' ? 'Changes' : '变更', value: 12, icon: GitBranch, color: 'from-indigo-500 to-blue-600', glow: 'rgba(99,102,241,0.15)', href: '/change-requests' },
+    { label: lang === 'en' ? 'Customers' : '客户', value: 5, icon: Building2, color: 'from-fuchsia-500 to-pink-600', glow: 'rgba(217,70,239,0.15)', href: '/customers' },
+    { label: lang === 'en' ? 'Revenue' : '收入', value: 15800, icon: DollarSign, color: 'from-lime-500 to-emerald-600', glow: 'rgba(132,204,22,0.15)', href: '/finance' },
   ];
 
   const quickActions = [
@@ -142,12 +142,15 @@ export default function DashboardPage() {
             return (
               <Link key={stat.label} href={stat.href}>
                 <motion.div
-                  className="glass-card glass-card-hover p-4 cursor-pointer group"
-                  whileHover={{ scale: 1.02 }}
+                  className="glass-card glass-card-hover p-4 cursor-pointer group relative overflow-hidden"
+                  whileHover={{ scale: 1.04, y: -4 }}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
+                  style={{ boxShadow: `0 8px 32px ${stat.glow}` }}
                 >
+                  {/* Shimmer overlay */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.08) 55%, transparent 60%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s ease-in-out infinite' }} />
                   <div className="flex items-center justify-between mb-3">
                     <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
                       <Icon className="w-5 h-5 text-white" />
@@ -247,7 +250,7 @@ export default function DashboardPage() {
           {/* Recent Activity */}
           <motion.div variants={itemVariants} className="glass-card p-6 lg:col-span-2">
             <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-blue-400" />
+              <Clock className="w-4 h-4 text-cyan-400" />
               {t('dash.recentActivity', lang)}
             </h3>
             <div className="space-y-3">
@@ -293,7 +296,7 @@ export default function DashboardPage() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
-                        <Icon className="w-5 h-5 text-blue-400" />
+                        <Icon className="w-5 h-5 text-cyan-400" />
                         <span className="text-xs">{action.label}</span>
                       </motion.div>
                     </Link>
@@ -317,7 +320,7 @@ export default function DashboardPage() {
                     className={`p-3 rounded-xl text-xs flex items-start gap-2 cursor-pointer group hover:ring-1 hover:ring-white/20 transition-all ${
                       insight.type === 'warning' ? 'bg-amber-500/10 border border-amber-500/20' :
                       insight.type === 'success' ? 'bg-emerald-500/10 border border-emerald-500/20' :
-                      'bg-blue-500/10 border border-blue-500/20'
+                      'bg-cyan-500/10 border border-cyan-500/20'
                     }`}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -327,7 +330,7 @@ export default function DashboardPage() {
                   >
                     {insight.type === 'warning' ? <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" /> :
                      insight.type === 'success' ? <CheckCircle className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" /> :
-                     <ArrowUpRight className="w-3.5 h-3.5 text-blue-400 flex-shrink-0 mt-0.5" />}
+                     <ArrowUpRight className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0 mt-0.5" />}
                     <span className="text-white/70 flex-1">{insight.text}</span>
                     <ExternalLink className="w-3 h-3 text-white/0 group-hover:text-white/40 transition-all flex-shrink-0 mt-0.5" />
                   </motion.div>
@@ -345,7 +348,7 @@ export default function DashboardPage() {
               {lang === 'en' ? 'Recent Change Requests' : '最近变更请求'}
             </h3>
             <Link href="/change-requests">
-              <motion.span className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 cursor-pointer" whileHover={{ x: 2 }}>
+              <motion.span className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer" whileHover={{ x: 2 }}>
                 {lang === 'en' ? 'View All' : '查看全部'}
                 <ArrowUpRight className="w-3 h-3" />
               </motion.span>
@@ -366,7 +369,7 @@ export default function DashboardPage() {
                   whileHover={{ scale: 1.02 }}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-blue-400 text-xs font-mono">{cr.number}</span>
+                    <span className="text-cyan-400 text-xs font-mono">{cr.number}</span>
                     <ExternalLink className="w-3 h-3 text-white/0 group-hover:text-white/40 transition-all" />
                   </div>
                   <p className="text-white text-sm mb-2 truncate">{cr.desc}</p>
@@ -396,7 +399,7 @@ export default function DashboardPage() {
               {lang === 'en' ? 'Warranty Alerts' : '保修提醒'}
             </h3>
             <Link href="/warranty">
-              <motion.span className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 cursor-pointer" whileHover={{ x: 2 }}>
+              <motion.span className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer" whileHover={{ x: 2 }}>
                 {lang === 'en' ? 'View All' : '查看全部'}
                 <ArrowUpRight className="w-3 h-3" />
               </motion.span>
@@ -409,7 +412,7 @@ export default function DashboardPage() {
                   className={`p-4 rounded-xl border cursor-pointer group hover:ring-1 hover:ring-white/20 transition-all ${
                     alert.status === 'critical' ? 'bg-red-500/10 border-red-500/20' :
                     alert.status === 'warning' ? 'bg-amber-500/10 border-amber-500/20' :
-                    'bg-blue-500/10 border-blue-500/20'
+                    'bg-cyan-500/10 border-cyan-500/20'
                   }`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -424,7 +427,7 @@ export default function DashboardPage() {
                   <div className={`text-xs font-medium ${
                     alert.status === 'critical' ? 'text-red-400' :
                     alert.status === 'warning' ? 'text-amber-400' :
-                    'text-blue-400'
+                    'text-cyan-400'
                   }`}>
                     {alert.daysLeft} {lang === 'en' ? 'days remaining' : '天剩余'}
                   </div>

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useApp } from '@/lib/context';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
+import FloatingAI from '@/components/FloatingAI';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { theme, sidebarOpen } = useApp();
@@ -14,7 +15,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <motion.div
           className="absolute w-96 h-96 rounded-full opacity-10 blur-3xl"
-          style={{ background: 'radial-gradient(circle, rgba(96,165,250,0.4) 0%, transparent 70%)' }}
+          style={{ background: 'radial-gradient(circle, rgba(34,211,238,0.4) 0%, transparent 70%)' }}
           animate={{
             x: [0, 100, -50, 0],
             y: [0, -80, 60, 0],
@@ -57,6 +58,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </motion.div>
         </main>
       </div>
+      <FloatingAI />
     </div>
   );
 }

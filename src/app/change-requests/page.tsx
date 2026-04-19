@@ -248,7 +248,7 @@ export default function ChangeRequestsPage() {
             </button>
             <button
               onClick={() => { resetForm(); setEditItem(null); setShowForm(true); }}
-              className="glass-button px-4 py-2 flex items-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/30"
+              className="glass-button px-4 py-2 flex items-center gap-2 bg-cyan-500/20 hover:bg-cyan-500/30 border-cyan-500/30"
             >
               <Plus className="w-4 h-4" />
               {lang === 'en' ? 'New Change' : '新建变更'}
@@ -300,7 +300,7 @@ export default function ChangeRequestsPage() {
                     >
                       <div className="flex items-center gap-1">
                         <span>{col.label}</span>
-                        <ArrowUpDown className={`w-3 h-3 ${sortField === col.key ? 'text-blue-400' : 'text-white/20'}`} />
+                        <ArrowUpDown className={`w-3 h-3 ${sortField === col.key ? 'text-cyan-400' : 'text-white/20'}`} />
                       </div>
                     </th>
                   ))}

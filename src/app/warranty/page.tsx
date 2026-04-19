@@ -441,7 +441,7 @@ export default function WarrantyPage() {
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-white font-semibold flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-blue-400" />
+                    <Mail className="w-4 h-4 text-cyan-400" />
                     {lang === 'en' ? 'Send Warranty Alert' : '发送保修提醒'}
                   </h3>
                   <button onClick={() => setShowCompose(null)} className="text-white/40 hover:text-white">
@@ -469,7 +469,7 @@ export default function WarrantyPage() {
                       <option value="7_day" className="bg-gray-900">{alertTypeLabels['7_day'][lang]}</option>
                     </select>
                   </div>
-                  <div className="p-3 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                  <div className="p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
                     <p className="text-blue-300 text-xs font-medium mb-1">
                       {lang === 'en' ? '🤖 AI-Generated Email Preview' : '🤖 AI 生成邮件预览'}
                     </p>
@@ -490,7 +490,7 @@ export default function WarrantyPage() {
                       handleSendAlert(showCompose, select?.value || '60_day');
                       setShowCompose(null);
                     }}
-                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm font-medium flex items-center gap-2 transition-all"
+                    className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl text-sm font-medium flex items-center gap-2 transition-all"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >

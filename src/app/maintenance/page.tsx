@@ -112,7 +112,7 @@ export default function MaintenancePage() {
               {lang === 'en' ? 'Manage maintenance tickets and support requests' : '管理维护工单和支持请求'}
             </p>
           </div>
-          <motion.button onClick={openAddModal} className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm font-medium transition-all" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <motion.button onClick={openAddModal} className="flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl text-sm font-medium transition-all" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Plus className="w-4 h-4" />
             {t('maint.add', lang)}
           </motion.button>
@@ -197,7 +197,7 @@ export default function MaintenancePage() {
                     <div className="flex items-center gap-4 mt-2 ml-7 text-xs text-white/30">
                       <Link
                         href={`/assets?search=${encodeURIComponent(ticket.assetTag)}`}
-                        className="text-blue-400/70 hover:text-blue-300 flex items-center gap-1 transition-colors"
+                        className="text-cyan-400/70 hover:text-cyan-300 flex items-center gap-1 transition-colors"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {ticket.assetName} ({ticket.assetTag})
@@ -291,7 +291,7 @@ export default function MaintenancePage() {
                 </div>
                 <div className="flex justify-end gap-3 mt-6">
                   <button onClick={() => setShowModal(false)} className="glass-button px-4 py-2 text-sm">{t('common.cancel', lang)}</button>
-                  <motion.button onClick={handleSave} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm font-medium transition-all" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <motion.button onClick={handleSave} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl text-sm font-medium transition-all" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     {t('common.save', lang)}
                   </motion.button>
                 </div>

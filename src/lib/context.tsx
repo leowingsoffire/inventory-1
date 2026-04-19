@@ -19,7 +19,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [themeKey, setThemeKey] = useState<ThemeKey>('ocean');
+  const [themeKey, setThemeKey] = useState<ThemeKey>('midnight');
   const [lang, setLang] = useState<Lang>('en');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [aiApiKey, setAiApiKey] = useState('');
@@ -52,7 +52,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-cyan-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-900 to-zinc-900 flex items-center justify-center">
         <div className="animate-pulse text-white text-xl">Loading...</div>
       </div>
     );

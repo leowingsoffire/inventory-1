@@ -114,7 +114,7 @@ export default function Sidebar() {
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
             >
-              <Cpu className="w-8 h-8 text-blue-400" />
+              <Cpu className="w-8 h-8 text-cyan-400" />
             </motion.div>
             <AnimatePresence>
               {sidebarOpen && (
@@ -156,12 +156,12 @@ export default function Sidebar() {
                       >
                         {isActive && (
                           <motion.div
-                            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-400 rounded-r-full"
+                            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-cyan-400 rounded-r-full"
                             layoutId="activeTab"
                             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                           />
                         )}
-                        <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-blue-400' : ''}`} />
+                        <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-cyan-400' : ''}`} />
                         <AnimatePresence>
                           {sidebarOpen && (
                             <motion.span
@@ -208,7 +208,7 @@ export default function Sidebar() {
                           return (
                             <Link key={child.href} href={child.href}>
                               <div className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-all ${
-                                isChildActive ? 'text-blue-400 bg-white/5' : 'text-white/40 hover:text-white/70 hover:bg-white/5'
+                                isChildActive ? 'text-cyan-400 bg-white/5' : 'text-white/40 hover:text-white/70 hover:bg-white/5'
                               }`}>
                                 {ChildIcon && <ChildIcon className="w-3 h-3" />}
                                 <span>{lang === 'en' ? child.label : child.labelZh}</span>

@@ -50,11 +50,11 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <motion.div
-            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/20 border border-blue-400/30 mb-4"
+            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-cyan-500/20 border border-cyan-400/30 mb-4"
             animate={{ rotate: 360 }}
             transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
           >
-            <Cpu className="w-8 h-8 text-blue-400" />
+            <Cpu className="w-8 h-8 text-cyan-400" />
           </motion.div>
           <motion.h1
             className="text-3xl font-bold text-white mb-1"
@@ -134,7 +134,7 @@ export default function LoginPage() {
           <motion.button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             initial={{ opacity: 0 }}
@@ -158,7 +158,7 @@ export default function LoginPage() {
         </form>
 
         <motion.div
-          className="mt-6 p-3 rounded-xl bg-blue-500/10 border border-blue-400/20"
+          className="mt-6 p-3 rounded-xl bg-cyan-500/10 border border-cyan-400/20"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}

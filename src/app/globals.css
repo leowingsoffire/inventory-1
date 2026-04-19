@@ -21,7 +21,7 @@
   }
 
   ::selection {
-    background: rgba(96, 165, 250, 0.4);
+    background: rgba(34, 211, 238, 0.4);
     color: white;
   }
 
@@ -69,7 +69,7 @@
     outline: none;
     background: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.4);
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.2);
   }
 
   .glass-input::placeholder {
@@ -107,7 +107,7 @@
   }
 
   .glow-text {
-    text-shadow: 0 0 20px rgba(96, 165, 250, 0.5), 0 0 40px rgba(96, 165, 250, 0.3);
+    text-shadow: 0 0 20px rgba(34, 211, 238, 0.5), 0 0 40px rgba(34, 211, 238, 0.3);
   }
 
   .float-animation {
@@ -130,13 +130,24 @@
 }
 
 @keyframes pulseGlow {
-  0%, 100% { opacity: 1; box-shadow: 0 0 5px rgba(96, 165, 250, 0.3); }
-  50% { opacity: 0.8; box-shadow: 0 0 20px rgba(96, 165, 250, 0.6); }
+  0%, 100% { opacity: 1; box-shadow: 0 0 5px rgba(34, 211, 238, 0.3); }
+  50% { opacity: 0.8; box-shadow: 0 0 20px rgba(34, 211, 238, 0.6); }
 }
 
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+
+@keyframes cardGlow {
+  0%, 100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1); }
+  50% { box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+}
+
+@keyframes borderShine {
+  0% { border-color: rgba(255, 255, 255, 0.15); }
+  50% { border-color: rgba(255, 255, 255, 0.3); }
+  100% { border-color: rgba(255, 255, 255, 0.15); }
 }
 
 @keyframes spin-slow {

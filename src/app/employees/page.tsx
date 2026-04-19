@@ -104,7 +104,7 @@ export default function EmployeesPage() {
           </div>
           <motion.button
             onClick={openAddModal}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm font-medium transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl text-sm font-medium transition-all"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -184,7 +184,7 @@ export default function EmployeesPage() {
               <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
                 <Link
                   href={`/assets?search=${encodeURIComponent(emp.name)}`}
-                  className="text-blue-400 hover:text-blue-300 text-xs flex items-center gap-1 transition-colors"
+                  className="text-cyan-400 hover:text-cyan-300 text-xs flex items-center gap-1 transition-colors"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Monitor className="w-3 h-3" />
@@ -323,7 +323,7 @@ export default function EmployeesPage() {
                 </div>
                 <div className="flex justify-end gap-3 mt-6">
                   <button onClick={() => setShowModal(false)} className="glass-button px-4 py-2 text-sm">{t('common.cancel', lang)}</button>
-                  <motion.button onClick={handleSave} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm font-medium transition-all" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <motion.button onClick={handleSave} className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl text-sm font-medium transition-all" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     {t('common.save', lang)}
                   </motion.button>
                 </div>

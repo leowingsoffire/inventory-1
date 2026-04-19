@@ -169,10 +169,9 @@ export default function WeatherCard() {
 
   if (loading) {
     return (
-      <div className="w-40 h-20 glass-card p-2 animate-pulse">
-        <div className="h-3 bg-white/10 rounded w-20 mb-2" />
-        <div className="h-5 bg-white/10 rounded w-16 mb-2" />
-        <div className="h-3 bg-white/10 rounded w-28" />
+      <div className="h-8 glass-button px-2 py-1 flex items-center gap-1.5 animate-pulse">
+        <div className="h-3 bg-white/10 rounded w-8" />
+        <div className="h-3 bg-white/10 rounded w-12" />
       </div>
     );
   }
@@ -183,62 +182,40 @@ export default function WeatherCard() {
 
   return (
     <motion.div
-      className={`relative w-40 glass-card overflow-hidden`}
+      className="relative glass-button overflow-hidden flex items-center gap-1.5 px-2.5 py-1.5"
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
+      title={`${weather?.description} | ${lang === 'en' ? 'Humidity' : '湿度'}: ${weather?.humidity}% | ${lang === 'en' ? 'Wind' : '风速'}: ${weather?.windSpeed}km/h`}
     >
       {/* Background gradient based on weather */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${cond.bg} rounded-2xl`} />
+      <div className={`absolute inset-0 bg-gradient-to-r ${cond.bg} rounded-xl`} />
 
-      {/* Weather animations */}
-      {condKey === 'rainy' || condKey === 'drizzle' ? <RainDrops /> : null}
-      {condKey === 'sunny' ? <SunRays /> : null}
-      {condKey === 'stormy' ? <LightningFlash /> : null}
-      {condKey === 'cloudy' ? <CloudFloat /> : null}
+      <div className="relative flex items-center gap-1.5">
+        {/* Location */}
+        <span className="text-white/40 text-[9px]">🇸🇬</span>
 
-      <div className="relative p-2">
-        {/* Location + Time */}
-        <div className="flex items-center justify-between mb-0.5">
-          <span className="text-white/50 text-[9px] font-medium tracking-wide uppercase">
-            🇸🇬 SG
-          </span>
-          <span className="text-white/60 text-[9px] font-mono">{sgTime}</span>
-        </div>
+        {/* Weather icon */}
+        <motion.div
+          animate={
+            condKey === 'sunny'
+              ? { rotate: [0, 5, -5, 0], scale: [1, 1.05, 1] }
+              : condKey === 'rainy' || condKey === 'stormy'
+              ? { y: [0, 1, 0] }
+              : { x: [0, 2, -2, 0] }
+          }
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <WeatherIcon className={`w-3.5 h-3.5 ${cond.color}`} />
+        </motion.div>
 
-        {/* Main weather display */}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-baseline gap-0.5">
-              <span className="text-lg font-bold text-white">{weather?.temp}°</span>
-              <span className="text-white/40 text-[9px]">C</span>
-            </div>
-            <p className="text-white/60 text-[9px]">{weather?.description}</p>
-          </div>
-          <motion.div
-            animate={
-              condKey === 'sunny'
-                ? { rotate: [0, 5, -5, 0], scale: [1, 1.05, 1] }
-                : condKey === 'rainy' || condKey === 'stormy'
-                ? { y: [0, 2, 0] }
-                : { x: [0, 3, -3, 0] }
-            }
-            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <WeatherIcon className={`w-6 h-6 ${cond.color}`} />
-          </motion.div>
-        </div>
+        {/* Temp */}
+        <span className="text-xs font-semibold text-white">{weather?.temp}°C</span>
 
-        {/* Stats row */}
-        <div className="flex items-center gap-2 mt-1.5 pt-1 border-t border-white/5">
-          <div className="flex items-center gap-0.5">
-            <Droplets className="w-2 h-2 text-blue-400/60" />
-            <span className="text-white/40 text-[8px]">{weather?.humidity}%</span>
-          </div>
-          <div className="flex items-center gap-0.5">
-            <Wind className="w-2 h-2 text-teal-400/60" />
-            <span className="text-white/40 text-[8px]">{weather?.windSpeed}km/h</span>
-          </div>
-        </div>
+        {/* Divider */}
+        <div className="w-px h-3 bg-white/10" />
+
+        {/* Time */}
+        <span className="text-white/50 text-[10px] font-mono">{sgTime}</span>
       </div>
     </motion.div>
   );

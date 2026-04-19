@@ -157,7 +157,7 @@ export default function Header() {
                       whileHover={{ x: 2 }}
                     >
                       <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                        n.type === 'warning' ? 'bg-amber-400' : n.type === 'alert' ? 'bg-red-400' : 'bg-blue-400'
+                        n.type === 'warning' ? 'bg-amber-400' : n.type === 'alert' ? 'bg-red-400' : 'bg-cyan-400'
                       }`} />
                       <div className="flex-1 min-w-0">
                         <p className="text-white/80 text-xs leading-relaxed">{n.text}</p>
@@ -174,8 +174,8 @@ export default function Header() {
 
         {/* User */}
         <div className="flex items-center gap-2 glass-button px-2.5 py-1.5">
-          <div className="w-6 h-6 rounded-full bg-blue-500/30 flex items-center justify-center">
-            <User className="w-3.5 h-3.5 text-blue-300" />
+          <div className="w-6 h-6 rounded-full bg-cyan-500/30 flex items-center justify-center">
+            <User className="w-3.5 h-3.5 text-cyan-300" />
           </div>
           <span className="text-xs text-white/80">Admin</span>
         </div>
