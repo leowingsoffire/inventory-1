@@ -4,80 +4,47 @@ import { prisma } from '@/lib/db';
 // Gather live app data summary for Uni AI context injection
 export async function GET() {
   try {
-    const [
-      assetCount,
-      assetsByStatus,
-      assetsByCategory,
-      employeeCount,
-      maintenanceOpen,
-      maintenanceByPriority,
-      warrantyExpiring30,
-      warrantyExpiring90,
-      customerCount,
-      vendorCount,
-      invoiceStats,
-      changeRequests,
-      complianceStats,
-      recentActivity,
-      companyProfile,
-    ] = await Promise.all([
-      // Total assets
-      prisma.asset.count(),
-      // Assets by status
-      prisma.asset.groupBy({ by: ['status'], _count: true }),
-      // Assets by category
-      prisma.asset.groupBy({ by: ['category'], _count: true }),
-      // Employees
-      prisma.employee.count({ where: { status: 'active' } }),
-      // Open maintenance tickets
-      prisma.maintenance.count({ where: { status: { in: ['open', 'in-progress'] } } }),
-      // Maintenance by priority
-      prisma.maintenance.groupBy({
-        by: ['priority'],
-        where: { status: { in: ['open', 'in-progress'] } },
-        _count: true,
-      }),
-      // Warranty expiring in 30 days
-      prisma.asset.count({
-        where: {
-          warrantyEnd: {
-            gte: new Date(),
-            lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          },
+    const assetCount = await prisma.asset.count();
+    const assetsByStatus = await prisma.asset.groupBy({ by: ['status'], _count: true });
+    const assetsByCategory = await prisma.asset.groupBy({ by: ['category'], _count: true });
+    const employeeCount = await prisma.employee.count({ where: { status: 'active' } });
+    const maintenanceOpen = await prisma.maintenance.count({ where: { status: { in: ['open', 'in-progress'] } } });
+    const maintenanceByPriority = await prisma.maintenance.groupBy({
+      by: ['priority'],
+      where: { status: { in: ['open', 'in-progress'] } },
+      _count: true,
+    });
+    const warrantyExpiring30 = await prisma.asset.count({
+      where: {
+        warrantyEnd: {
+          gte: new Date(),
+          lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         },
-      }),
-      // Warranty expiring in 90 days
-      prisma.asset.count({
-        where: {
-          warrantyEnd: {
-            gte: new Date(),
-            lte: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-          },
+      },
+    });
+    const warrantyExpiring90 = await prisma.asset.count({
+      where: {
+        warrantyEnd: {
+          gte: new Date(),
+          lte: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
         },
-      }),
-      // Customers
-      prisma.customer.count({ where: { status: 'active' } }),
-      // Vendors
-      prisma.vendor.count({ where: { status: 'active' } }),
-      // Invoice stats
-      prisma.invoice.groupBy({
-        by: ['status'],
-        _sum: { totalAmount: true },
-        _count: true,
-      }),
-      // Change requests by state
-      prisma.changeRequest.groupBy({ by: ['state'], _count: true }),
-      // PDPA compliance
-      prisma.pDPAAssessment.groupBy({ by: ['status'], _count: true }),
-      // Recent activity (last 10)
-      prisma.activityLog.findMany({
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-        select: { action: true, entity: true, details: true, createdAt: true },
-      }),
-      // Company profile
-      prisma.companyProfile.findFirst(),
-    ]);
+      },
+    });
+    const customerCount = await prisma.customer.count({ where: { status: 'active' } });
+    const vendorCount = await prisma.vendor.count({ where: { status: 'active' } });
+    const invoiceStats = await prisma.invoice.groupBy({
+      by: ['status'],
+      _sum: { totalAmount: true },
+      _count: true,
+    });
+    const changeRequests = await prisma.changeRequest.groupBy({ by: ['state'], _count: true });
+    const complianceStats = await prisma.pDPAAssessment.groupBy({ by: ['status'], _count: true });
+    const recentActivity = await prisma.activityLog.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: { action: true, entity: true, details: true, createdAt: true },
+    });
+    const companyProfile = await prisma.companyProfile.findFirst();
 
     // Build warranty-at-risk assets list
     const warrantyRiskAssets = await prisma.asset.findMany({
@@ -125,51 +92,51 @@ export async function GET() {
       company: companyProfile?.companyName || 'Unitech IT System Pte Ltd',
       summary: {
         totalAssets: assetCount,
-        assetsByStatus: assetsByStatus.map(s => ({ status: s.status, count: s._count })),
-        assetsByCategory: assetsByCategory.map(s => ({ category: s.category, count: s._count })),
+        assetsByStatus: assetsByStatus.map((s: any) => ({ status: s.status, count: s._count })),
+        assetsByCategory: assetsByCategory.map((s: any) => ({ category: s.category, count: s._count })),
         activeEmployees: employeeCount,
         openTickets: maintenanceOpen,
-        ticketsByPriority: maintenanceByPriority.map(p => ({ priority: p.priority, count: p._count })),
+        ticketsByPriority: maintenanceByPriority.map((p: any) => ({ priority: p.priority, count: p._count })),
         warrantyExpiring30,
         warrantyExpiring90,
         activeCustomers: customerCount,
         activeVendors: vendorCount,
-        invoicesByStatus: invoiceStats.map(s => ({ status: s.status, count: s._count, total: s._sum.totalAmount || 0 })),
-        changesByState: changeRequests.map(s => ({ state: s.state, count: s._count })),
-        complianceByStatus: complianceStats.map(s => ({ status: s.status, count: s._count })),
+        invoicesByStatus: invoiceStats.map((s: any) => ({ status: s.status, count: s._count, total: s._sum.totalAmount || 0 })),
+        changesByState: changeRequests.map((s: any) => ({ state: s.state, count: s._count })),
+        complianceByStatus: complianceStats.map((s: any) => ({ status: s.status, count: s._count })),
       },
       alerts: {
-        warrantyRiskAssets: warrantyRiskAssets.map(a => ({
+        warrantyRiskAssets: warrantyRiskAssets.map((a: any) => ({
           name: a.name,
           tag: a.assetTag,
           expiresOn: a.warrantyEnd?.toISOString().split('T')[0],
           category: a.category,
         })),
-        overdueInvoices: overdueInvoices.map(i => ({
+        overdueInvoices: overdueInvoices.map((i: any) => ({
           number: i.invoiceNumber,
           amount: i.totalAmount,
           dueDate: i.dueDate?.toISOString().split('T')[0],
         })),
-        urgentTickets: urgentTickets.map(t => ({
+        urgentTickets: urgentTickets.map((t: any) => ({
           title: t.title,
           priority: t.priority,
           status: t.status,
           created: t.createdAt.toISOString().split('T')[0],
         })),
-        pendingChanges: pendingChanges.map(c => ({
+        pendingChanges: pendingChanges.map((c: any) => ({
           number: c.number,
           description: c.shortDescription,
           state: c.state,
           priority: c.priority,
         })),
-        nonCompliantControls: nonCompliantControls.map(c => ({
+        nonCompliantControls: nonCompliantControls.map((c: any) => ({
           ref: c.controlRef,
           title: c.controlTitle,
           status: c.status,
           risk: c.riskLevel,
         })),
       },
-      recentActivity: recentActivity.map(a => ({
+      recentActivity: recentActivity.map((a: any) => ({
         action: a.action,
         entity: a.entity,
         details: a.details,

@@ -3,29 +3,16 @@ import { prisma } from '@/lib/db';
 
 export async function GET() {
   try {
-    const [
-      totalAssets,
-      assetsByStatus,
-      assetsByCategory,
-      activeEmployees,
-      openTickets,
-      ticketsByPriority,
-      activeCustomers,
-      invoicesByStatus,
-      changesByState,
-      recentActivity,
-    ] = await Promise.all([
-      prisma.asset.count(),
-      prisma.asset.groupBy({ by: ['status'], _count: true }),
-      prisma.asset.groupBy({ by: ['category'], _count: true }),
-      prisma.employee.count({ where: { status: 'active' } }),
-      prisma.maintenance.count({ where: { status: { in: ['open', 'inProgress'] } } }),
-      prisma.maintenance.groupBy({ by: ['priority'], _count: true, where: { status: { in: ['open', 'inProgress'] } } }),
-      prisma.customer.count({ where: { status: 'active' } }),
-      prisma.invoice.groupBy({ by: ['status'], _count: true, _sum: { totalAmount: true } }),
-      prisma.changeRequest.groupBy({ by: ['state'], _count: true }),
-      prisma.activityLog.findMany({ orderBy: { createdAt: 'desc' }, take: 10 }),
-    ]);
+    const totalAssets = await prisma.asset.count();
+    const assetsByStatus = await prisma.asset.groupBy({ by: ['status'], _count: true });
+    const assetsByCategory = await prisma.asset.groupBy({ by: ['category'], _count: true });
+    const activeEmployees = await prisma.employee.count({ where: { status: 'active' } });
+    const openTickets = await prisma.maintenance.count({ where: { status: { in: ['open', 'inProgress'] } } });
+    const ticketsByPriority = await prisma.maintenance.groupBy({ by: ['priority'], _count: true, where: { status: { in: ['open', 'inProgress'] } } });
+    const activeCustomers = await prisma.customer.count({ where: { status: 'active' } });
+    const invoicesByStatus = await prisma.invoice.groupBy({ by: ['status'], _count: true, _sum: { totalAmount: true } });
+    const changesByState = await prisma.changeRequest.groupBy({ by: ['state'], _count: true });
+    const recentActivity = await prisma.activityLog.findMany({ orderBy: { createdAt: 'desc' }, take: 10 });
 
     // Warranty expiring
     const now = new Date();
@@ -38,9 +25,9 @@ export async function GET() {
 
     // Compute quick stats
     const statusMap: Record<string, number> = {};
-    assetsByStatus.forEach((s) => { statusMap[s.status] = s._count; });
+    assetsByStatus.forEach((s: any) => { statusMap[s.status] = s._count; });
 
-    const categoryList = assetsByCategory.map((c) => ({
+    const categoryList = assetsByCategory.map((c: any) => ({
       name: c.category,
       value: c._count,
     }));
@@ -67,20 +54,20 @@ export async function GET() {
       warrantyExpiring30,
       warrantyExpiring90,
       categoryData: categoryList,
-      ticketsByPriority: ticketsByPriority.map((p) => ({
+      ticketsByPriority: ticketsByPriority.map((p: any) => ({
         priority: p.priority,
         count: p._count,
       })),
-      invoicesByStatus: invoicesByStatus.map((s) => ({
+      invoicesByStatus: invoicesByStatus.map((s: any) => ({
         status: s.status,
         count: s._count,
         total: s._sum.totalAmount || 0,
       })),
-      changesByState: changesByState.map((c) => ({
+      changesByState: changesByState.map((c: any) => ({
         state: c.state,
         count: c._count,
       })),
-      recentActivity: recentActivity.map((a) => ({
+      recentActivity: recentActivity.map((a: any) => ({
         action: a.action,
         entity: a.entity,
         details: a.details,
