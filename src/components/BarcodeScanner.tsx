@@ -110,7 +110,7 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white font-semibold flex items-center gap-2">
-            <ScanLine className="w-5 h-5 text-cyan-400" />
+            <ScanLine className="w-5 h-5 text-accent-400" />
             {lang === 'en' ? 'Barcode / QR Scanner' : '条码 / 二维码扫描'}
           </h3>
           <button onClick={handleClose} className="text-white/40 hover:text-white transition-colors">
@@ -145,7 +145,7 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
           <div className="relative">
             <div ref={scannerRef} className="rounded-xl overflow-hidden bg-black/30 min-h-[240px]" />
             <motion.div
-              className="absolute top-1/2 left-4 right-4 h-0.5 bg-cyan-400/60"
+              className="absolute top-1/2 left-4 right-4 h-0.5 bg-accent-400/60"
               animate={{ y: [-50, 50] }}
               transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
             />
@@ -174,7 +174,7 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
             <motion.button
               type="submit"
               disabled={!manualInput.trim()}
-              className="w-full py-3 bg-cyan-500 hover:bg-cyan-600 disabled:opacity-40 text-white rounded-xl text-sm font-medium transition-all"
+              className="w-full py-3 bg-accent-500 hover:bg-accent-600 disabled:opacity-40 text-white rounded-xl text-sm font-medium transition-all"
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
             >

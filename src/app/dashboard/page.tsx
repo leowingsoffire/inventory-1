@@ -95,7 +95,7 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const stats = [
-    { label: t('dash.totalAssets', lang), value: 118, icon: Monitor, color: 'from-cyan-500 to-teal-600', glow: 'rgba(34,211,238,0.15)', href: '/assets' },
+    { label: t('dash.totalAssets', lang), value: 118, icon: Monitor, color: 'from-accent-500 to-accent-600', glow: 'rgba(34,211,238,0.15)', href: '/assets' },
     { label: t('dash.assigned', lang), value: 89, icon: CheckCircle, color: 'from-emerald-500 to-green-600', glow: 'rgba(52,211,153,0.15)', href: '/assets?status=assigned' },
     { label: t('dash.available', lang), value: 21, icon: Package, color: 'from-violet-500 to-purple-600', glow: 'rgba(167,139,250,0.15)', href: '/assets?status=available' },
     { label: t('dash.maintenance', lang), value: 8, icon: Wrench, color: 'from-amber-500 to-orange-600', glow: 'rgba(251,191,36,0.15)', href: '/maintenance' },
@@ -250,7 +250,7 @@ export default function DashboardPage() {
           {/* Recent Activity */}
           <motion.div variants={itemVariants} className="glass-card p-6 lg:col-span-2">
             <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-cyan-400" />
+              <Clock className="w-4 h-4 text-accent-400" />
               {t('dash.recentActivity', lang)}
             </h3>
             <div className="space-y-3">
@@ -296,7 +296,7 @@ export default function DashboardPage() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
-                        <Icon className="w-5 h-5 text-cyan-400" />
+                        <Icon className="w-5 h-5 text-accent-400" />
                         <span className="text-xs">{action.label}</span>
                       </motion.div>
                     </Link>
@@ -320,7 +320,7 @@ export default function DashboardPage() {
                     className={`p-3 rounded-xl text-xs flex items-start gap-2 cursor-pointer group hover:ring-1 hover:ring-white/20 transition-all ${
                       insight.type === 'warning' ? 'bg-amber-500/10 border border-amber-500/20' :
                       insight.type === 'success' ? 'bg-emerald-500/10 border border-emerald-500/20' :
-                      'bg-cyan-500/10 border border-cyan-500/20'
+                      'bg-accent-500/10 border border-accent-500/20'
                     }`}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -330,7 +330,7 @@ export default function DashboardPage() {
                   >
                     {insight.type === 'warning' ? <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" /> :
                      insight.type === 'success' ? <CheckCircle className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" /> :
-                     <ArrowUpRight className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0 mt-0.5" />}
+                     <ArrowUpRight className="w-3.5 h-3.5 text-accent-400 flex-shrink-0 mt-0.5" />}
                     <span className="text-white/70 flex-1">{insight.text}</span>
                     <ExternalLink className="w-3 h-3 text-white/0 group-hover:text-white/40 transition-all flex-shrink-0 mt-0.5" />
                   </motion.div>
@@ -344,11 +344,11 @@ export default function DashboardPage() {
         <motion.div variants={itemVariants} className="glass-card p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-white font-semibold flex items-center gap-2">
-              <GitBranch className="w-4 h-4 text-cyan-400" />
+              <GitBranch className="w-4 h-4 text-accent-400" />
               {lang === 'en' ? 'Recent Change Requests' : '最近变更请求'}
             </h3>
             <Link href="/change-requests">
-              <motion.span className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer" whileHover={{ x: 2 }}>
+              <motion.span className="text-xs text-accent-400 hover:text-accent-300 flex items-center gap-1 cursor-pointer" whileHover={{ x: 2 }}>
                 {lang === 'en' ? 'View All' : '查看全部'}
                 <ArrowUpRight className="w-3 h-3" />
               </motion.span>
@@ -369,14 +369,14 @@ export default function DashboardPage() {
                   whileHover={{ scale: 1.02 }}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-cyan-400 text-xs font-mono">{cr.number}</span>
+                    <span className="text-accent-400 text-xs font-mono">{cr.number}</span>
                     <ExternalLink className="w-3 h-3 text-white/0 group-hover:text-white/40 transition-all" />
                   </div>
                   <p className="text-white text-sm mb-2 truncate">{cr.desc}</p>
                   <div className="flex items-center gap-2">
                     <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] border ${
                       cr.state === 'implement' ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' :
-                      cr.state === 'scheduled' ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' :
+                      cr.state === 'scheduled' ? 'bg-accent-500/20 text-accent-400 border-accent-500/30' :
                       'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                     }`}>
                       {cr.state.charAt(0).toUpperCase() + cr.state.slice(1)}
@@ -399,7 +399,7 @@ export default function DashboardPage() {
               {lang === 'en' ? 'Warranty Alerts' : '保修提醒'}
             </h3>
             <Link href="/warranty">
-              <motion.span className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer" whileHover={{ x: 2 }}>
+              <motion.span className="text-xs text-accent-400 hover:text-accent-300 flex items-center gap-1 cursor-pointer" whileHover={{ x: 2 }}>
                 {lang === 'en' ? 'View All' : '查看全部'}
                 <ArrowUpRight className="w-3 h-3" />
               </motion.span>
@@ -412,7 +412,7 @@ export default function DashboardPage() {
                   className={`p-4 rounded-xl border cursor-pointer group hover:ring-1 hover:ring-white/20 transition-all ${
                     alert.status === 'critical' ? 'bg-red-500/10 border-red-500/20' :
                     alert.status === 'warning' ? 'bg-amber-500/10 border-amber-500/20' :
-                    'bg-cyan-500/10 border-cyan-500/20'
+                    'bg-accent-500/10 border-accent-500/20'
                   }`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -427,7 +427,7 @@ export default function DashboardPage() {
                   <div className={`text-xs font-medium ${
                     alert.status === 'critical' ? 'text-red-400' :
                     alert.status === 'warning' ? 'text-amber-400' :
-                    'text-cyan-400'
+                    'text-accent-400'
                   }`}>
                     {alert.daysLeft} {lang === 'en' ? 'days remaining' : '天剩余'}
                   </div>

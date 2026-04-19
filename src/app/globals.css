@@ -1,5 +1,62 @@
 @import "tailwindcss";
 
+/* Theme-aware accent colors via CSS custom properties */
+@theme {
+  --color-accent-50: var(--accent-50);
+  --color-accent-100: var(--accent-100);
+  --color-accent-200: var(--accent-200);
+  --color-accent-300: var(--accent-300);
+  --color-accent-400: var(--accent-400);
+  --color-accent-500: var(--accent-500);
+  --color-accent-600: var(--accent-600);
+  --color-accent-700: var(--accent-700);
+}
+
+/* Carbon theme (default) — emerald green */
+:root, [data-theme="carbon"] {
+  --accent-50: rgba(16, 185, 129, 0.05);
+  --accent-100: rgba(16, 185, 129, 0.1);
+  --accent-200: #6ee7b7;
+  --accent-300: #34d399;
+  --accent-400: #34d399;
+  --accent-500: #10b981;
+  --accent-600: #059669;
+  --accent-700: #047857;
+  --glow-color: rgba(16, 185, 129, 0.5);
+  --glow-color-light: rgba(52, 211, 153, 0.3);
+  --selection-color: rgba(52, 211, 153, 0.4);
+}
+
+/* Neon theme — violet/purple */
+[data-theme="neon"] {
+  --accent-50: rgba(139, 92, 246, 0.05);
+  --accent-100: rgba(139, 92, 246, 0.1);
+  --accent-200: #c4b5fd;
+  --accent-300: #a78bfa;
+  --accent-400: #a78bfa;
+  --accent-500: #8b5cf6;
+  --accent-600: #7c3aed;
+  --accent-700: #6d28d9;
+  --glow-color: rgba(139, 92, 246, 0.5);
+  --glow-color-light: rgba(167, 139, 250, 0.3);
+  --selection-color: rgba(139, 92, 246, 0.4);
+}
+
+/* Daylight theme — orange */
+[data-theme="daylight"] {
+  --accent-50: rgba(249, 115, 22, 0.05);
+  --accent-100: rgba(249, 115, 22, 0.1);
+  --accent-200: #fdba74;
+  --accent-300: #fb923c;
+  --accent-400: #f97316;
+  --accent-500: #f97316;
+  --accent-600: #ea580c;
+  --accent-700: #c2410c;
+  --glow-color: rgba(249, 115, 22, 0.5);
+  --glow-color-light: rgba(251, 146, 60, 0.3);
+  --selection-color: rgba(249, 115, 22, 0.4);
+}
+
 @layer base {
   * {
     scrollbar-width: thin;
@@ -21,7 +78,7 @@
   }
 
   ::selection {
-    background: rgba(34, 211, 238, 0.4);
+    background: var(--selection-color);
     color: white;
   }
 
@@ -69,7 +126,7 @@
     outline: none;
     background: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.4);
-    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.2);
+    box-shadow: 0 0 0 3px var(--accent-100);
   }
 
   .glass-input::placeholder {
@@ -107,7 +164,7 @@
   }
 
   .glow-text {
-    text-shadow: 0 0 20px rgba(34, 211, 238, 0.5), 0 0 40px rgba(34, 211, 238, 0.3);
+    text-shadow: 0 0 20px var(--glow-color), 0 0 40px var(--glow-color-light);
   }
 
   .float-animation {
@@ -130,8 +187,8 @@
 }
 
 @keyframes pulseGlow {
-  0%, 100% { opacity: 1; box-shadow: 0 0 5px rgba(34, 211, 238, 0.3); }
-  50% { opacity: 0.8; box-shadow: 0 0 20px rgba(34, 211, 238, 0.6); }
+  0%, 100% { opacity: 1; box-shadow: 0 0 5px var(--glow-color-light); }
+  50% { opacity: 0.8; box-shadow: 0 0 20px var(--glow-color); }
 }
 
 @keyframes shimmer {

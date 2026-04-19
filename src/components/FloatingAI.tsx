@@ -152,7 +152,7 @@ export default function FloatingAI() {
       <AnimatePresence>
         {!open && (
           <motion.button
-            className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow-lg shadow-violet-500/25 flex items-center justify-center text-white hover:shadow-xl hover:shadow-violet-500/40 transition-shadow"
+            className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-accent-500 to-accent-600 shadow-lg shadow-accent-500/25 flex items-center justify-center text-white hover:shadow-xl hover:shadow-accent-500/40 transition-shadow"
             onClick={() => setOpen(true)}
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -169,7 +169,7 @@ export default function FloatingAI() {
             </motion.div>
             {/* Pulse ring */}
             <motion.div
-              className="absolute inset-0 rounded-full border-2 border-violet-400"
+              className="absolute inset-0 rounded-full border-2 border-accent-400"
               animate={{ scale: [1, 1.3, 1.3], opacity: [0.6, 0, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
             />
@@ -186,7 +186,7 @@ export default function FloatingAI() {
               background: 'rgba(15, 23, 42, 0.95)',
               backdropFilter: 'blur(24px)',
               border: '1px solid rgba(255,255,255,0.15)',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.4), 0 0 40px rgba(139,92,246,0.1)',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.4), 0 0 40px rgba(255,255,255,0.05)',
             }}
             initial={{ scale: 0.8, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -194,9 +194,9 @@ export default function FloatingAI() {
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-accent-500/10 to-accent-500/10">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center">
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
                 <div>
@@ -220,11 +220,11 @@ export default function FloatingAI() {
                 <div className="space-y-3">
                   <div className="text-center py-4">
                     <motion.div
-                      className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center mb-3"
+                      className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-br from-accent-500/20 to-accent-500/20 flex items-center justify-center mb-3"
                       animate={{ y: [0, -4, 0] }}
                       transition={{ duration: 3, repeat: Infinity }}
                     >
-                      <MessageSquare className="w-6 h-6 text-violet-400" />
+                      <MessageSquare className="w-6 h-6 text-accent-400" />
                     </motion.div>
                     <p className="text-white/50 text-xs">{lang === 'en' ? 'Try asking:' : '试试问我：'}</p>
                   </div>
@@ -238,7 +238,7 @@ export default function FloatingAI() {
                       transition={{ delay: i * 0.1 }}
                       whileHover={{ x: 4 }}
                     >
-                      <Sparkles className="w-3 h-3 text-violet-400 inline mr-2" />
+                      <Sparkles className="w-3 h-3 text-accent-400 inline mr-2" />
                       {hint}
                     </motion.button>
                   ))}
@@ -254,7 +254,7 @@ export default function FloatingAI() {
                 >
                   <div className={`max-w-[85%] p-3 rounded-xl text-xs leading-relaxed whitespace-pre-wrap ${
                     msg.role === 'user'
-                      ? 'bg-gradient-to-r from-violet-500/30 to-fuchsia-500/30 text-white border border-violet-500/20'
+                      ? 'bg-gradient-to-r from-accent-500/30 to-accent-500/30 text-white border border-accent-500/20'
                       : 'bg-white/5 text-white/80 border border-white/10'
                   }`}>
                     {msg.content}
@@ -268,7 +268,7 @@ export default function FloatingAI() {
                     {[0, 1, 2].map(i => (
                       <motion.div
                         key={i}
-                        className="w-1.5 h-1.5 rounded-full bg-violet-400"
+                        className="w-1.5 h-1.5 rounded-full bg-accent-400"
                         animate={{ y: [0, -6, 0] }}
                         transition={{ duration: 0.6, delay: i * 0.15, repeat: Infinity }}
                       />
@@ -291,13 +291,13 @@ export default function FloatingAI() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={lang === 'en' ? 'Ask AI anything...' : '问AI任何问题...'}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-xs placeholder:text-white/30 focus:outline-none focus:border-violet-500/50"
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-xs placeholder:text-white/30 focus:outline-none focus:border-accent-500/50"
                   disabled={loading}
                 />
                 <motion.button
                   type="submit"
                   disabled={!input.trim() || loading}
-                  className="p-2 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-600 text-white disabled:opacity-40"
+                  className="p-2 rounded-xl bg-gradient-to-r from-accent-500 to-accent-600 text-white disabled:opacity-40"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >

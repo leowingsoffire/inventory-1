@@ -19,7 +19,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [themeKey, setThemeKey] = useState<ThemeKey>('midnight');
+  const [themeKey, setThemeKey] = useState<ThemeKey>('carbon');
   const [lang, setLang] = useState<Lang>('en');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [aiApiKey, setAiApiKey] = useState('');
@@ -34,6 +34,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (savedLang) setLang(savedLang);
     if (savedKey) setAiApiKey(savedKey);
   }, []);
+
+  // Sync data-theme attribute on <html> for CSS variable overrides
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', themeKey);
+  }, [themeKey]);
 
   const setTheme = (key: ThemeKey) => {
     setThemeKey(key);
@@ -52,7 +57,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-900 to-zinc-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] flex items-center justify-center">
         <div className="animate-pulse text-white text-xl">Loading...</div>
       </div>
     );

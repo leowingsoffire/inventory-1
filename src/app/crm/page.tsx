@@ -37,7 +37,7 @@ const typeConfig: Record<string, { color: string; icon: typeof Phone }> = {
   email: { color: 'from-emerald-500 to-emerald-600', icon: Mail },
   meeting: { color: 'from-violet-500 to-violet-600', icon: Calendar },
   'site-visit': { color: 'from-amber-500 to-amber-600', icon: MapPin },
-  'follow-up': { color: 'from-cyan-500 to-cyan-600', icon: Clock },
+  'follow-up': { color: 'from-accent-500 to-accent-600', icon: Clock },
   support: { color: 'from-rose-500 to-rose-600', icon: MessageSquare },
 };
 

@@ -40,7 +40,7 @@ const serviceCategories = [
     description: 'Plan, approve, and implement IT changes safely',
     descZh: '安全地规划、审批和实施IT变更',
     icon: GitBranch,
-    color: 'from-blue-500 to-cyan-500',
+    color: 'from-blue-500 to-accent-500',
     href: '/change-requests',
     stats: { label: 'Pending Changes', value: 8 },
   },
@@ -166,7 +166,7 @@ export default function ServiceDeskPage() {
         <motion.div variants={itemVariants} className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-accent-500 flex items-center justify-center">
                 <Server className="w-5 h-5 text-white" />
               </div>
               {lang === 'en' ? 'Service Desk' : '服务台'}

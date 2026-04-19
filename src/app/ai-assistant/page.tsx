@@ -169,7 +169,7 @@ export default function AIAssistantPage() {
                 )}
                 <div className={`max-w-[80%] p-4 rounded-2xl ${
                   msg.role === 'user'
-                    ? 'bg-cyan-500/20 border border-cyan-400/30 rounded-tr-md'
+                    ? 'bg-accent-500/20 border border-accent-400/30 rounded-tr-md'
                     : 'bg-white/5 border border-white/10 rounded-tl-md'
                 }`}>
                   <div className="text-white text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</div>
@@ -178,8 +178,8 @@ export default function AIAssistantPage() {
                   </p>
                 </div>
                 {msg.role === 'user' && (
-                  <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center flex-shrink-0">
-                    <User className="w-4 h-4 text-cyan-400" />
+                  <div className="w-8 h-8 rounded-xl bg-accent-500/20 border border-accent-400/30 flex items-center justify-center flex-shrink-0">
+                    <User className="w-4 h-4 text-accent-400" />
                   </div>
                 )}
               </motion.div>

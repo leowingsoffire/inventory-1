@@ -201,7 +201,7 @@ export default function CustomersPage() {
             </h1>
             <p className="text-white/50 text-sm mt-1">{lang === 'en' ? 'Manage your SME clients and contracts' : '管理您的中小企业客户和合同'}</p>
           </div>
-          <motion.button onClick={() => { resetForm(); setEditingCustomer(null); setShowModal(true); }} className="px-4 py-2.5 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl text-sm font-medium flex items-center gap-2" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
+          <motion.button onClick={() => { resetForm(); setEditingCustomer(null); setShowModal(true); }} className="px-4 py-2.5 bg-accent-500 hover:bg-accent-600 text-white rounded-xl text-sm font-medium flex items-center gap-2" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
             <Plus className="w-4 h-4" /> {lang === 'en' ? 'Add Customer' : '添加客户'}
           </motion.button>
         </div>
@@ -471,7 +471,7 @@ export default function CustomersPage() {
 
                 <div className="flex justify-end gap-2 mt-5">
                   <button onClick={() => { setShowModal(false); setEditingCustomer(null); }} className="px-4 py-2 text-white/50 hover:text-white text-sm">{lang === 'en' ? 'Cancel' : '取消'}</button>
-                  <motion.button onClick={handleSubmit} className="px-5 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl text-sm font-medium" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
+                  <motion.button onClick={handleSubmit} className="px-5 py-2 bg-accent-500 hover:bg-accent-600 text-white rounded-xl text-sm font-medium" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
                     {editingCustomer ? (lang === 'en' ? 'Update' : '更新') : (lang === 'en' ? 'Create' : '创建')}
                   </motion.button>
                 </div>

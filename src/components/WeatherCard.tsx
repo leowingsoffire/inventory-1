@@ -21,9 +21,9 @@ interface WeatherData {
 const WEATHER_CONDITIONS = {
   sunny: { icon: Sun, color: 'text-yellow-400', bg: 'from-amber-500/20 to-orange-500/10', particles: '☀️' },
   cloudy: { icon: Cloud, color: 'text-gray-300', bg: 'from-gray-500/20 to-slate-500/10', particles: '☁️' },
-  rainy: { icon: CloudRain, color: 'text-blue-400', bg: 'from-blue-500/20 to-cyan-500/10', particles: '🌧️' },
+  rainy: { icon: CloudRain, color: 'text-blue-400', bg: 'from-blue-500/20 to-accent-500/10', particles: '🌧️' },
   stormy: { icon: CloudLightning, color: 'text-purple-400', bg: 'from-purple-500/20 to-indigo-500/10', particles: '⛈️' },
-  drizzle: { icon: CloudDrizzle, color: 'text-cyan-400', bg: 'from-cyan-500/20 to-blue-500/10', particles: '🌦️' },
+  drizzle: { icon: CloudDrizzle, color: 'text-accent-400', bg: 'from-accent-500/20 to-blue-500/10', particles: '🌦️' },
   foggy: { icon: CloudFog, color: 'text-gray-400', bg: 'from-gray-500/20 to-slate-500/10', particles: '🌫️' },
   snowy: { icon: CloudSnow, color: 'text-white', bg: 'from-white/20 to-blue-500/10', particles: '❄️' },
   windy: { icon: Wind, color: 'text-teal-400', bg: 'from-teal-500/20 to-emerald-500/10', particles: '💨' },

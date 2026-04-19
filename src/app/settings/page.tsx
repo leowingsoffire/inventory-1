@@ -48,11 +48,9 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'general' | 'integrations' | 'workflow' | 'guide'>('general');
 
   const themeEntries: { key: ThemeKey; label: string; preview: string }[] = [
-    { key: 'ocean', label: lang === 'en' ? 'Ocean Blue' : '海洋蓝', preview: 'from-blue-900 via-indigo-900 to-slate-900' },
-    { key: 'emerald', label: lang === 'en' ? 'Emerald Green' : '翡翠绿', preview: 'from-emerald-900 via-teal-900 to-slate-900' },
-    { key: 'purple', label: lang === 'en' ? 'Royal Purple' : '皇家紫', preview: 'from-purple-900 via-violet-900 to-slate-900' },
-    { key: 'sunset', label: lang === 'en' ? 'Sunset Orange' : '日落橙', preview: 'from-orange-900 via-red-900 to-slate-900' },
-    { key: 'midnight', label: lang === 'en' ? 'Midnight Dark' : '午夜黑', preview: 'from-gray-900 via-slate-900 to-zinc-900' },
+    { key: 'carbon', label: lang === 'en' ? 'Carbon' : '碳黑', preview: 'from-[#1a1a2e] via-[#16213e] to-[#0f3460]' },
+    { key: 'neon', label: lang === 'en' ? 'Neon' : '霓虹', preview: 'from-[#0d0b1e] via-[#1a1040] to-[#13072e]' },
+    { key: 'daylight', label: lang === 'en' ? 'Daylight' : '晨光', preview: 'from-[#0f172a] via-[#1e293b] to-[#0c1524]' },
   ];
 
   const handleSave = () => {
@@ -74,13 +72,13 @@ export default function SettingsPage() {
     { icon: Users, label: lang === 'en' ? 'Employees' : '员工', color: 'from-violet-500 to-violet-600', desc: lang === 'en' ? 'Assign assets to staff' : '分配资产给员工', href: '/employees' },
     { icon: Wrench, label: lang === 'en' ? 'Maintenance' : '维护', color: 'from-amber-500 to-amber-600', desc: lang === 'en' ? 'Create repair tickets' : '创建维修工单', href: '/maintenance' },
     { icon: Shield, label: lang === 'en' ? 'Warranty' : '保修', color: 'from-red-500 to-red-600', desc: lang === 'en' ? 'Monitor & alert expiry' : '监控并提醒到期', href: '/warranty' },
-    { icon: TrendingUp, label: lang === 'en' ? 'Reports' : '报告', color: 'from-cyan-500 to-cyan-600', desc: lang === 'en' ? 'Analytics & insights' : '分析和洞察', href: '/reports' },
+    { icon: TrendingUp, label: lang === 'en' ? 'Reports' : '报告', color: 'from-accent-500 to-accent-600', desc: lang === 'en' ? 'Analytics & insights' : '分析和洞察', href: '/reports' },
     { icon: ShieldCheck, label: lang === 'en' ? 'RBAC' : '权限', color: 'from-pink-500 to-pink-600', desc: lang === 'en' ? 'Manage user roles' : '管理用户角色', href: '/users' },
     { icon: Bot, label: lang === 'en' ? 'AI Assistant' : 'AI助手', color: 'from-indigo-500 to-indigo-600', desc: lang === 'en' ? 'Ask anything about IT' : '询问IT相关问题', href: '/ai-assistant' },
   ];
 
   const guideCards = [
-    { title: lang === 'en' ? '1. Add Assets' : '1. 添加资产', desc: lang === 'en' ? 'Start by registering all IT hardware. Use barcode scanner or manual entry.' : '首先注册所有IT硬件。使用条码扫描或手动输入。', icon: Monitor, color: 'from-blue-500 to-cyan-500', href: '/assets?action=add', action: lang === 'en' ? 'Add Asset' : '添加资产' },
+    { title: lang === 'en' ? '1. Add Assets' : '1. 添加资产', desc: lang === 'en' ? 'Start by registering all IT hardware. Use barcode scanner or manual entry.' : '首先注册所有IT硬件。使用条码扫描或手动输入。', icon: Monitor, color: 'from-blue-500 to-accent-500', href: '/assets?action=add', action: lang === 'en' ? 'Add Asset' : '添加资产' },
     { title: lang === 'en' ? '2. Register Employees' : '2. 注册员工', desc: lang === 'en' ? 'Add staff profiles, then assign assets to them from the Assets page.' : '添加员工档案，然后从资产页面分配资产。', icon: Users, color: 'from-violet-500 to-purple-500', href: '/employees', action: lang === 'en' ? 'Add Employee' : '添加员工' },
     { title: lang === 'en' ? '3. Track Warranties' : '3. 跟踪保修', desc: lang === 'en' ? 'System auto-detects expiring warranties. Configure email/WhatsApp alerts.' : '系统自动检测到期保修。配置邮件/WhatsApp提醒。', icon: Shield, color: 'from-amber-500 to-orange-500', href: '/warranty', action: lang === 'en' ? 'View Warranty' : '查看保修' },
     { title: lang === 'en' ? '4. Maintenance Tickets' : '4. 维护工单', desc: lang === 'en' ? 'Log repair & upgrade tickets. Link to specific assets for tracking.' : '记录维修和升级工单。链接到具体资产进行跟踪。', icon: Wrench, color: 'from-emerald-500 to-teal-500', href: '/maintenance?action=add', action: lang === 'en' ? 'Create Ticket' : '创建工单' },
@@ -133,7 +131,7 @@ export default function SettingsPage() {
                 <Palette className="w-4 h-4 text-pink-400" />
                 {t('settings.theme', lang)}
               </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {themeEntries.map((entry) => (
                   <motion.button
                     key={entry.key}
@@ -341,7 +339,7 @@ export default function SettingsPage() {
           <motion.div className="space-y-5" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <motion.div className="glass-card p-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <h2 className="text-white font-semibold mb-1 flex items-center gap-2 text-sm">
-                <Database className="w-4 h-4 text-cyan-400" />
+                <Database className="w-4 h-4 text-accent-400" />
                 {lang === 'en' ? 'System Architecture' : '系统架构'}
               </h2>
               <p className="text-white/40 text-xs mb-5">{lang === 'en' ? 'All modules are interconnected. Click any node to navigate.' : '所有模块互相连接。点击任何节点进行导航。'}</p>
@@ -415,7 +413,7 @@ export default function SettingsPage() {
                 <div className="mt-4 p-4 rounded-xl bg-white/5 border border-white/10 border-dashed">
                   <div className="flex items-center gap-2 mb-3">
                     <motion.div animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}>
-                      <Cloud className="w-4 h-4 text-cyan-400" />
+                      <Cloud className="w-4 h-4 text-accent-400" />
                     </motion.div>
                     <span className="text-white/60 text-xs font-medium">{lang === 'en' ? 'Integration Layer' : '集成层'}</span>
                   </div>
@@ -427,7 +425,7 @@ export default function SettingsPage() {
                       { label: 'Webhook', icon: Webhook, color: 'text-violet-400' },
                       { label: 'OpenAI', icon: Bot, color: 'text-indigo-400' },
                       { label: 'Barcode', icon: ScanLine, color: 'text-amber-400' },
-                      { label: 'Weather API', icon: Cloud, color: 'text-cyan-400' },
+                      { label: 'Weather API', icon: Cloud, color: 'text-accent-400' },
                     ].map((int, i) => {
                       const IntIcon = int.icon;
                       return (
@@ -521,7 +519,7 @@ export default function SettingsPage() {
             {/* Connections Card */}
             <motion.div className="glass-card p-5" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
               <h2 className="text-white font-semibold mb-3 flex items-center gap-2 text-sm">
-                <Link2 className="w-4 h-4 text-cyan-400" />
+                <Link2 className="w-4 h-4 text-accent-400" />
                 {lang === 'en' ? 'How Features Connect' : '功能如何连接'}
               </h2>
               <div className="space-y-2.5">

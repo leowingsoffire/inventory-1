@@ -15,7 +15,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <motion.div
           className="absolute w-96 h-96 rounded-full opacity-10 blur-3xl"
-          style={{ background: 'radial-gradient(circle, rgba(34,211,238,0.4) 0%, transparent 70%)' }}
+          style={{ background: `radial-gradient(circle, ${theme.orbColors[0]} 0%, transparent 70%)` }}
           animate={{
             x: [0, 100, -50, 0],
             y: [0, -80, 60, 0],
@@ -25,7 +25,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         />
         <motion.div
           className="absolute w-80 h-80 rounded-full opacity-10 blur-3xl"
-          style={{ background: 'radial-gradient(circle, rgba(168,85,247,0.4) 0%, transparent 70%)' }}
+          style={{ background: `radial-gradient(circle, ${theme.orbColors[1]} 0%, transparent 70%)` }}
           animate={{
             x: [0, -80, 40, 0],
             y: [0, 60, -40, 0],
@@ -35,7 +35,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         />
         <motion.div
           className="absolute w-64 h-64 rounded-full opacity-10 blur-3xl"
-          style={{ background: 'radial-gradient(circle, rgba(52,211,153,0.4) 0%, transparent 70%)' }}
+          style={{ background: `radial-gradient(circle, ${theme.orbColors[2]} 0%, transparent 70%)` }}
           animate={{
             x: [0, 60, -30, 0],
             y: [0, -60, 80, 0],

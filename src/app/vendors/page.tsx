@@ -37,7 +37,7 @@ const statusColors: Record<string, string> = {
 };
 
 const categoryIcons: Record<string, string> = {
-  hardware: 'from-blue-500 to-cyan-500',
+  hardware: 'from-blue-500 to-accent-500',
   software: 'from-violet-500 to-purple-500',
   services: 'from-emerald-500 to-teal-500',
   telecom: 'from-amber-500 to-orange-500',
@@ -198,7 +198,7 @@ export default function VendorsPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: lang === 'en' ? 'Total Vendors' : '供应商总数', value: vendors.length, color: 'from-emerald-500 to-emerald-600' },
-            { label: lang === 'en' ? 'Hardware' : '硬件', value: vendors.filter(v => v.category === 'hardware').length, color: 'from-blue-500 to-cyan-500' },
+            { label: lang === 'en' ? 'Hardware' : '硬件', value: vendors.filter(v => v.category === 'hardware').length, color: 'from-blue-500 to-accent-500' },
             { label: lang === 'en' ? 'Software' : '软件', value: vendors.filter(v => v.category === 'software').length, color: 'from-violet-500 to-purple-500' },
             { label: lang === 'en' ? 'Services' : '服务', value: vendors.filter(v => v.category === 'services').length, color: 'from-amber-500 to-orange-500' },
           ].map((s, i) => (
