@@ -12,6 +12,8 @@ import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
 import { t } from '@/lib/i18n';
 import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
+import { CyberWorkflow } from '@/components/CyberWorkflow';
+import { getModuleWorkflows } from '@/lib/workflow-definitions';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
