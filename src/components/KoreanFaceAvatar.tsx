@@ -447,125 +447,441 @@ function RealisticEye({ cx, cy, face, uid, side, lw, hasWing, isSmoky, isWink }:
 }
 
 /* ═══════════════════════════════════════════════════════════════════════ */
-/*  Hair Back (behind face) — with highlight streaks                     */
+/*  Hair Back (behind face) — realistic Korean actress hairstyles        */
 /* ═══════════════════════════════════════════════════════════════════════ */
 function HairBack({ s, hc, hcH, hcL, uid }: { s: string; hc: string; hcH: string; hcL: string; uid: string }) {
+  const hcD = darken(hc, 18);
+  const hcD2 = darken(hc, 32);
+  /* Scalp/crown dome — shared by all styles */
   const dome = <path d="M36,75 Q30,44 56,24 Q76,8 100,6 Q124,8 144,24 Q170,44 164,75 L160,62 Q155,38 136,24 Q120,12 100,10 Q80,12 64,24 Q45,38 40,62 Z" fill={hc} />;
+  /* Dome inner shadow for depth */
+  const domeShadow = <path d="M42,70 Q38,48 58,30 Q78,14 100,12 Q122,14 142,30 Q162,48 158,70 L155,60 Q152,42 138,28 Q122,16 100,14 Q78,16 62,28 Q48,42 45,60 Z" fill={hcD} opacity="0.15" />;
 
-  // Highlight streak helper
-  const hl = (x1: string, y1: string, x2: string, y2: string, w = '2') =>
-    <line key={`${x1}${y1}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={hcH} strokeWidth={w} opacity="0.12" />;
-  const sh = (x1: string, y1: string, x2: string, y2: string, w = '1.5') =>
-    <line key={`s${x1}${y1}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={hcL} strokeWidth={w} opacity="0.1" />;
+  /* Strand line helpers */
+  const strand = (d: string, c: string, w: number, o: number) =>
+    <path key={d} d={d} stroke={c} strokeWidth={w} fill="none" opacity={o} strokeLinecap="round" />;
 
   switch (s) {
+    /* ── Long Straight — flowing past shoulders, layered ── */
     case 'long-straight':
-      return <g>{dome}
-        <path d="M36,75 L32,200 L52,200 L52,100 Z" fill={hc} />
-        <path d="M164,75 L168,200 L148,200 L148,100 Z" fill={hc} />
-        {hl("38","90","34","190")}{hl("43","88","39","185")}{sh("46","86","42","180")}
-        {hl("162","90","166","190")}{hl("157","88","161","185")}{sh("154","86","158","180")}
-        <path d="M52,80 L52,180" stroke={hcH} strokeWidth="3" opacity="0.08" />
-        <path d="M148,80 L148,180" stroke={hcH} strokeWidth="3" opacity="0.08" />
+      return <g>{dome}{domeShadow}
+        {/* Left hair mass — flowing layers */}
+        <path d="M36,72 Q28,82 26,100 Q24,130 26,160 Q27,178 30,200 L58,200 Q56,178 54,155 Q52,130 52,108 Q52,92 52,82 Z" fill={hc} />
+        <path d="M36,72 Q30,85 28,105 Q26,135 28,165 Q30,185 32,200 L44,200 Q42,182 40,160 Q38,135 38,110 Q38,90 40,78 Z" fill={hcD} opacity="0.3" />
+        {/* Right hair mass */}
+        <path d="M164,72 Q172,82 174,100 Q176,130 174,160 Q173,178 170,200 L142,200 Q144,178 146,155 Q148,130 148,108 Q148,92 148,82 Z" fill={hc} />
+        <path d="M164,72 Q170,85 172,105 Q174,135 172,165 Q170,185 168,200 L156,200 Q158,182 160,160 Q162,135 162,110 Q162,90 160,78 Z" fill={hcD} opacity="0.3" />
+        {/* Individual strand highlights — left */}
+        {strand("M38,80 Q34,120 32,165 Q31,184 32,200", hcH, 2, 0.1)}
+        {strand("M42,78 Q38,115 36,158 Q35,180 36,198", hcL, 1.5, 0.08)}
+        {strand("M46,76 Q42,110 42,155 Q42,178 43,196", hcH, 1, 0.09)}
+        {strand("M50,76 Q48,108 48,150 Q48,175 49,194", hcL, 1.2, 0.07)}
+        {/* Individual strand highlights — right */}
+        {strand("M162,80 Q166,120 168,165 Q169,184 168,200", hcH, 2, 0.1)}
+        {strand("M158,78 Q162,115 164,158 Q165,180 164,198", hcL, 1.5, 0.08)}
+        {strand("M154,76 Q158,110 158,155 Q158,178 157,196", hcH, 1, 0.09)}
+        {strand("M150,76 Q152,108 152,150 Q152,175 151,194", hcL, 1.2, 0.07)}
+        {/* Hair tips — natural tapered ends */}
+        <path d="M30,194 Q34,200 42,200" stroke={hcD} strokeWidth="0.6" fill="none" opacity="0.15" />
+        <path d="M170,194 Q166,200 158,200" stroke={hcD} strokeWidth="0.6" fill="none" opacity="0.15" />
       </g>;
+
+    /* ── Medium Bob — C-curl inward at jawline, volumetric ── */
     case 'bob':
-      return <g>{dome}
-        <path d="M36,75 Q30,110 44,130 Q56,144 68,142 L68,100 Z" fill={hc} />
-        <path d="M164,75 Q170,110 156,130 Q144,144 132,142 L132,100 Z" fill={hc} />
-        {hl("40","85","44","130")}{sh("44","83","48","125")}
-        {hl("160","85","156","130")}{sh("156","83","152","125")}
-        <path d="M42,90 Q38,115 46,132" stroke={hcH} strokeWidth="2.5" opacity="0.08" fill="none" />
+      return <g>{dome}{domeShadow}
+        {/* Left hair mass — voluminous with inward C-curl */}
+        <path d="M36,72 Q26,82 24,98 Q22,115 26,130 Q30,142 40,148 Q50,152 60,148 Q66,144 66,136 Q66,120 64,105 Q62,90 58,80 Z" fill={hc} />
+        <path d="M36,72 Q28,84 26,102 Q24,118 28,134 Q32,144 42,148 L48,148 Q40,142 36,132 Q32,118 34,100 Q36,86 40,76 Z" fill={hcD} opacity="0.25" />
+        {/* C-curl tip detail — left */}
+        <path d="M40,144 Q48,154 62,150 Q68,146 66,138" fill={hc} />
+        <path d="M42,146 Q50,152 60,148" stroke={hcD} strokeWidth="0.8" fill="none" opacity="0.12" />
+        {/* Right hair mass — mirror C-curl */}
+        <path d="M164,72 Q174,82 176,98 Q178,115 174,130 Q170,142 160,148 Q150,152 140,148 Q134,144 134,136 Q134,120 136,105 Q138,90 142,80 Z" fill={hc} />
+        <path d="M164,72 Q172,84 174,102 Q176,118 172,134 Q168,144 158,148 L152,148 Q160,142 164,132 Q168,118 166,100 Q164,86 160,76 Z" fill={hcD} opacity="0.25" />
+        {/* C-curl tip detail — right */}
+        <path d="M160,144 Q152,154 138,150 Q132,146 134,138" fill={hc} />
+        <path d="M158,146 Q150,152 140,148" stroke={hcD} strokeWidth="0.8" fill="none" opacity="0.12" />
+        {/* Strand highlights */}
+        {strand("M38,80 Q30,105 28,132 Q30,144 42,148", hcH, 1.8, 0.1)}
+        {strand("M42,78 Q34,100 34,128 Q36,142 46,148", hcL, 1.2, 0.08)}
+        {strand("M162,80 Q170,105 172,132 Q170,144 158,148", hcH, 1.8, 0.1)}
+        {strand("M158,78 Q166,100 166,128 Q164,142 154,148", hcL, 1.2, 0.08)}
+        {/* Volume highlight at crown */}
+        <ellipse cx="100" cy="20" rx="28" ry="8" fill={hcL} opacity="0.06" />
       </g>;
+
+    /* ── Ponytail — high gathered + flowing tail ── */
     case 'ponytail':
-      return <g>{dome}
-        <path d="M36,75 L40,100 L48,96 Z" fill={hc} />
-        <path d="M164,75 L160,100 L152,96 Z" fill={hc} />
-        <ellipse cx="145" cy="38" rx="14" ry="30" fill={hc} transform="rotate(25,145,38)" />
-        <path d="M148,58 Q160,100 152,148 Q148,164 140,172" stroke={hc} strokeWidth="17" fill="none" strokeLinecap="round" />
-        <path d="M148,58 Q160,100 152,148" stroke={hcL} strokeWidth="2" fill="none" opacity="0.1" />
-        <path d="M148,58 Q158,95 150,140" stroke={hcH} strokeWidth="3" fill="none" opacity="0.08" />
+      return <g>{dome}{domeShadow}
+        {/* Pulled-back sides — smooth, tight */}
+        <path d="M36,72 Q32,86 36,100 L48,96 Q46,86 48,76 Z" fill={hc} />
+        <path d="M164,72 Q168,86 164,100 L152,96 Q154,86 152,76 Z" fill={hc} />
+        {/* Hair gathered at crown-back */}
+        <ellipse cx="130" cy="24" rx="22" ry="18" fill={hc} transform="rotate(15,130,24)" />
+        <ellipse cx="130" cy="24" rx="18" ry="14" fill={hcD} opacity="0.2" transform="rotate(15,130,24)" />
+        {/* Scrunchie / hair tie */}
+        <ellipse cx="142" cy="36" rx="8" ry="5" fill={darken(hc, 25)} opacity="0.6" transform="rotate(20,142,36)" />
+        <ellipse cx="142" cy="36" rx="6" ry="3.5" fill={hcD2} opacity="0.3" transform="rotate(20,142,36)" />
+        {/* Flowing ponytail — multiple layers for volume */}
+        <path d="M142,40 Q158,65 160,100 Q162,135 156,165 Q152,182 144,192" fill={hc} stroke={hc} strokeWidth="18" strokeLinecap="round" />
+        <path d="M140,42 Q155,68 157,105 Q159,138 154,168 Q150,185 142,195" fill="none" stroke={hcD} strokeWidth="14" strokeLinecap="round" opacity="0.2" />
+        {/* Ponytail strand detail */}
+        {strand("M142,42 Q156,70 158,108 Q160,142 154,172 Q150,188 142,196", hcH, 2, 0.12)}
+        {strand("M140,44 Q154,72 155,112 Q156,145 152,174", hcL, 1.5, 0.09)}
+        {strand("M144,38 Q160,62 162,98 Q164,132 158,162", hcH, 1.2, 0.08)}
+        {/* Ponytail tip — natural tapered strands */}
+        <path d="M144,188 Q148,196 146,200" stroke={hc} strokeWidth="4" fill="none" strokeLinecap="round" opacity="0.7" />
+        <path d="M148,186 Q152,194 150,200" stroke={hc} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.5" />
+        <path d="M152,184 Q154,190 154,196" stroke={hc} strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.4" />
+        {/* Pulled-back texture lines */}
+        {strand("M52,50 Q80,30 120,24", hcD, 0.6, 0.1)}
+        {strand("M48,58 Q76,38 116,28", hcD, 0.5, 0.08)}
       </g>;
+
+    /* ── Bangs (curtain) — long hair with see-through Korean bangs ── */
     case 'bangs':
-      return <g>{dome}
-        <path d="M36,75 L32,192 L52,192 L52,100 Z" fill={hc} />
-        <path d="M164,75 L168,192 L148,192 L148,100 Z" fill={hc} />
-        {hl("38","88","34","182")}{sh("42","86","38","178")}
-        {hl("162","88","166","182")}{sh("158","86","162","178")}
+      return <g>{dome}{domeShadow}
+        {/* Left flowing hair */}
+        <path d="M36,72 Q28,84 26,104 Q24,134 26,164 Q28,184 32,200 L56,200 Q54,180 52,155 Q50,130 52,108 Q52,90 52,80 Z" fill={hc} />
+        <path d="M36,72 Q30,88 28,110 Q26,140 28,170 Q30,188 34,200 L44,200 Q42,186 40,166 Q38,138 38,112 Q38,92 40,78 Z" fill={hcD} opacity="0.25" />
+        {/* Right flowing hair */}
+        <path d="M164,72 Q172,84 174,104 Q176,134 174,164 Q172,184 168,200 L144,200 Q146,180 148,155 Q150,130 148,108 Q148,90 148,80 Z" fill={hc} />
+        <path d="M164,72 Q170,88 172,110 Q174,140 172,170 Q170,188 166,200 L156,200 Q158,186 160,166 Q162,138 162,112 Q162,92 160,78 Z" fill={hcD} opacity="0.25" />
+        {/* Strand highlights */}
+        {strand("M38,82 Q34,120 32,168 Q31,186 32,200", hcH, 1.8, 0.1)}
+        {strand("M44,78 Q40,112 40,160 Q40,182 42,198", hcL, 1.2, 0.08)}
+        {strand("M162,82 Q166,120 168,168 Q169,186 168,200", hcH, 1.8, 0.1)}
+        {strand("M156,78 Q160,112 160,160 Q160,182 158,198", hcL, 1.2, 0.08)}
       </g>;
+
+    /* ── Wavy — flowing S-curves with multiple wave layers ── */
     case 'wavy':
-      return <g>{dome}
-        <path d="M36,75 Q28,110 36,130 Q44,148 36,168 Q32,188 40,200 L56,200 Q58,180 52,160 Q44,140 52,118 L52,96 Z" fill={hc} />
-        <path d="M164,75 Q172,110 164,130 Q156,148 164,168 Q168,188 160,200 L144,200 Q142,180 148,160 Q156,140 148,118 L148,96 Z" fill={hc} />
-        {hl("40","100","36","168")}{sh("44","98","40","162")}
-        {hl("160","100","164","168")}{sh("156","98","160","162")}
+      return <g>{dome}{domeShadow}
+        {/* Left wavy mass — multiple S-curves */}
+        <path d="M36,72 Q26,88 28,108 Q30,124 24,140 Q18,158 22,178 Q26,194 34,200 L58,200 Q56,192 52,176 Q48,158 52,140 Q56,124 52,108 Q48,92 52,80 Z" fill={hc} />
+        <path d="M36,72 Q28,90 30,112 Q32,128 26,144 Q20,162 24,182 Q28,196 36,200 L46,200 Q42,194 38,180 Q34,162 38,144 Q44,128 40,112 Q36,94 40,78 Z" fill={hcD} opacity="0.25" />
+        {/* Right wavy mass */}
+        <path d="M164,72 Q174,88 172,108 Q170,124 176,140 Q182,158 178,178 Q174,194 166,200 L142,200 Q144,192 148,176 Q152,158 148,140 Q144,124 148,108 Q152,92 148,80 Z" fill={hc} />
+        <path d="M164,72 Q172,90 170,112 Q168,128 174,144 Q180,162 176,182 Q172,196 164,200 L154,200 Q158,194 162,180 Q166,162 162,144 Q156,128 160,112 Q164,94 160,78 Z" fill={hcD} opacity="0.25" />
+        {/* Wave ridge highlights */}
+        {strand("M30,108 Q24,140 22,178", hcH, 2, 0.1)}
+        {strand("M34,112 Q28,144 26,180", hcL, 1.5, 0.08)}
+        {strand("M40,106 Q36,136 34,172", hcH, 1, 0.09)}
+        {strand("M170,108 Q176,140 178,178", hcH, 2, 0.1)}
+        {strand("M166,112 Q172,144 174,180", hcL, 1.5, 0.08)}
+        {strand("M160,106 Q164,136 166,172", hcH, 1, 0.09)}
+        {/* Wave definition strokes */}
+        <path d="M28,108 Q26,116 24,126" stroke={hcD2} strokeWidth="0.5" fill="none" opacity="0.08" />
+        <path d="M172,108 Q174,116 176,126" stroke={hcD2} strokeWidth="0.5" fill="none" opacity="0.08" />
       </g>;
+
+    /* ── Bun — elegant messy bun with wispy tendrils ── */
     case 'bun':
-      return <g>{dome}
-        <path d="M36,75 L40,96 L48,92 Z" fill={hc} />
-        <path d="M164,75 L160,96 L152,92 Z" fill={hc} />
-        <circle cx="100" cy="-2" r="21" fill={hc} />
-        <circle cx="100" cy="-2" r="19" fill="none" stroke={hcH} strokeWidth="1.4" opacity="0.1" />
-        <ellipse cx="96" cy="-8" rx="7" ry="5" fill={hcL} opacity="0.05" />
+      return <g>{dome}{domeShadow}
+        {/* Pulled-back sides — sleek */}
+        <path d="M36,72 Q32,84 34,98 L48,94 Q46,84 48,76 Z" fill={hc} />
+        <path d="M164,72 Q168,84 166,98 L152,94 Q154,84 152,76 Z" fill={hc} />
+        {/* Bun — layered circles for 3D donut shape */}
+        <circle cx="100" cy="-4" r="24" fill={hc} />
+        <circle cx="100" cy="-4" r="22" fill={hcD} opacity="0.15" />
+        <ellipse cx="96" cy="-10" rx="14" ry="10" fill={hcL} opacity="0.06" />
+        {/* Bun twist/wrap detail */}
+        <path d="M82,-8 Q88,-20 100,-22 Q112,-20 118,-8" stroke={hcD} strokeWidth="1.5" fill="none" opacity="0.2" />
+        <path d="M86,-2 Q92,-14 100,-16 Q108,-14 114,-2" stroke={hcD2} strokeWidth="1" fill="none" opacity="0.12" />
+        <path d="M90,4 Q96,-6 100,-8 Q104,-6 110,4" stroke={hcD} strokeWidth="0.8" fill="none" opacity="0.1" />
+        {/* Bun highlights */}
+        <ellipse cx="94" cy="-12" rx="6" ry="4" fill="white" opacity="0.06" transform="rotate(-15,94,-12)" />
+        <ellipse cx="108" cy="-8" rx="4" ry="3" fill={hcH} opacity="0.08" />
+        {/* Wispy loose tendrils at nape */}
+        {strand("M44,92 Q38,106 36,120 Q35,130 37,138", hc, 2.5, 0.4)}
+        {strand("M46,90 Q42,102 40,116 Q39,124 40,132", hcD, 1.5, 0.25)}
+        {strand("M156,92 Q162,106 164,120 Q165,130 163,138", hc, 2.5, 0.4)}
+        {strand("M154,90 Q158,102 160,116 Q161,124 160,132", hcD, 1.5, 0.25)}
+        {/* Pulled-back texture */}
+        {strand("M50,52 Q74,32 100,26 Q126,32 150,52", hcD, 0.6, 0.08)}
+        {strand("M48,60 Q76,40 100,34 Q124,40 152,60", hcD, 0.5, 0.06)}
       </g>;
+
+    /* ── Side Part — glamorous asymmetric sweep ── */
     case 'side-part':
-      return <g>{dome}
-        <path d="M36,75 Q28,110 34,140 L32,200 L56,200 L52,110 Z" fill={hc} />
-        <path d="M164,75 L160,100 L152,96 Z" fill={hc} />
-        {hl("40","90","34","185")}{sh("44","88","38","180")}
+      return <g>{dome}{domeShadow}
+        {/* Left — heavy volume side (more hair) */}
+        <path d="M36,72 Q24,86 22,108 Q20,136 22,166 Q24,186 30,200 L58,200 Q56,182 54,158 Q52,132 52,108 Q52,90 52,80 Z" fill={hc} />
+        <path d="M36,72 Q26,88 24,112 Q22,142 24,172 Q26,190 32,200 L44,200 Q42,188 40,168 Q38,140 38,114 Q38,92 40,78 Z" fill={hcD} opacity="0.28" />
+        {/* Left extra volume — layered */}
+        <path d="M36,72 Q22,80 18,98 Q14,120 18,145 Q22,168 28,188 Q30,196 34,200 L40,200 Q36,194 32,180 Q26,160 24,140 Q20,118 24,96 Q28,80 36,72 Z" fill={hc} opacity="0.5" />
+        {/* Right — minimal swept side */}
+        <path d="M164,72 Q170,84 168,100 Q167,112 168,120 L152,116 Q152,102 152,90 Q152,82 152,76 Z" fill={hc} />
+        {/* Strand highlights — left (dominant) */}
+        {strand("M36,80 Q28,108 24,148 Q22,178 26,200", hcH, 2, 0.12)}
+        {strand("M40,78 Q32,104 30,142 Q28,172 32,198", hcL, 1.5, 0.09)}
+        {strand("M44,76 Q38,100 36,138 Q34,168 38,196", hcH, 1.2, 0.08)}
+        {strand("M48,76 Q44,98 42,134 Q40,164 44,194", hcL, 1, 0.07)}
+        {/* Right strand */}
+        {strand("M162,78 Q166,92 166,112", hcH, 1.2, 0.08)}
       </g>;
+
+    /* ── Twin Tail — pigtails with ties + flowing tails ── */
     case 'twin-tail':
-      return <g>{dome}
-        <path d="M36,75 L40,94 L48,90 Z" fill={hc} />
-        <path d="M164,75 L160,94 L152,90 Z" fill={hc} />
-        <path d="M48,82 Q32,110 28,148 Q26,168 32,192" stroke={hc} strokeWidth="17" fill="none" strokeLinecap="round" />
-        <path d="M152,82 Q168,110 172,148 Q174,168 168,192" stroke={hc} strokeWidth="17" fill="none" strokeLinecap="round" />
-        {sh("48","82","30","186")}{sh("152","82","170","186")}
-        <circle cx="46" cy="82" r="4" fill={darken(hc, 15)} stroke="white" strokeWidth="0.8" opacity="0.4" />
-        <circle cx="154" cy="82" r="4" fill={darken(hc, 15)} stroke="white" strokeWidth="0.8" opacity="0.4" />
+      return <g>{dome}{domeShadow}
+        {/* Pulled-back sides to tie points */}
+        <path d="M36,72 Q32,82 36,92 L48,88 Q46,80 48,74 Z" fill={hc} />
+        <path d="M164,72 Q168,82 164,92 L152,88 Q154,80 152,74 Z" fill={hc} />
+        {/* Left tail — flowing with volume */}
+        <path d="M42,86 Q28,100 24,124 Q20,152 24,180 Q26,194 30,200 L50,200 Q46,192 42,176 Q38,154 40,130 Q42,110 48,96 Z" fill={hc} />
+        <path d="M42,86 Q30,102 26,128 Q22,158 26,184 Q28,196 32,200 L40,200 Q38,194 36,182 Q32,160 34,134 Q36,112 42,98 Z" fill={hcD} opacity="0.25" />
+        {/* Right tail — flowing with volume */}
+        <path d="M158,86 Q172,100 176,124 Q180,152 176,180 Q174,194 170,200 L150,200 Q154,192 158,176 Q162,154 160,130 Q158,110 152,96 Z" fill={hc} />
+        <path d="M158,86 Q170,102 174,128 Q178,158 174,184 Q172,196 168,200 L160,200 Q162,194 164,182 Q168,160 166,134 Q164,112 158,98 Z" fill={hcD} opacity="0.25" />
+        {/* Hair ties — decorative */}
+        <ellipse cx="44" cy="88" rx="6" ry="5" fill={darken(hc, 22)} opacity="0.65" />
+        <ellipse cx="44" cy="88" rx="4" ry="3.5" fill="white" opacity="0.15" />
+        <ellipse cx="156" cy="88" rx="6" ry="5" fill={darken(hc, 22)} opacity="0.65" />
+        <ellipse cx="156" cy="88" rx="4" ry="3.5" fill="white" opacity="0.15" />
+        {/* Tail strand highlights */}
+        {strand("M40,92 Q30,118 26,152 Q24,178 28,200", hcH, 1.8, 0.1)}
+        {strand("M44,94 Q34,120 32,156 Q30,182 34,200", hcL, 1.2, 0.08)}
+        {strand("M160,92 Q170,118 174,152 Q176,178 172,200", hcH, 1.8, 0.1)}
+        {strand("M156,94 Q166,120 168,156 Q170,182 166,200", hcL, 1.2, 0.08)}
+        {/* Centre part texture */}
+        {strand("M56,50 Q80,28 100,24 Q120,28 144,50", hcD, 0.5, 0.08)}
       </g>;
+
+    /* ── Short — chic layered pixie cut ── */
     case 'short':
-      return <g>{dome}
-        <path d="M36,75 Q30,95 40,112 Q48,120 56,116 L52,90 Z" fill={hc} />
-        <path d="M164,75 Q170,95 160,112 Q152,120 144,116 L148,90 Z" fill={hc} />
-        {hl("38","82","42","110")}{hl("162","82","158","110")}
+      return <g>{dome}{domeShadow}
+        {/* Left — textured short layers covering ear */}
+        <path d="M36,72 Q28,82 28,96 Q28,108 34,116 Q40,122 48,120 Q54,118 56,112 Q58,104 56,94 Q54,84 52,78 Z" fill={hc} />
+        <path d="M36,72 Q30,84 30,98 Q30,110 36,118 Q42,124 48,122" fill={hcD} opacity="0.2" />
+        {/* Left layered texture */}
+        <path d="M42,76 Q34,86 34,100 Q34,112 40,118" stroke={hcD} strokeWidth="0.8" fill="none" opacity="0.12" />
+        <path d="M46,74 Q38,84 38,96 Q38,106 42,114" stroke={hcD} strokeWidth="0.6" fill="none" opacity="0.1" />
+        {/* Right — textured short layers */}
+        <path d="M164,72 Q172,82 172,96 Q172,108 166,116 Q160,122 152,120 Q146,118 144,112 Q142,104 144,94 Q146,84 148,78 Z" fill={hc} />
+        <path d="M164,72 Q170,84 170,98 Q170,110 164,118 Q158,124 152,122" fill={hcD} opacity="0.2" />
+        {/* Right layered texture */}
+        <path d="M158,76 Q166,86 166,100 Q166,112 160,118" stroke={hcD} strokeWidth="0.8" fill="none" opacity="0.12" />
+        <path d="M154,74 Q162,84 162,96 Q162,106 158,114" stroke={hcD} strokeWidth="0.6" fill="none" opacity="0.1" />
+        {/* Top volume — tousled layers */}
+        <path d="M46,38 Q60,12 100,8 Q140,12 154,38 L150,48 Q138,24 100,20 Q62,24 50,48 Z" fill={hcD} opacity="0.12" />
+        {/* Pixie texture strands */}
+        {strand("M38,78 Q32,92 32,108 Q34,116 40,120", hcH, 1.5, 0.1)}
+        {strand("M42,76 Q36,88 36,102 Q37,112 42,118", hcL, 1, 0.08)}
+        {strand("M162,78 Q168,92 168,108 Q166,116 160,120", hcH, 1.5, 0.1)}
+        {strand("M158,76 Q164,88 164,102 Q163,112 158,118", hcL, 1, 0.08)}
+        {/* Volume highlight */}
+        <ellipse cx="100" cy="16" rx="24" ry="6" fill={hcL} opacity="0.06" />
       </g>;
+
+    /* ── Updo — elegant chignon / French twist ── */
     case 'updo':
-      return <g>{dome}
-        <path d="M36,75 L40,94 L48,90 Z" fill={hc} />
-        <path d="M164,75 L160,94 L152,90 Z" fill={hc} />
-        <path d="M80,12 Q70,-4 84,-8 Q110,-12 124,2 Q136,14 120,14 Q104,14 96,6 Q88,-2 80,12" fill={hc} />
-        <path d="M90,0 Q100,-6 116,2" stroke={hcL} strokeWidth="1.2" fill="none" opacity="0.1" />
-        <circle cx="118" cy="8" r="2.5" fill="white" opacity="0.35" />
+      return <g>{dome}{domeShadow}
+        {/* Pulled-back sleek sides */}
+        <path d="M36,72 Q32,84 34,96 L48,92 Q46,82 48,74 Z" fill={hc} />
+        <path d="M164,72 Q168,84 166,96 L152,92 Q154,82 152,74 Z" fill={hc} />
+        {/* Chignon — elegant twisted bun at back-crown */}
+        <ellipse cx="108" cy="2" rx="26" ry="20" fill={hc} transform="rotate(10,108,2)" />
+        <ellipse cx="108" cy="2" rx="22" ry="16" fill={hcD} opacity="0.18" transform="rotate(10,108,2)" />
+        {/* Twist detail lines */}
+        <path d="M88,-8 Q96,-18 108,-18 Q120,-16 126,-6" stroke={hcD} strokeWidth="1.5" fill="none" opacity="0.18" />
+        <path d="M92,0 Q100,-8 108,-8 Q116,-6 120,2" stroke={hcD2} strokeWidth="1" fill="none" opacity="0.14" />
+        <path d="M96,8 Q104,2 108,2 Q112,2 116,8" stroke={hcD} strokeWidth="0.8" fill="none" opacity="0.1" />
+        {/* Elegant twist wrap */}
+        <path d="M86,-4 Q82,4 86,10 Q90,14 96,12 Q102,8 104,0 Q106,-6 112,-8 Q118,-6 120,-2 Q124,4 120,10 Q118,14 114,16" stroke={hcD} strokeWidth="0.6" fill="none" opacity="0.12" />
+        {/* Hair pin / decorative stick */}
+        <line x1="120" y1="-10" x2="126" y2="8" stroke="#d4af37" strokeWidth="1.5" opacity="0.55" />
+        <circle cx="126" cy="8" r="2.5" fill="#d4af37" opacity="0.6" />
+        <circle cx="126" cy="8" r="1.5" fill="white" opacity="0.3" />
+        {/* Shine on bun */}
+        <ellipse cx="102" cy="-8" rx="8" ry="5" fill="white" opacity="0.06" transform="rotate(-12,102,-8)" />
+        <ellipse cx="114" cy="-2" rx="5" ry="3" fill={hcH} opacity="0.08" />
+        {/* Wispy tendrils at nape */}
+        {strand("M44,90 Q38,104 36,118 Q35,128 37,136", hc, 2, 0.35)}
+        {strand("M46,88 Q42,100 40,112 Q39,120 40,128", hcD, 1.2, 0.2)}
+        {strand("M156,90 Q162,104 164,118 Q165,128 163,136", hc, 2, 0.35)}
+        {strand("M154,88 Q158,100 160,112 Q161,120 160,128", hcD, 1.2, 0.2)}
+        {/* Pulled-back texture */}
+        {strand("M50,52 Q76,30 100,24 Q124,30 150,52", hcD, 0.6, 0.08)}
       </g>;
+
     default:
-      return <g>{dome}</g>;
+      return <g>{dome}{domeShadow}</g>;
   }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════ */
-/*  Hair Front (over forehead) — with highlight streaks                  */
+/*  Hair Front (over forehead) — realistic per-style front rendering     */
 /* ═══════════════════════════════════════════════════════════════════════ */
 function HairFront({ s, hc, hcH, hcL, uid }: { s: string; hc: string; hcH: string; hcL: string; uid: string }) {
+  const hcD = darken(hc, 18);
+
   switch (s) {
+
+    /* ── Long Straight — centre-part face-framing layers ── */
+    case 'long-straight':
+      return <g>
+        {/* Centre part line */}
+        <line x1="100" y1="10" x2="100" y2="36" stroke={darken(hc, 40)} strokeWidth="0.6" opacity="0.15" />
+        {/* Left face-framing layer */}
+        <path d="M44,36 Q54,20 80,14 Q92,12 100,12 L100,36 Q88,32 76,34 Q60,38 52,48 L48,58 Z" fill={hc} />
+        <path d="M48,42 Q58,26 82,18 Q92,16 100,16 L100,36 Q90,34 80,36 Q64,40 56,50 L52,58 Z" fill={hcD} opacity="0.15" />
+        {/* Right face-framing layer */}
+        <path d="M156,36 Q146,20 120,14 Q108,12 100,12 L100,36 Q112,32 124,34 Q140,38 148,48 L152,58 Z" fill={hc} />
+        <path d="M152,42 Q142,26 118,18 Q108,16 100,16 L100,36 Q110,34 120,36 Q136,40 144,50 L148,58 Z" fill={hcD} opacity="0.15" />
+        {/* Soft face-framing wisps */}
+        <path d="M52,48 Q50,56 48,66" stroke={hcL} strokeWidth="0.7" fill="none" opacity="0.1" />
+        <path d="M148,48 Q150,56 152,66" stroke={hcL} strokeWidth="0.7" fill="none" opacity="0.1" />
+      </g>;
+
+    /* ── Bob — side-swept fringe with face framing ── */
+    case 'bob':
+      return <g>
+        {/* Left face frame — sweeps to side */}
+        <path d="M44,36 Q54,18 84,12 Q94,11 100,12 L100,34 Q90,30 78,32 Q62,36 54,46 L50,58 Z" fill={hc} />
+        <path d="M48,40 Q58,24 84,16 Q94,15 100,16 L100,34 Q92,32 82,34 Q66,38 58,48 L54,58 Z" fill={hcD} opacity="0.15" />
+        {/* Right face frame */}
+        <path d="M156,36 Q146,18 116,12 Q106,11 100,12 L100,34 Q110,30 122,32 Q138,36 146,46 L150,58 Z" fill={hc} />
+        <path d="M152,40 Q142,24 116,16 Q106,15 100,16 L100,34 Q108,32 118,34 Q134,38 142,48 L146,58 Z" fill={hcD} opacity="0.15" />
+        {/* Part line */}
+        <line x1="100" y1="12" x2="100" y2="32" stroke={darken(hc, 40)} strokeWidth="0.5" opacity="0.12" />
+        {/* Wispy face strands */}
+        <path d="M54,46 Q52,54 50,64" stroke={hcH} strokeWidth="0.6" fill="none" opacity="0.08" />
+        <path d="M146,46 Q148,54 150,64" stroke={hcH} strokeWidth="0.6" fill="none" opacity="0.08" />
+      </g>;
+
+    /* ── Ponytail — swept-back hairline with baby hairs ── */
+    case 'ponytail':
+      return <g>
+        {/* Swept-back smooth hairline */}
+        <path d="M44,36 Q58,18 100,12 Q142,18 156,36 L152,44 Q140,26 100,20 Q60,26 48,44 Z" fill={hc} />
+        <path d="M48,38 Q62,22 100,16 Q138,22 152,38 L150,42 Q138,28 100,22 Q62,28 50,42 Z" fill={hcD} opacity="0.12" />
+        {/* Baby hairs / wispy edges */}
+        <path d="M56,36 Q52,42 50,50" stroke={hc} strokeWidth="1.2" fill="none" opacity="0.35" strokeLinecap="round" />
+        <path d="M60,32 Q54,38 52,44" stroke={hc} strokeWidth="0.8" fill="none" opacity="0.25" strokeLinecap="round" />
+        <path d="M144,36 Q148,42 150,50" stroke={hc} strokeWidth="1.2" fill="none" opacity="0.35" strokeLinecap="round" />
+        <path d="M140,32 Q146,38 148,44" stroke={hc} strokeWidth="0.8" fill="none" opacity="0.25" strokeLinecap="round" />
+        {/* Pulled-back texture */}
+        <path d="M60,30 Q80,18 100,16 Q120,18 140,30" stroke={hcD} strokeWidth="0.5" fill="none" opacity="0.06" />
+      </g>;
+
+    /* ── Bangs — Korean see-through curtain bangs ── */
     case 'bangs':
       return <g>
+        {/* Full bang coverage */}
         <path d="M44,36 Q60,14 100,10 Q140,14 156,36 L152,72 Q140,66 124,67 Q110,68 100,70 Q90,68 76,67 Q60,66 48,72 Z" fill={hc} />
-        {/* See-through bang strands */}
-        <path d="M58,28 L54,68" stroke={hcL} strokeWidth="0.8" opacity="0.11" />
-        <path d="M74,20 L70,68" stroke={hcL} strokeWidth="0.8" opacity="0.09" />
-        <path d="M90,16 L88,70" stroke={hcL} strokeWidth="0.8" opacity="0.11" />
-        <path d="M100,14 L100,70" stroke={hcH} strokeWidth="1.2" opacity="0.13" />
-        <path d="M110,16 L112,70" stroke={hcL} strokeWidth="0.8" opacity="0.11" />
-        <path d="M126,20 L130,68" stroke={hcL} strokeWidth="0.8" opacity="0.09" />
-        <path d="M142,28 L146,68" stroke={hcL} strokeWidth="0.8" opacity="0.11" />
-        <path d="M48,66 Q74,60 100,64 Q126,60 152,66 L152,72 Q126,66 100,70 Q74,66 48,72 Z" fill={hc} opacity="0.42" />
+        {/* See-through strands — Korean style separated */}
+        <path d="M56,26 Q54,44 52,68" stroke={hcL} strokeWidth="1" opacity="0.12" />
+        <path d="M66,20 Q64,42 62,66" stroke={hcL} strokeWidth="0.8" opacity="0.1" />
+        <path d="M76,16 Q74,40 74,68" stroke={hcH} strokeWidth="1" opacity="0.11" />
+        <path d="M86,14 Q86,38 86,68" stroke={hcL} strokeWidth="0.8" opacity="0.09" />
+        <path d="M96,12 Q96,36 96,70" stroke={hcL} strokeWidth="0.8" opacity="0.1" />
+        <path d="M100,12 L100,70" stroke={hcH} strokeWidth="1.2" opacity="0.13" />
+        <path d="M104,12 Q104,36 104,70" stroke={hcL} strokeWidth="0.8" opacity="0.1" />
+        <path d="M114,14 Q114,38 114,68" stroke={hcL} strokeWidth="0.8" opacity="0.09" />
+        <path d="M124,16 Q126,40 126,68" stroke={hcH} strokeWidth="1" opacity="0.11" />
+        <path d="M134,20 Q136,42 138,66" stroke={hcL} strokeWidth="0.8" opacity="0.1" />
+        <path d="M144,26 Q146,44 148,68" stroke={hcL} strokeWidth="1" opacity="0.12" />
+        {/* Feathered tip edge — wispy */}
+        <path d="M48,66 Q62,60 76,63 Q88,66 100,64 Q112,66 124,63 Q138,60 152,66 L152,72 Q138,66 124,68 Q112,70 100,70 Q88,70 76,68 Q62,66 48,72 Z" fill={hc} opacity="0.45" />
+        <path d="M54,68 Q60,64 68,66" stroke={hcD} strokeWidth="0.4" fill="none" opacity="0.08" />
+        <path d="M132,66 Q140,64 146,68" stroke={hcD} strokeWidth="0.4" fill="none" opacity="0.08" />
       </g>;
+
+    /* ── Wavy — soft wave framing face ── */
+    case 'wavy':
+      return <g>
+        {/* Centre part */}
+        <line x1="100" y1="10" x2="100" y2="36" stroke={darken(hc, 40)} strokeWidth="0.6" opacity="0.15" />
+        {/* Left face frame — with gentle wave */}
+        <path d="M44,36 Q54,18 80,12 Q92,11 100,12 L100,36 Q88,30 76,32 Q62,38 54,50 Q50,58 48,66 Z" fill={hc} />
+        <path d="M48,40 Q58,24 82,16 Q94,15 100,16 L100,36 Q90,32 80,34 Q66,42 58,52 Q54,58 52,66 Z" fill={hcD} opacity="0.15" />
+        {/* Right face frame */}
+        <path d="M156,36 Q146,18 120,12 Q108,11 100,12 L100,36 Q112,30 124,32 Q138,38 146,50 Q150,58 152,66 Z" fill={hc} />
+        <path d="M152,40 Q142,24 118,16 Q106,15 100,16 L100,36 Q110,32 120,34 Q134,42 142,52 Q146,58 148,66 Z" fill={hcD} opacity="0.15" />
+        {/* Wavy framing wisps */}
+        <path d="M52,50 Q48,60 50,68" stroke={hcH} strokeWidth="0.8" fill="none" opacity="0.09" />
+        <path d="M148,50 Q152,60 150,68" stroke={hcH} strokeWidth="0.8" fill="none" opacity="0.09" />
+      </g>;
+
+    /* ── Bun — pulled-back smooth hairline with wispy edges ── */
+    case 'bun':
+      return <g>
+        {/* Sleek pulled-back hairline */}
+        <path d="M44,36 Q58,16 100,10 Q142,16 156,36 L152,44 Q140,24 100,18 Q60,24 48,44 Z" fill={hc} />
+        <path d="M48,38 Q62,20 100,14 Q138,20 152,38 L150,42 Q138,26 100,20 Q62,26 50,42 Z" fill={hcD} opacity="0.12" />
+        {/* Wispy flyaway tendrils */}
+        <path d="M54,38 Q50,46 48,56" stroke={hc} strokeWidth="1" fill="none" opacity="0.3" strokeLinecap="round" />
+        <path d="M58,34 Q52,40 50,48" stroke={hc} strokeWidth="0.7" fill="none" opacity="0.2" strokeLinecap="round" />
+        <path d="M146,38 Q150,46 152,56" stroke={hc} strokeWidth="1" fill="none" opacity="0.3" strokeLinecap="round" />
+        <path d="M142,34 Q148,40 150,48" stroke={hc} strokeWidth="0.7" fill="none" opacity="0.2" strokeLinecap="round" />
+        {/* Smooth pulled texture */}
+        <path d="M58,28 Q78,16 100,14 Q122,16 142,28" stroke={hcD} strokeWidth="0.4" fill="none" opacity="0.06" />
+      </g>;
+
+    /* ── Side Part — dramatic swept fringe ── */
     case 'side-part':
       return <g>
-        <path d="M44,36 Q56,16 90,12 Q112,14 120,28 L116,56 Q104,50 90,52 Q72,54 56,60 L48,64 Z" fill={hc} />
-        <path d="M60,26 Q70,20 82,24" stroke={hcL} strokeWidth="1" opacity="0.08" fill="none" />
-        <path d="M66,22 L62,54" stroke={hcH} strokeWidth="0.8" opacity="0.07" />
+        {/* Swept from right to left — dramatic coverage */}
+        <path d="M44,36 Q56,14 90,10 Q118,12 140,22 L136,42 Q120,26 96,22 Q70,24 56,40 L50,54 Z" fill={hc} />
+        <path d="M48,38 Q60,18 92,14 Q116,16 136,24 L134,38 Q118,28 96,26 Q72,28 58,42 L54,54 Z" fill={hcD} opacity="0.15" />
+        {/* Sweep direction highlights */}
+        <path d="M62,24 Q76,18 92,16" stroke={hcL} strokeWidth="0.8" fill="none" opacity="0.09" />
+        <path d="M68,20 Q82,14 98,14" stroke={hcH} strokeWidth="1" fill="none" opacity="0.08" />
+        {/* Face-framing strand */}
+        <path d="M52,42 Q48,54 48,66" stroke={hc} strokeWidth="1.5" fill="none" opacity="0.35" strokeLinecap="round" />
+        <path d="M56,38 Q52,48 50,60" stroke={hcD} strokeWidth="0.8" fill="none" opacity="0.2" strokeLinecap="round" />
+        {/* Minimal right side edge */}
+        <path d="M156,36 Q150,28 140,24 L140,36 Q148,38 152,44 Z" fill={hc} opacity="0.5" />
       </g>;
+
+    /* ── Twin Tail — centre part with face-framing tendrils ── */
+    case 'twin-tail':
+      return <g>
+        {/* Centre part line */}
+        <line x1="100" y1="10" x2="100" y2="36" stroke={darken(hc, 40)} strokeWidth="0.6" opacity="0.15" />
+        {/* Left hairline */}
+        <path d="M44,36 Q56,18 80,12 Q92,11 100,12 L100,36 Q88,30 76,32 Q60,38 52,48 L48,58 Z" fill={hc} />
+        <path d="M48,40 Q58,24 82,16 Q94,14 100,16 L100,34 Q90,32 80,34 Q66,40 56,50 L52,58 Z" fill={hcD} opacity="0.12" />
+        {/* Right hairline */}
+        <path d="M156,36 Q144,18 120,12 Q108,11 100,12 L100,36 Q112,30 124,32 Q140,38 148,48 L152,58 Z" fill={hc} />
+        <path d="M152,40 Q142,24 118,16 Q106,14 100,16 L100,34 Q110,32 120,34 Q134,40 144,50 L148,58 Z" fill={hcD} opacity="0.12" />
+        {/* Face-framing tendrils */}
+        <path d="M52,48 Q48,58 48,68" stroke={hc} strokeWidth="1.2" fill="none" opacity="0.3" strokeLinecap="round" />
+        <path d="M148,48 Q152,58 152,68" stroke={hc} strokeWidth="1.2" fill="none" opacity="0.3" strokeLinecap="round" />
+      </g>;
+
+    /* ── Short — textured layers framing face ── */
+    case 'short':
+      return <g>
+        {/* Textured tousled top — with natural side-swept direction */}
+        <path d="M44,36 Q56,14 100,8 Q144,14 156,36 L152,50 Q142,32 120,22 Q106,18 100,18 Q94,18 80,22 Q58,32 48,50 Z" fill={hc} />
+        <path d="M48,38 Q60,18 100,12 Q140,18 152,38 L150,46 Q140,30 118,22 Q106,20 100,20 Q94,20 82,22 Q60,30 50,46 Z" fill={hcD} opacity="0.15" />
+        {/* Tousled texture strands on top */}
+        <path d="M68,24 Q72,16 78,20" stroke={hcH} strokeWidth="0.7" fill="none" opacity="0.1" />
+        <path d="M86,18 Q90,12 96,16" stroke={hcL} strokeWidth="0.6" fill="none" opacity="0.08" />
+        <path d="M110,16 Q114,12 118,18" stroke={hcH} strokeWidth="0.7" fill="none" opacity="0.1" />
+        <path d="M128,20 Q132,16 136,24" stroke={hcL} strokeWidth="0.6" fill="none" opacity="0.08" />
+        {/* Side texture wisps */}
+        <path d="M50,46 Q48,54 48,62" stroke={hc} strokeWidth="1" fill="none" opacity="0.3" strokeLinecap="round" />
+        <path d="M150,46 Q152,54 152,62" stroke={hc} strokeWidth="1" fill="none" opacity="0.3" strokeLinecap="round" />
+      </g>;
+
+    /* ── Updo — elegant pulled-back with loose strands ── */
+    case 'updo':
+      return <g>
+        {/* Sleek swept-back hairline */}
+        <path d="M44,36 Q58,16 100,10 Q142,16 156,36 L152,44 Q140,24 100,18 Q60,24 48,44 Z" fill={hc} />
+        <path d="M48,38 Q62,20 100,14 Q138,20 152,38 L150,42 Q138,26 100,20 Q62,26 50,42 Z" fill={hcD} opacity="0.12" />
+        {/* Elegant loose tendrils framing face */}
+        <path d="M52,38 Q48,48 46,60 Q45,68 46,76" stroke={hc} strokeWidth="1.5" fill="none" opacity="0.35" strokeLinecap="round" />
+        <path d="M56,34 Q50,44 48,56 Q47,62 48,70" stroke={hcD} strokeWidth="0.8" fill="none" opacity="0.22" strokeLinecap="round" />
+        <path d="M148,38 Q152,48 154,60 Q155,68 154,76" stroke={hc} strokeWidth="1.5" fill="none" opacity="0.35" strokeLinecap="round" />
+        <path d="M144,34 Q150,44 152,56 Q153,62 152,70" stroke={hcD} strokeWidth="0.8" fill="none" opacity="0.22" strokeLinecap="round" />
+        {/* Smooth pulled texture */}
+        <path d="M58,28 Q78,16 100,14 Q122,16 142,28" stroke={hcD} strokeWidth="0.4" fill="none" opacity="0.06" />
+        <path d="M62,24 Q80,14 100,12 Q120,14 138,24" stroke={hcD} strokeWidth="0.3" fill="none" opacity="0.05" />
+      </g>;
+
     default:
       return <g>
         <path d="M44,36 Q48,26 56,36 L52,56 Q48,52 44,56 Z" fill={hc} opacity="0.62" />
