@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Settings as SettingsIcon, Palette, Globe, Bot, Building2, Save, Check, Eye,
   Mail, MessageSquare, Bell, Shield, Database, Cloud, Webhook, Link2,
   Monitor, Users, Wrench, TrendingUp, ScanLine, ArrowRight, Sparkles,
-  ArrowDown, LayoutDashboard, FileText, ShieldCheck,
+  ArrowDown, LayoutDashboard, FileText, ShieldCheck, Upload, Image, AlertCircle, CheckCircle,
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
 import { useApp } from '@/lib/context';
@@ -24,9 +24,56 @@ export default function SettingsPage() {
   const [apiKeyInput, setApiKeyInput] = useState(aiApiKey);
   const [showApiKey, setShowApiKey] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [companyName, setCompanyName] = useState('Unitech IT System Pte Ltd');
-  const [companyEmail, setCompanyEmail] = useState('admin@unitech.sg');
-  const [companyPhone, setCompanyPhone] = useState('+65 6789 0123');
+
+  // Company Profile (fetched from API)
+  const [company, setCompany] = useState({
+    companyName: '', uen: '', logoUrl: '', address: '', postalCode: '', country: 'Singapore',
+    phone: '', email: '', website: '', gstNumber: '', bankName: '', bankAccount: '', bankSwift: '',
+    invoicePrefix: 'INV', invoiceFooter: '', quotationFooter: '',
+  });
+  const [companySaving, setCompanySaving] = useState(false);
+  const [companySaved, setCompanySaved] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  // Import
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importTarget, setImportTarget] = useState('customers');
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ success: boolean; imported?: number; skipped?: number; errors?: string[]; totalRows?: number } | null>(null);
+
+  // Fetch company on mount
+  useEffect(() => {
+    fetch('/api/company').then(r => r.ok ? r.json() : null).then(data => { if (data) setCompany(data); });
+  }, []);
+
+  const handleSaveCompany = async () => {
+    setCompanySaving(true);
+    try {
+      const res = await fetch('/api/company', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(company) });
+      if (res.ok) { setCompanySaved(true); setTimeout(() => setCompanySaved(false), 2000); }
+    } catch { /* silent */ } finally { setCompanySaving(false); }
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || file.size > 2 * 1024 * 1024) return; // 2MB max
+    const reader = new FileReader();
+    reader.onload = () => setCompany(prev => ({ ...prev, logoUrl: reader.result as string }));
+    reader.readAsDataURL(file);
+  };
+
+  const handleImport = async () => {
+    if (!importFile) return;
+    setImporting(true); setImportResult(null);
+    try {
+      const form = new FormData();
+      form.append('file', importFile);
+      form.append('target', importTarget);
+      const res = await fetch('/api/import', { method: 'POST', body: form });
+      const data = await res.json();
+      setImportResult(data);
+    } catch { setImportResult({ success: false, errors: ['Upload failed'] }); } finally { setImporting(false); }
+  };
 
   // SMTP
   const [smtpHost, setSmtpHost] = useState('smtp.gmail.com');
@@ -187,26 +234,113 @@ export default function SettingsPage() {
               </div>
             </motion.div>
 
-            {/* Company Info */}
+            {/* Company Branding & Profile */}
             <motion.div className="glass-card p-5" custom={3} variants={cardVariants} initial="hidden" animate="visible">
               <h2 className="text-white font-semibold mb-3 flex items-center gap-2 text-sm">
                 <Building2 className="w-4 h-4 text-amber-400" />
-                {lang === 'en' ? 'Company Information' : '公司信息'}
+                {lang === 'en' ? 'Company Branding & Profile' : '公司品牌与档案'}
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-white/40 text-[10px] mb-1 block">{lang === 'en' ? 'Company Name' : '公司名称'}</label>
-                  <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="glass-input w-full px-3 py-2 text-sm" />
+
+              {/* Logo */}
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 rounded-xl border-2 border-dashed border-white/20 flex items-center justify-center bg-white/5 overflow-hidden flex-shrink-0">
+                  {company.logoUrl ? (
+                    <img src={company.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                  ) : (
+                    <Image className="w-6 h-6 text-white/30" />
+                  )}
                 </div>
                 <div>
-                  <label className="text-white/40 text-[10px] mb-1 block">{lang === 'en' ? 'Email' : '电子邮件'}</label>
-                  <input type="email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)} className="glass-input w-full px-3 py-2 text-sm" />
-                </div>
-                <div>
-                  <label className="text-white/40 text-[10px] mb-1 block">{lang === 'en' ? 'Phone' : '电话'}</label>
-                  <input type="tel" value={companyPhone} onChange={(e) => setCompanyPhone(e.target.value)} className="glass-input w-full px-3 py-2 text-sm" />
+                  <button onClick={() => logoInputRef.current?.click()} className="px-3 py-1.5 bg-accent-500/20 hover:bg-accent-500/30 border border-accent-500/30 rounded-lg text-accent-400 text-xs transition-colors flex items-center gap-1.5">
+                    <Upload className="w-3 h-3" /> {lang === 'en' ? 'Upload Logo' : '上传标志'}
+                  </button>
+                  <p className="text-white/30 text-[10px] mt-1">{lang === 'en' ? 'Max 2MB. Appears on invoices & reports.' : '最大2MB。显示在发票和报告上。'}</p>
+                  <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {[
+                  { key: 'companyName', label: lang === 'en' ? 'Company Name' : '公司名称', type: 'text' },
+                  { key: 'uen', label: lang === 'en' ? 'UEN (Registration No.)' : 'UEN（注册号）', type: 'text' },
+                  { key: 'email', label: lang === 'en' ? 'Email' : '电子邮件', type: 'email' },
+                  { key: 'phone', label: lang === 'en' ? 'Phone' : '电话', type: 'tel' },
+                  { key: 'website', label: lang === 'en' ? 'Website' : '网站', type: 'url' },
+                  { key: 'address', label: lang === 'en' ? 'Address' : '地址', type: 'text' },
+                  { key: 'postalCode', label: lang === 'en' ? 'Postal Code' : '邮编', type: 'text' },
+                  { key: 'country', label: lang === 'en' ? 'Country' : '国家', type: 'text' },
+                  { key: 'gstNumber', label: lang === 'en' ? 'GST Registration No.' : 'GST注册号', type: 'text' },
+                  { key: 'bankName', label: lang === 'en' ? 'Bank Name' : '银行名称', type: 'text' },
+                  { key: 'bankAccount', label: lang === 'en' ? 'Bank Account No.' : '银行账号', type: 'text' },
+                  { key: 'bankSwift', label: lang === 'en' ? 'SWIFT Code' : 'SWIFT代码', type: 'text' },
+                  { key: 'invoicePrefix', label: lang === 'en' ? 'Invoice Prefix' : '发票前缀', type: 'text' },
+                ].map(field => (
+                  <div key={field.key}>
+                    <label className="text-white/40 text-[10px] mb-1 block">{field.label}</label>
+                    <input type={field.type} value={(company as Record<string, string>)[field.key] || ''} onChange={e => setCompany(prev => ({ ...prev, [field.key]: e.target.value }))} className="glass-input w-full px-3 py-2 text-sm" />
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                <div>
+                  <label className="text-white/40 text-[10px] mb-1 block">{lang === 'en' ? 'Invoice Footer Text' : '发票页脚'}</label>
+                  <textarea value={company.invoiceFooter} onChange={e => setCompany(prev => ({ ...prev, invoiceFooter: e.target.value }))} rows={2} className="glass-input w-full px-3 py-2 text-sm resize-none" />
+                </div>
+                <div>
+                  <label className="text-white/40 text-[10px] mb-1 block">{lang === 'en' ? 'Quotation Footer Text' : '报价单页脚'}</label>
+                  <textarea value={company.quotationFooter} onChange={e => setCompany(prev => ({ ...prev, quotationFooter: e.target.value }))} rows={2} className="glass-input w-full px-3 py-2 text-sm resize-none" />
+                </div>
+              </div>
+              <div className="mt-3">
+                <motion.button onClick={handleSaveCompany} disabled={companySaving} className="px-4 py-2 bg-accent-500 hover:bg-accent-600 text-white rounded-xl text-xs transition-all flex items-center gap-2 disabled:opacity-50" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
+                  {companySaved ? <><Check className="w-3.5 h-3.5" /> {lang === 'en' ? 'Saved!' : '已保存！'}</> : <><Save className="w-3.5 h-3.5" /> {lang === 'en' ? 'Save Company Profile' : '保存公司档案'}</>}
+                </motion.button>
+              </div>
+            </motion.div>
+
+            {/* Data Import */}
+            <motion.div className="glass-card p-5" custom={4} variants={cardVariants} initial="hidden" animate="visible">
+              <h2 className="text-white font-semibold mb-2 flex items-center gap-2 text-sm">
+                <Upload className="w-4 h-4 text-emerald-400" />
+                {lang === 'en' ? 'Data Import (CSV / Excel)' : '数据导入（CSV / Excel）'}
+              </h2>
+              <p className="text-white/40 text-xs mb-3">
+                {lang === 'en' ? 'Import existing data from CSV or TSV files. Save your Excel as CSV before uploading.' : '从CSV或TSV文件导入现有数据。上传前请将Excel另存为CSV。'}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <select value={importTarget} onChange={e => setImportTarget(e.target.value)} className="px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500/50 appearance-none">
+                  {[
+                    { value: 'customers', label: lang === 'en' ? 'Customers' : '客户' },
+                    { value: 'vendors', label: lang === 'en' ? 'Vendors' : '供应商' },
+                    { value: 'assets', label: lang === 'en' ? 'Assets' : '资产' },
+                    { value: 'employees', label: lang === 'en' ? 'Employees' : '员工' },
+                    { value: 'invoices', label: lang === 'en' ? 'Invoices' : '发票' },
+                    { value: 'warranty', label: lang === 'en' ? 'Warranty Alerts' : '保修提醒' },
+                  ].map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                </select>
+                <label className="flex-1 flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/8 transition-colors">
+                  <Upload className="w-4 h-4 text-white/30" />
+                  <span className="text-white/50 text-sm truncate">{importFile ? importFile.name : (lang === 'en' ? 'Choose CSV file...' : '选择CSV文件...')}</span>
+                  <input type="file" accept=".csv,.tsv,.txt" onChange={e => { setImportFile(e.target.files?.[0] || null); setImportResult(null); }} className="hidden" />
+                </label>
+                <motion.button onClick={handleImport} disabled={!importFile || importing} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm transition-all flex items-center gap-2 disabled:opacity-40" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
+                  {importing ? (lang === 'en' ? 'Importing...' : '导入中...') : (lang === 'en' ? 'Import' : '导入')}
+                </motion.button>
+              </div>
+              {importResult && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`mt-3 p-3 rounded-xl border text-xs ${importResult.success ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' : 'bg-red-500/10 border-red-500/20 text-red-300'}`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    {importResult.success ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                    <span className="font-medium">{importResult.success ? (lang === 'en' ? 'Import Complete' : '导入完成') : (lang === 'en' ? 'Import Failed' : '导入失败')}</span>
+                  </div>
+                  {importResult.success && (
+                    <p>{lang === 'en' ? `${importResult.imported} imported, ${importResult.skipped} skipped out of ${importResult.totalRows} rows` : `${importResult.totalRows}行中导入${importResult.imported}条，跳过${importResult.skipped}条`}</p>
+                  )}
+                  {importResult.errors && importResult.errors.length > 0 && (
+                    <ul className="mt-1 space-y-0.5 list-disc list-inside text-[10px] opacity-80 max-h-24 overflow-y-auto">{importResult.errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
+                  )}
+                </motion.div>
+              )}
             </motion.div>
 
             <motion.button onClick={handleSave} className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-medium text-sm transition-all flex items-center gap-2" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>

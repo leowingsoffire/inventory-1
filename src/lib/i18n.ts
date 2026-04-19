@@ -25,6 +25,7 @@ const translations: Record<string, Record<Lang, string>> = {
   'nav.finance': { en: 'Finance', zh: '财务管理' },
   'nav.serviceDesk': { en: 'Service Desk', zh: '服务台' },
   'nav.changes': { en: 'Change Requests', zh: '变更请求' },
+  'nav.compliance': { en: 'PDPA Compliance', zh: 'PDPA 合规' },
 
   // Dashboard
   'dash.totalAssets': { en: 'Total Assets', zh: '资产总数' },

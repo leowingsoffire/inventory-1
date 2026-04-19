@@ -279,3 +279,43 @@ model ChangeRequest {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+model CompanyProfile {
+  id              String   @id @default(uuid())
+  companyName     String   @default("Unitech IT System Pte Ltd")
+  uen             String?
+  logoUrl         String?
+  address         String?
+  postalCode      String?
+  country         String   @default("Singapore")
+  phone           String?
+  email           String?
+  website         String?
+  gstNumber       String?
+  bankName        String?
+  bankAccount     String?
+  bankSwift       String?
+  invoicePrefix   String   @default("INV")
+  invoiceFooter   String?
+  quotationFooter String?
+  updatedAt       DateTime @updatedAt
+}
+
+model PDPAAssessment {
+  id              String   @id @default(uuid())
+  category        String
+  controlRef      String
+  controlTitle    String
+  description     String?
+  status          String   @default("not-started")
+  evidence        String?
+  responsiblePerson String?
+  reviewDate      DateTime?
+  nextReviewDate  DateTime?
+  notes           String?
+  riskLevel       String   @default("medium")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([category, controlRef])
+}
