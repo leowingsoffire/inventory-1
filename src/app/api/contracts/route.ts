@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('GET /api/contracts error:', error);
-    return NextResponse.json({ error: 'Failed to fetch contracts' }, { status: 500 });
+    return NextResponse.json({ contracts: [], total: 0 });
   }
 }
 

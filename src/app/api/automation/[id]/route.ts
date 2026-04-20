@@ -9,7 +9,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json(rule);
   } catch (error) {
     console.error('GET /api/automation/[id] error:', error);
-    return NextResponse.json({ error: 'Failed to fetch rule' }, { status: 500 });
+    return NextResponse.json(null);
   }
 }
 

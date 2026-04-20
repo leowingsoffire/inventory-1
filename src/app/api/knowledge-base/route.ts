@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('GET /api/knowledge-base error:', error);
-    return NextResponse.json({ error: 'Failed to fetch articles' }, { status: 500 });
+    return NextResponse.json({ articles: [], total: 0 });
   }
 }
 

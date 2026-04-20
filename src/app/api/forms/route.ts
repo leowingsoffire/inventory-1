@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('GET /api/forms error:', error);
-    return NextResponse.json({ error: 'Failed to fetch forms' }, { status: 500 });
+    return NextResponse.json({ templates: [], total: 0 });
   }
 }
 

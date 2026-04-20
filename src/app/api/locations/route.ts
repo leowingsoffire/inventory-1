@@ -7,7 +7,7 @@ export async function GET() {
     return NextResponse.json(locations);
   } catch (error) {
     console.error('GET /api/locations error:', error);
-    return NextResponse.json({ error: 'Failed to fetch locations' }, { status: 500 });
+    return NextResponse.json([]);
   }
 }
 

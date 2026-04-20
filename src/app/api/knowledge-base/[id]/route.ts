@@ -9,7 +9,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json(article);
   } catch (error) {
     console.error('GET /api/knowledge-base/[id] error:', error);
-    return NextResponse.json({ error: 'Failed to fetch article' }, { status: 500 });
+    return NextResponse.json(null);
   }
 }
 

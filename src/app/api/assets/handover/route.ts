@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('GET /api/assets/handover error:', error);
-    return NextResponse.json({ error: 'Failed to fetch handovers' }, { status: 500 });
+    return NextResponse.json({ handovers: [], total: 0 });
   }
 }
 

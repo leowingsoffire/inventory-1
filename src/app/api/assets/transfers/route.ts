@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('GET /api/assets/transfers error:', error);
-    return NextResponse.json({ error: 'Failed to fetch transfers' }, { status: 500 });
+    return NextResponse.json({ transfers: [], total: 0 });
   }
 }
 

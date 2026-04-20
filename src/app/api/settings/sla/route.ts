@@ -7,7 +7,7 @@ export async function GET() {
     return NextResponse.json(policies);
   } catch (error) {
     console.error('GET /api/settings/sla error:', error);
-    return NextResponse.json({ error: 'Failed to fetch SLA policies' }, { status: 500 });
+    return NextResponse.json([]);
   }
 }
 

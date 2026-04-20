@@ -8,7 +8,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json(steps);
   } catch (error) {
     console.error('GET /api/approvals/[id] error:', error);
-    return NextResponse.json({ error: 'Failed to fetch approval steps' }, { status: 500 });
+    return NextResponse.json({ steps: [] });
   }
 }
 

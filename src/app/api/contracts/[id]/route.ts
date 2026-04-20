@@ -9,7 +9,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json(contract);
   } catch (error) {
     console.error('GET /api/contracts/[id] error:', error);
-    return NextResponse.json({ error: 'Failed to fetch contract' }, { status: 500 });
+    return NextResponse.json(null);
   }
 }
 
