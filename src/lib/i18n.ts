@@ -27,6 +27,14 @@ const translations: Record<string, Record<Lang, string>> = {
   'nav.serviceDesk': { en: 'Service Desk', zh: '服务台' },
   'nav.changes': { en: 'Change Requests', zh: '变更请求' },
   'nav.compliance': { en: 'PDPA Compliance', zh: 'PDPA 合规' },
+  'nav.knowledgeBase': { en: 'Knowledge Base', zh: '知识库' },
+  'nav.scheduledTasks': { en: 'Scheduled Tasks', zh: '计划任务' },
+  'nav.contracts': { en: 'Contracts', zh: '合同管理' },
+  'nav.approvals': { en: 'Approvals', zh: '审批管理' },
+  'nav.audit': { en: 'Audit Trail', zh: '审计追踪' },
+  'nav.communications': { en: 'Communications', zh: '通讯中心' },
+  'nav.forms': { en: 'Custom Forms', zh: '自定义表单' },
+  'nav.locations': { en: 'Locations', zh: '位置管理' },
 
   // Dashboard
   'dash.totalAssets': { en: 'Total Assets', zh: '资产总数' },
