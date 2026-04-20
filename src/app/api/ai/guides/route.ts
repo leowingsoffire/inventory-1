@@ -4,7 +4,9 @@ import crypto from 'crypto';
 
 const AZURE_AI_ENDPOINT = process.env.AZURE_AI_ENDPOINT || '';
 const AZURE_AI_KEY = process.env.AZURE_AI_KEY || '';
-const AZURE_AI_MODEL = process.env.AZURE_AI_MODEL || 'grok-4-20-reasoning';
+const AZURE_AI_MODEL = process.env.AZURE_AI_MODEL || 'gpt-40-mini';
+const AZURE_AI_SECONDARY_KEY = process.env.AZURE_AI_SECONDARY_KEY || '';
+const AZURE_AI_SECONDARY_MODEL = process.env.AZURE_AI_SECONDARY_MODEL || 'grok-4-20-reasoning';
 
 interface DocRow {
   id: string;
@@ -130,7 +132,8 @@ export async function POST(request: NextRequest) {
     const nextVersion = ((versionRows[0]?.maxVer) || 0) + 1;
 
     const key = apiKey || AZURE_AI_KEY;
-    if (!key) {
+    const secondaryKey = apiKey || AZURE_AI_SECONDARY_KEY;
+    if (!key && !secondaryKey) {
       return NextResponse.json({ error: 'No AI API key configured' }, { status: 400 });
     }
 
@@ -154,27 +157,56 @@ Generate a complete, professional user guide following all the format requiremen
       userPrompt += `\n\nADDITIONAL INSTRUCTIONS:\n${customInstructions}`;
     }
 
-    const response = await fetch(`${AZURE_AI_ENDPOINT}/openai/deployments/${AZURE_AI_MODEL}/chat/completions?api-version=2024-10-21`, {
-      method: 'POST',
-      headers: { 'api-key': key, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: AZURE_AI_MODEL,
-        messages: [
-          { role: 'system', content: GUIDE_SYSTEM_PROMPT },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.4,
-        max_tokens: 4096,
-      }),
-    });
+    const guideMessages = [
+      { role: 'system', content: GUIDE_SYSTEM_PROMPT },
+      { role: 'user', content: userPrompt },
+    ];
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('AI guide generation error:', response.status, errText);
-      return NextResponse.json({ error: 'AI guide generation failed' }, { status: 502 });
+    let data;
+    // Try primary model first
+    if (key) {
+      const response = await fetch(`${AZURE_AI_ENDPOINT}/openai/deployments/${AZURE_AI_MODEL}/chat/completions?api-version=2024-10-21`, {
+        method: 'POST',
+        headers: { 'api-key': key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: AZURE_AI_MODEL,
+          messages: guideMessages,
+          temperature: 0.4,
+          max_tokens: 4096,
+        }),
+      });
+
+      if (response.ok) {
+        data = await response.json();
+      } else {
+        console.error('AI guide primary error:', response.status);
+      }
     }
 
-    const data = await response.json();
+    // Fallback to secondary model
+    if (!data && secondaryKey) {
+      const response = await fetch(`${AZURE_AI_ENDPOINT}/openai/deployments/${AZURE_AI_SECONDARY_MODEL}/chat/completions?api-version=2024-10-21`, {
+        method: 'POST',
+        headers: { 'api-key': secondaryKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: AZURE_AI_SECONDARY_MODEL,
+          messages: guideMessages,
+          temperature: 0.4,
+          max_tokens: 4096,
+        }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error('AI guide secondary error:', response.status, errText);
+        return NextResponse.json({ error: 'AI guide generation failed' }, { status: 502 });
+      }
+      data = await response.json();
+    }
+
+    if (!data) {
+      return NextResponse.json({ error: 'AI guide generation failed — no models available' }, { status: 502 });
+    }
     const guideContent = data.choices?.[0]?.message?.content || '';
 
     if (!guideContent) {

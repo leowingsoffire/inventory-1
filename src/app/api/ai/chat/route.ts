@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const AZURE_AI_ENDPOINT = process.env.AZURE_AI_ENDPOINT || 'https://lai-grok-4-20-reasoning-resource.services.ai.azure.com';
 const AZURE_AI_KEY = process.env.AZURE_AI_KEY || '';
-const AZURE_AI_MODEL = process.env.AZURE_AI_MODEL || 'grok-4-20-reasoning';
+const AZURE_AI_MODEL = process.env.AZURE_AI_MODEL || 'gpt-40-mini';
+const AZURE_AI_SECONDARY_KEY = process.env.AZURE_AI_SECONDARY_KEY || '';
+const AZURE_AI_SECONDARY_MODEL = process.env.AZURE_AI_SECONDARY_MODEL || 'grok-4-20-reasoning';
 
 const BASE_SYSTEM_PROMPT = `You are "Uni AI", the primary AI assistant fully integrated into the Unitech IT System — a Singapore-based SME IT company's internal platform.
 
@@ -250,11 +252,84 @@ export async function POST(request: NextRequest) {
         const errorText = await response.text();
         console.error('Azure OpenAI error:', response.status, errorText);
       } catch (azureError) {
-        console.error('Azure OpenAI connection failed:', azureError);
+        console.error('Azure OpenAI primary connection failed:', azureError);
       }
     }
 
-    // FALLBACK: Local offline AI (only when Azure is unavailable)
+    // SECONDARY: Azure OpenAI with secondary model/key
+    const secondaryKey = apiKey || AZURE_AI_SECONDARY_KEY;
+    if (secondaryKey && AZURE_AI_SECONDARY_MODEL) {
+      try {
+        if (useStream) {
+          const response = await fetch(`${AZURE_AI_ENDPOINT}/openai/deployments/${AZURE_AI_SECONDARY_MODEL}/chat/completions?api-version=2024-10-21`, {
+            method: 'POST',
+            headers: { 'api-key': secondaryKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: AZURE_AI_SECONDARY_MODEL,
+              messages: [{ role: 'system', content: systemPrompt }, ...messages],
+              temperature: 0.7,
+              max_tokens: tokenLimit,
+              stream: true,
+            }),
+          });
+
+          if (response.ok && response.body) {
+            const encoder = new TextEncoder();
+            const readable = new ReadableStream({
+              async start(controller) {
+                const reader = response.body!.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                try {
+                  while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    for (const line of lines) {
+                      const trimmed = line.trim();
+                      if (!trimmed || !trimmed.startsWith('data: ')) continue;
+                      const data = trimmed.slice(6);
+                      if (data === '[DONE]') { controller.enqueue(encoder.encode('data: [DONE]\n\n')); continue; }
+                      try {
+                        const parsed = JSON.parse(data);
+                        const content = parsed.choices?.[0]?.delta?.content;
+                        if (content) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+                      } catch { /* skip malformed chunks */ }
+                    }
+                  }
+                } finally { controller.close(); }
+              },
+            });
+            return new Response(readable, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' } });
+          }
+        }
+
+        const response = await fetch(`${AZURE_AI_ENDPOINT}/openai/deployments/${AZURE_AI_SECONDARY_MODEL}/chat/completions?api-version=2024-10-21`, {
+          method: 'POST',
+          headers: { 'api-key': secondaryKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: AZURE_AI_SECONDARY_MODEL,
+            messages: [{ role: 'system', content: systemPrompt }, ...messages],
+            temperature: 0.7,
+            max_tokens: tokenLimit,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const content = data.choices?.[0]?.message?.content || 'No response generated.';
+          return NextResponse.json({ content, source: 'azure-openai-secondary' });
+        }
+
+        console.error('Azure OpenAI secondary error:', response.status);
+      } catch (secondaryError) {
+        console.error('Azure OpenAI secondary connection failed:', secondaryError);
+      }
+    }
+
+    // FALLBACK: Local offline AI (only when both Azure models are unavailable)
     console.warn('Falling back to local AI — Azure OpenAI unavailable');
     const lastMessage = messages[messages.length - 1]?.content || '';
     const fallbackContent = generateLocalResponse(lastMessage, appContext);
