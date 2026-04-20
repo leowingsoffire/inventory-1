@@ -17,6 +17,7 @@ const translations: Record<string, Record<Lang, string>> = {
   'nav.warranty': { en: 'Warranty', zh: '保修监控' },
   'nav.users': { en: 'Users & Roles', zh: '用户权限' },
   'nav.reports': { en: 'Reports', zh: '报告分析' },
+  'nav.activity': { en: 'Activity Log', zh: '活动日志' },
   'nav.ai': { en: 'AI Assistant', zh: 'AI 助手' },
   'nav.settings': { en: 'Settings', zh: '系统设置' },
   'nav.customers': { en: 'Customers', zh: '客户管理' },

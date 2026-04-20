@@ -399,27 +399,55 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Activity */}
           <motion.div variants={itemVariants} className="glass-card p-6 lg:col-span-2">
-            <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-accent-400" />
-              {t('dash.recentActivity', lang)}
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-semibold flex items-center gap-2">
+                <Clock className="w-4 h-4 text-accent-400" />
+                {t('dash.recentActivity', lang)}
+              </h3>
+              <Link href="/activity" className="text-accent-400/70 hover:text-accent-400 text-xs flex items-center gap-1 transition-colors">
+                {lang === 'en' ? 'View All' : '查看全部'}
+                <ExternalLink className="w-3 h-3" />
+              </Link>
+            </div>
             <div className="space-y-3">
-              {data.recentActivity.length > 0 ? data.recentActivity.map((activity, i) => (
-                <motion.div
-                  key={i}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer group"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + i * 0.05 }}
-                >
-                  <div className="w-2 h-2 rounded-full bg-accent-400" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm">{activity.action}</p>
-                    <p className="text-white/40 text-xs truncate">{activity.entity} {activity.details ? `• ${activity.details}` : ''}</p>
-                  </div>
-                  <span className="text-white/30 text-xs whitespace-nowrap">{new Date(activity.time).toLocaleDateString()}</span>
-                </motion.div>
-              )) : (
+              {data.recentActivity.length > 0 ? data.recentActivity.map((activity, i) => {
+                const entityIconMap: Record<string, React.ElementType> = {
+                  Asset: Monitor, Employee: Users, Maintenance: Wrench, ChangeRequest: GitBranch,
+                  Invoice: DollarSign, Customer: Building2, Vendor: Package, User: Shield,
+                };
+                const entityColorMap: Record<string, string> = {
+                  Asset: 'bg-blue-400', Employee: 'bg-emerald-400', Maintenance: 'bg-orange-400', ChangeRequest: 'bg-purple-400',
+                  Invoice: 'bg-amber-400', Customer: 'bg-cyan-400', Vendor: 'bg-pink-400', User: 'bg-indigo-400',
+                };
+                const entityLinkMap: Record<string, string> = {
+                  Asset: '/assets', Employee: '/employees', Maintenance: '/maintenance', ChangeRequest: '/change-requests',
+                  Invoice: '/finance', Customer: '/customers', Vendor: '/vendors', User: '/users',
+                };
+                const Icon = entityIconMap[activity.entity] || Activity;
+                const dotColor = entityColorMap[activity.entity] || 'bg-accent-400';
+                const link = entityLinkMap[activity.entity] || '#';
+                return (
+                  <motion.div
+                    key={i}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer group"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + i * 0.05 }}
+                    onClick={() => router.push(link)}
+                  >
+                    <div className={`w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center`}>
+                      <Icon className="w-3.5 h-3.5 text-white/50" />
+                    </div>
+                    <div className={`w-2 h-2 rounded-full ${dotColor}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-sm">{activity.action}</p>
+                      <p className="text-white/40 text-xs truncate">{activity.entity} {activity.details ? `• ${activity.details}` : ''}</p>
+                    </div>
+                    <span className="text-white/30 text-xs whitespace-nowrap">{new Date(activity.time).toLocaleDateString()}</span>
+                    <ArrowUpRight className="w-3.5 h-3.5 text-white/0 group-hover:text-white/40 transition-all" />
+                  </motion.div>
+                );
+              }) : (
                 <p className="text-white/30 text-sm text-center py-8">{lang === 'en' ? 'No activity yet. Start by adding assets or creating tickets.' : '暂无活动。开始添加资产或创建工单。'}</p>
               )}
             </div>

@@ -86,6 +86,7 @@ const navItems: NavItem[] = [
   { href: '/warranty', icon: AlertTriangle, label: 'nav.warranty' },
   { href: '/users', icon: ShieldCheck, label: 'nav.users' },
   { href: '/reports', icon: BarChart3, label: 'nav.reports' },
+  { href: '/activity', icon: Clock, label: 'nav.activity' },
   { href: '/ai-assistant', icon: Bot, label: 'nav.ai' },
   { href: '/settings', icon: Settings, label: 'nav.settings' },
 ];
