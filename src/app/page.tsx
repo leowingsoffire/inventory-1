@@ -367,75 +367,131 @@ export default function LoginPage() {
 
           {/* Logo section */}
           <div className="text-center mb-8">
-            {/* Animated logo with rotating rings */}
-            <div className="relative inline-flex items-center justify-center w-20 h-20 mb-4">
-              {/* Outer rotating ring — water ripple */}
+            {/* Animated Logo — Gold Shining Cyber Tech */}
+            <div className="relative inline-flex items-center justify-center w-24 h-24 mb-4">
+              {/* Ambient gold aura */}
               <motion.div
-                className="absolute inset-0 rounded-full border border-sky-400/25"
-                style={{ borderStyle: 'dashed' }}
-                animate={{ rotate: 360, scale: [1, 1.03, 1] }}
-                transition={{ rotate: { duration: 15, repeat: Infinity, ease: 'linear' }, scale: { duration: 3, repeat: Infinity, ease: 'easeInOut' } }}
+                className="absolute inset-0 rounded-full pointer-events-none"
+                style={{ background: 'radial-gradient(circle, rgba(255,200,50,0.15) 0%, rgba(255,180,30,0.05) 40%, transparent 70%)' }}
+                animate={{ opacity: [0.4, 0.8, 0.4], scale: [0.95, 1.12, 0.95] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
               />
-              {/* Middle pulsing ring */}
+              {/* Outer rotating ring — gold dashed */}
               <motion.div
-                className="absolute inset-1.5 rounded-full border border-cyan-300/20"
-                animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.6, 0.3] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                className="absolute inset-0 rounded-full"
+                style={{ border: '1.5px dashed rgba(255,200,60,0.3)' }}
+                animate={{ rotate: 360, opacity: [0.2, 0.5, 0.2] }}
+                transition={{ rotate: { duration: 12, repeat: Infinity, ease: 'linear' }, opacity: { duration: 3, repeat: Infinity, ease: 'easeInOut' } }}
               />
-              {/* Inner rotating ring (opposite direction) */}
+              {/* Middle pulsing ring — warm gold */}
               <motion.div
-                className="absolute inset-3 rounded-full border border-teal-300/15"
-                style={{ borderStyle: 'dotted' }}
+                className="absolute inset-2 rounded-full"
+                style={{ border: '1px solid rgba(255,190,50,0.2)' }}
+                animate={{ scale: [1, 1.06, 1], opacity: [0.2, 0.5, 0.2] }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              {/* Inner counter-rotating ring — dotted gold */}
+              <motion.div
+                className="absolute inset-4 rounded-full"
+                style={{ border: '1px dotted rgba(255,210,80,0.18)' }}
                 animate={{ rotate: -360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
               />
-              {/* Icon container — water droplet gradient */}
+              {/* Icon container — gold gradient */}
               <motion.div
-                className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/25 to-teal-500/25 border border-cyan-300/20 flex items-center justify-center"
+                className="relative w-12 h-12 rounded-xl flex items-center justify-center"
+                style={{ background: 'linear-gradient(135deg, rgba(255,200,50,0.2) 0%, rgba(255,160,30,0.1) 50%, rgba(255,210,80,0.2) 100%)', border: '1px solid rgba(255,200,60,0.25)' }}
                 animate={{ rotate: 360 }}
                 transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
               >
-                <Cpu className="w-5 h-5 text-cyan-300" />
+                <Cpu className="w-6 h-6" style={{ color: '#ffc850' }} />
+                {/* Gold shimmer sweep */}
+                <motion.div
+                  className="absolute inset-0 rounded-xl pointer-events-none"
+                  style={{ background: 'linear-gradient(105deg, transparent 35%, rgba(255,215,100,0.3) 48%, rgba(255,240,180,0.15) 52%, transparent 65%)' }}
+                  animate={{ x: ['-120%', '220%'] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2.5 }}
+                />
               </motion.div>
-              {/* Corner dots — water droplets */}
-              {[0, 90, 180, 270].map((deg) => (
+              {/* Corner sparkle dots — gold */}
+              {[0, 60, 120, 180, 240, 300].map((deg) => (
                 <motion.div
                   key={deg}
-                  className="absolute w-1.5 h-1.5 rounded-full bg-cyan-300/50"
+                  className="absolute w-1.5 h-1.5 rounded-full"
                   style={{
-                    top: `${50 - 48 * Math.cos((deg * Math.PI) / 180)}%`,
-                    left: `${50 + 48 * Math.sin((deg * Math.PI) / 180)}%`,
+                    background: 'radial-gradient(circle, #ffd060 0%, #ffb830 100%)',
+                    top: `${50 - 46 * Math.cos((deg * Math.PI) / 180)}%`,
+                    left: `${50 + 46 * Math.sin((deg * Math.PI) / 180)}%`,
                     transform: 'translate(-50%, -50%)',
+                    boxShadow: '0 0 4px rgba(255,200,50,0.4)',
                   }}
-                  animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
-                  transition={{ duration: 2, repeat: Infinity, delay: deg / 360 }}
+                  animate={{ opacity: [0, 0.9, 0], scale: [0.4, 1.3, 0.4] }}
+                  transition={{ duration: 2.5, repeat: Infinity, delay: deg / 300, ease: 'easeInOut' }}
                 />
               ))}
+              {/* Orbiting light particle */}
+              <motion.div
+                className="absolute w-1 h-1 rounded-full"
+                style={{ background: '#ffe680', boxShadow: '0 0 6px rgba(255,220,80,0.6)' }}
+                animate={{
+                  top: [0, 50, 100, 50, 0].map(v => `${v}%`),
+                  left: [50, 100, 50, 0, 50].map(v => `${v}%`),
+                }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+              />
             </div>
 
-            {/* Glitch title */}
+            {/* Gold Shining Title with Glitch */}
             <motion.h1
               className="text-3xl font-bold mb-1 relative"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              <span className="bg-gradient-to-r from-sky-200 via-cyan-200 to-teal-200 bg-clip-text text-transparent">
+              <span
+                style={{
+                  background: 'linear-gradient(90deg, #ffd700 0%, #fff5cc 20%, #ffc107 40%, #fff5cc 60%, #ffd700 80%, #ffecb3 100%)',
+                  backgroundSize: '200% 100%',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  animation: 'goldShimmer 4s ease-in-out infinite',
+                  filter: 'drop-shadow(0 0 8px rgba(255,200,50,0.3))',
+                }}
+              >
                 Unitech IT System
               </span>
               {glitchText && (
                 <>
-                  <span className="absolute inset-0 bg-gradient-to-r from-sky-200 via-cyan-200 to-teal-200 bg-clip-text text-transparent" style={{ clipPath: 'inset(20% 0 40% 0)', transform: 'translateX(-2px)' }}>
+                  <span
+                    className="absolute inset-0"
+                    style={{
+                      background: 'linear-gradient(90deg, #ffd700, #ffecb3, #ffc107)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      clipPath: 'inset(20% 0 40% 0)',
+                      transform: 'translateX(-2px)',
+                    }}
+                  >
                     Unitech IT System
                   </span>
-                  <span className="absolute inset-0 bg-gradient-to-r from-teal-200 via-sky-200 to-cyan-200 bg-clip-text text-transparent" style={{ clipPath: 'inset(60% 0 10% 0)', transform: 'translateX(2px)' }}>
+                  <span
+                    className="absolute inset-0"
+                    style={{
+                      background: 'linear-gradient(90deg, #ffecb3, #ffd700, #ffc107)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      clipPath: 'inset(60% 0 10% 0)',
+                      transform: 'translateX(2px)',
+                    }}
+                  >
                     Unitech IT System
                   </span>
                 </>
               )}
             </motion.h1>
             <motion.div
-              className="flex items-center justify-center gap-2 text-white/40 text-sm"
+              className="flex items-center justify-center gap-2 text-sm"
+              style={{ color: 'rgba(255,210,100,0.5)' }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
