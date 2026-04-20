@@ -352,3 +352,31 @@ model UserGuide {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+
+model WarrantyRegistration {
+  id              String   @id @default(uuid())
+  itemName        String
+  serialNumber    String?
+  category        String   @default("hardware") // hardware, software, appliance, vehicle, equipment, other
+  brand           String?
+  modelName       String?
+  purchaseDate    DateTime?
+  warrantyStart   DateTime
+  warrantyEnd     DateTime
+  warrantyMonths  Int?     // auto-calculated or manual
+  warrantyType    String   @default("manufacturer") // manufacturer, extended, third-party
+  provider        String?  // warranty provider name
+  coverageDetails String?  // what's covered
+  claimProcess    String?  // how to file a claim
+  receiptRef      String?  // receipt/PO reference number
+  cost            Float?   // warranty cost if purchased separately
+  status          String   @default("active") // active, expiring, expired, claimed, void
+  notes           String?
+  assetId         String?  // optional link to existing asset
+  customerName    String?
+  customerEmail   String?
+  vendorName      String?
+  registeredBy    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

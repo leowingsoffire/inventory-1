@@ -294,14 +294,60 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET: List all warranty alerts
+// GET: List all warranty data — assets with warranty, alerts, and registrations
 export async function GET() {
   try {
+    const now = new Date();
+
+    // Fetch assets with warranty dates
+    const assets = await prisma.asset.findMany({
+      where: { warrantyEnd: { not: null } },
+    });
+
+    const warrantyAssets = assets.map(a => {
+      const warrantyDate = a.warrantyEnd ? new Date(a.warrantyEnd) : new Date();
+      const daysLeft = Math.ceil((warrantyDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return {
+        id: a.id,
+        assetTag: a.assetTag,
+        name: a.name,
+        brand: a.brand || '',
+        warrantyEnd: a.warrantyEnd ? new Date(a.warrantyEnd).toISOString().split('T')[0] : '',
+        customerEmail: a.customerEmail || '',
+        customerName: a.customerName || '',
+        assignedTo: a.assignedTo || '',
+        daysLeft,
+      };
+    }).sort((a, b) => a.daysLeft - b.daysLeft);
+
+    // Fetch alerts
     const alerts = await prisma.warrantyAlert.findMany({
       include: { asset: true },
       orderBy: { createdAt: 'desc' },
     });
-    return NextResponse.json(alerts);
+
+    const formattedAlerts = alerts.map(al => ({
+      id: al.id,
+      assetId: al.assetId,
+      assetTag: al.asset?.assetTag || '',
+      assetName: al.asset?.name || '',
+      alertType: al.alertType,
+      status: al.status,
+      recipientEmail: al.recipientEmail,
+      ccEmails: al.ccEmails || '',
+      sentAt: al.lastAttempt ? new Date(al.lastAttempt).toISOString().split('T')[0] : null,
+      attempts: al.attempts,
+      maxAttempts: al.maxAttempts,
+      nextAttempt: al.nextAttempt ? new Date(al.nextAttempt).toISOString().split('T')[0] : null,
+      subject: al.subject || '',
+    }));
+
+    // Fetch registrations
+    const registrations = await prisma.warrantyRegistration.findMany({
+      orderBy: { warrantyEnd: 'asc' },
+    });
+
+    return NextResponse.json({ assets: warrantyAssets, alerts: formattedAlerts, registrations });
   } catch (error) {
     console.error('Warranty GET error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
