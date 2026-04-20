@@ -25,6 +25,8 @@ interface Message {
   timestamp: Date;
   suggestions?: string[];
   attachment?: FileAttachment;
+  detailContent?: string;
+  detailRevealed?: boolean;
 }
 
 interface DocumentRecord {
@@ -82,6 +84,13 @@ function getOfflineResponse(message: string, lang: 'en' | 'zh'): string {
 }
 
 function extractSuggestions(content: string): string[] {
+  // Parse structured suggestions from <!-- SUGGESTIONS --> marker
+  const sugIdx = content.indexOf('<!-- SUGGESTIONS -->');
+  if (sugIdx !== -1) {
+    const sugBlock = content.slice(sugIdx + 19).trim();
+    return sugBlock.split('\n').map(l => l.trim()).filter(l => l.length > 5 && l.length < 55).slice(0, 4);
+  }
+  // Fallback: extract lines ending with "?"
   const suggestions: string[] = [];
   const lines = content.split('\n');
   for (const line of lines) {
@@ -91,6 +100,74 @@ function extractSuggestions(content: string): string[] {
     }
   }
   return suggestions.slice(0, 3);
+}
+
+/** Split content at <!-- MORE --> and strip <!-- SUGGESTIONS --> */
+function parseResponse(content: string): { concise: string; detail: string; suggestions: string[] } {
+  const suggestions = extractSuggestions(content);
+  // Strip suggestions block from content
+  let cleaned = content.replace(/<!-- SUGGESTIONS -->[\s\S]*$/, '').trim();
+  // Split at <!-- MORE -->
+  const moreIdx = cleaned.indexOf('<!-- MORE -->');
+  if (moreIdx !== -1) {
+    return {
+      concise: cleaned.slice(0, moreIdx).trim(),
+      detail: cleaned.slice(moreIdx + 12).trim(),
+      suggestions,
+    };
+  }
+  return { concise: cleaned, detail: '', suggestions };
+}
+
+/** Generate smart contextual suggestion cards based on conversation topic */
+function generateTopicCards(content: string, lang: 'en' | 'zh'): { icon: string; text: string; query: string }[] {
+  const lower = content.toLowerCase();
+  const cards: { icon: string; text: string; query: string }[] = [];
+
+  if (lower.includes('asset') || lower.includes('inventory') || lower.includes('device'))
+    cards.push(
+      { icon: '📊', text: lang === 'en' ? 'Asset breakdown' : '资产分类', query: lang === 'en' ? 'Show asset breakdown by category' : '按类别显示资产分类' },
+      { icon: '🔄', text: lang === 'en' ? 'Lifecycle review' : '生命周期审查', query: lang === 'en' ? 'Which assets need replacement soon?' : '哪些资产需要尽快更换？' },
+    );
+  if (lower.includes('warranty') || lower.includes('expir'))
+    cards.push(
+      { icon: '⏰', text: lang === 'en' ? 'Renewal plan' : '续保计划', query: lang === 'en' ? 'Create a warranty renewal plan' : '创建保修续保计划' },
+      { icon: '💰', text: lang === 'en' ? 'Cost impact' : '成本分析', query: lang === 'en' ? 'What is the warranty renewal cost?' : '保修续保费用是多少？' },
+    );
+  if (lower.includes('ticket') || lower.includes('maintenance') || lower.includes('issue'))
+    cards.push(
+      { icon: '🔥', text: lang === 'en' ? 'Priority tickets' : '优先工单', query: lang === 'en' ? 'Show high-priority open tickets' : '显示高优先级待处理工单' },
+      { icon: '📈', text: lang === 'en' ? 'Trend analysis' : '趋势分析', query: lang === 'en' ? 'Ticket trend this quarter' : '本季度工单趋势' },
+    );
+  if (lower.includes('compliance') || lower.includes('pdpa') || lower.includes('security'))
+    cards.push(
+      { icon: '🛡️', text: lang === 'en' ? 'Risk assessment' : '风险评估', query: lang === 'en' ? 'Show compliance risk areas' : '显示合规风险领域' },
+      { icon: '✅', text: lang === 'en' ? 'Action items' : '待办事项', query: lang === 'en' ? 'What compliance actions are needed?' : '需要哪些合规行动？' },
+    );
+  if (lower.includes('invoice') || lower.includes('finance') || lower.includes('revenue') || lower.includes('payment'))
+    cards.push(
+      { icon: '💵', text: lang === 'en' ? 'Revenue summary' : '收入摘要', query: lang === 'en' ? 'Show revenue summary this month' : '显示本月收入摘要' },
+      { icon: '📋', text: lang === 'en' ? 'Overdue invoices' : '逾期发票', query: lang === 'en' ? 'Any overdue invoices?' : '有逾期发票吗？' },
+    );
+  if (lower.includes('employee') || lower.includes('staff') || lower.includes('department'))
+    cards.push(
+      { icon: '👥', text: lang === 'en' ? 'Team overview' : '团队概览', query: lang === 'en' ? 'Department headcount breakdown' : '部门人数分布' },
+      { icon: '💻', text: lang === 'en' ? 'Device allocation' : '设备分配', query: lang === 'en' ? 'Which employees need new devices?' : '哪些员工需要新设备？' },
+    );
+  if (lower.includes('change') || lower.includes('request') || lower.includes('approval'))
+    cards.push(
+      { icon: '📝', text: lang === 'en' ? 'Pending changes' : '待审变更', query: lang === 'en' ? 'Show pending change requests' : '显示待审批变更请求' },
+      { icon: '📊', text: lang === 'en' ? 'Change history' : '变更历史', query: lang === 'en' ? 'Recent change request outcomes' : '最近变更请求结果' },
+    );
+
+  // Always add a general follow-up if no topic matched
+  if (cards.length === 0)
+    cards.push(
+      { icon: '💡', text: lang === 'en' ? 'Quick insights' : '快速洞察', query: lang === 'en' ? 'What needs my attention today?' : '今天需要我关注什么？' },
+      { icon: '📊', text: lang === 'en' ? 'System health' : '系统健康', query: lang === 'en' ? 'Overall system health check' : '整体系统健康检查' },
+    );
+
+  return cards.slice(0, 3);
 }
 
 export default function AIAssistantPage() {
@@ -375,24 +452,69 @@ export default function AIAssistantPage() {
               const parsed = JSON.parse(data);
               if (parsed.content) {
                 fullContent += parsed.content;
-                const currentContent = fullContent;
-                setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, content: currentContent } : m));
+                // During streaming, show only concise part (before <!-- MORE -->)
+                const moreIdx = fullContent.indexOf('<!-- MORE -->');
+                const displayContent = moreIdx !== -1 ? fullContent.slice(0, moreIdx).trim() : fullContent;
+                setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, content: displayContent } : m));
               }
             } catch { /* skip */ }
           }
         }
 
-        // Add suggestions after streaming completes
-        const suggestions = extractSuggestions(fullContent);
-        setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, suggestions } : m));
+        // After streaming completes: parse response, split concise/detail
+        const { concise, detail, suggestions } = parseResponse(fullContent);
+        setMessages(prev => prev.map(m => m.id === aiMsgId ? {
+          ...m,
+          content: concise,
+          detailContent: detail || undefined,
+          detailRevealed: !detail, // if no detail, mark as revealed
+          suggestions,
+        } : m));
+
+        // Delayed detail reveal — 2 seconds pause, then show detail like human typing
+        if (detail) {
+          setTimeout(() => {
+            setIsTyping(true); // show typing indicator briefly
+            setTimeout(() => {
+              setMessages(prev => prev.map(m => m.id === aiMsgId ? {
+                ...m,
+                content: `${concise}\n\n${detail}`,
+                detailRevealed: true,
+              } : m));
+              setIsTyping(false);
+            }, 800);
+          }, 2000);
+        }
       } else {
         // Non-streaming JSON response
         const data = await res.json();
         const responseText = data.content || data.message || '';
         if (data.source) setAiSource(data.source);
-        const suggestions = extractSuggestions(responseText);
-        setMessages(prev => [...prev, { id: String(Date.now() + 1), role: 'assistant', content: responseText, timestamp: new Date(), suggestions }]);
+        const { concise, detail, suggestions } = parseResponse(responseText);
+        const aiMsgId = String(Date.now() + 1);
+        setMessages(prev => [...prev, {
+          id: aiMsgId,
+          role: 'assistant',
+          content: concise,
+          timestamp: new Date(),
+          suggestions,
+          detailContent: detail || undefined,
+          detailRevealed: !detail,
+        }]);
         setIsTyping(false);
+        if (detail) {
+          setTimeout(() => {
+            setIsTyping(true);
+            setTimeout(() => {
+              setMessages(prev => prev.map(m => m.id === aiMsgId ? {
+                ...m,
+                content: `${concise}\n\n${detail}`,
+                detailRevealed: true,
+              } : m));
+              setIsTyping(false);
+            }, 800);
+          }, 2000);
+        }
       }
     } catch {
       const responseText = getOfflineResponse(text, lang);
@@ -546,15 +668,82 @@ export default function AIAssistantPage() {
                       </div>
                     )}
                     <div className={`p-4 rounded-2xl ${msg.role === 'user' ? `bg-gradient-to-r ${chatTheme.userBubble} border border-white/10 rounded-tr-md` : `${chatTheme.aiBubble} border border-white/5 rounded-tl-md`}`}>
-                      <div className="text-white text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+                      <div className="text-white text-sm whitespace-pre-wrap leading-relaxed">
+                        {msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
+                      </div>
+                      {/* Detail reveal indicator — shows "elaborating..." before detail appears */}
+                      {msg.role === 'assistant' && msg.detailContent && !msg.detailRevealed && (
+                        <motion.div
+                          className="mt-3 flex items-center gap-2 text-white/25 text-[11px]"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.5 }}
+                        >
+                          <div className="flex gap-0.5">
+                            <motion.div className="w-1 h-1 rounded-full bg-white/30" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0 }} />
+                            <motion.div className="w-1 h-1 rounded-full bg-white/30" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0.3 }} />
+                            <motion.div className="w-1 h-1 rounded-full bg-white/30" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0.6 }} />
+                          </div>
+                          {lang === 'en' ? 'elaborating...' : '展开中...'}
+                        </motion.div>
+                      )}
                       <p className="text-white/20 text-xs mt-2">{msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                     </div>
                     {msg.role === 'assistant' && (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <button onClick={() => speak(msg.content)} className="text-white/20 hover:text-white/50 transition-colors p-1"><Volume2 className="w-3.5 h-3.5" /></button>
-                        {msg.suggestions?.map((s, i) => (
-                          <motion.button key={i} onClick={() => sendMessage(s)} className="px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.1] text-white/50 text-[11px] transition-all hover:text-white/70" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }} whileHover={{ scale: 1.03 }}>{s}</motion.button>
-                        ))}
+                      <div className="space-y-2">
+                        {/* Speaker button */}
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => speak(msg.content)} className="text-white/20 hover:text-white/50 transition-colors p-1"><Volume2 className="w-3.5 h-3.5" /></button>
+                        </div>
+                        {/* ── Smart Suggestion Cards — glassmorphism ── */}
+                        {msg.detailRevealed !== false && (
+                          <motion.div
+                            className="flex flex-wrap gap-2"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3, duration: 0.4 }}
+                          >
+                            {/* Topic-based contextual cards */}
+                            {generateTopicCards(msg.content, lang).map((card, i) => (
+                              <motion.button
+                                key={`tc-${i}`}
+                                onClick={() => sendMessage(card.query)}
+                                className="group flex items-center gap-2 px-3 py-2 rounded-xl
+                                  bg-white/[0.04] backdrop-blur-md border border-white/[0.08]
+                                  hover:bg-white/[0.09] hover:border-white/[0.18]
+                                  shadow-[0_2px_8px_rgba(0,0,0,0.15)]
+                                  transition-all duration-200"
+                                initial={{ opacity: 0, scale: 0.92, y: 6 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                transition={{ delay: 0.4 + i * 0.08 }}
+                                whileHover={{ scale: 1.04, y: -1 }}
+                              >
+                                <span className="text-sm">{card.icon}</span>
+                                <span className="text-[11px] text-white/45 group-hover:text-white/70 font-medium transition-colors">{card.text}</span>
+                              </motion.button>
+                            ))}
+                            {/* AI-extracted suggestion cards */}
+                            {msg.suggestions?.map((s, i) => (
+                              <motion.button
+                                key={`sg-${i}`}
+                                onClick={() => sendMessage(s)}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl
+                                  bg-gradient-to-r from-white/[0.03] to-white/[0.06] backdrop-blur-md
+                                  border border-white/[0.08] hover:border-white/[0.18]
+                                  hover:from-white/[0.06] hover:to-white/[0.1]
+                                  shadow-[0_2px_8px_rgba(0,0,0,0.12)]
+                                  transition-all duration-200"
+                                initial={{ opacity: 0, scale: 0.92, y: 6 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                transition={{ delay: 0.6 + i * 0.08 }}
+                                whileHover={{ scale: 1.04, y: -1 }}
+                              >
+                                <Lightbulb className="w-3 h-3 text-amber-400/50" />
+                                <span className="text-[11px] text-white/40 hover:text-white/65 font-medium">{s}</span>
+                              </motion.button>
+                            ))}
+                          </motion.div>
+                        )}
                       </div>
                     )}
                   </div>

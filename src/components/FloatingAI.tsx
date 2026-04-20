@@ -27,6 +27,8 @@ interface Message {
   content: string;
   suggestions?: string[];
   attachment?: FileAttachment;
+  detailContent?: string;
+  detailRevealed?: boolean;
 }
 
 interface AlertTip {
@@ -105,6 +107,11 @@ function generateSmartAlerts(ctx: Record<string, unknown> | null): AlertTip[] {
 
 // Extract follow-up questions from AI response as suggestion cards
 function extractSuggestions(content: string): string[] {
+  const sugIdx = content.indexOf('<!-- SUGGESTIONS -->');
+  if (sugIdx !== -1) {
+    const sugBlock = content.slice(sugIdx + 19).trim();
+    return sugBlock.split('\n').map(l => l.trim()).filter(l => l.length > 5 && l.length < 55).slice(0, 4);
+  }
   const suggestions: string[] = [];
   const lines = content.split('\n');
   for (const line of lines) {
@@ -114,6 +121,36 @@ function extractSuggestions(content: string): string[] {
     }
   }
   return suggestions.slice(0, 3);
+}
+
+/** Split response at <!-- MORE --> and strip <!-- SUGGESTIONS --> */
+function parseFloatingResponse(content: string): { concise: string; detail: string; suggestions: string[] } {
+  const suggestions = extractSuggestions(content);
+  let cleaned = content.replace(/<!-- SUGGESTIONS -->[\s\S]*$/, '').trim();
+  const moreIdx = cleaned.indexOf('<!-- MORE -->');
+  if (moreIdx !== -1) {
+    return { concise: cleaned.slice(0, moreIdx).trim(), detail: cleaned.slice(moreIdx + 12).trim(), suggestions };
+  }
+  return { concise: cleaned, detail: '', suggestions };
+}
+
+/** Generate smart contextual suggestion cards for floating chat */
+function generateFloatingTopicCards(content: string, lang: 'en' | 'zh'): { icon: string; text: string; query: string }[] {
+  const lower = content.toLowerCase();
+  const cards: { icon: string; text: string; query: string }[] = [];
+  if (lower.includes('asset') || lower.includes('inventory') || lower.includes('device'))
+    cards.push({ icon: '📊', text: lang === 'en' ? 'Asset breakdown' : '资产分类', query: lang === 'en' ? 'Show asset breakdown by category' : '按类别显示资产分类' });
+  if (lower.includes('warranty') || lower.includes('expir'))
+    cards.push({ icon: '⏰', text: lang === 'en' ? 'Renewal plan' : '续保计划', query: lang === 'en' ? 'Create a warranty renewal plan' : '创建保修续保计划' });
+  if (lower.includes('ticket') || lower.includes('maintenance'))
+    cards.push({ icon: '🔥', text: lang === 'en' ? 'Priority tickets' : '优先工单', query: lang === 'en' ? 'Show high-priority open tickets' : '显示高优先级待处理工单' });
+  if (lower.includes('compliance') || lower.includes('pdpa'))
+    cards.push({ icon: '🛡️', text: lang === 'en' ? 'Risk areas' : '风险领域', query: lang === 'en' ? 'Show compliance risk areas' : '显示合规风险领域' });
+  if (lower.includes('invoice') || lower.includes('finance'))
+    cards.push({ icon: '💵', text: lang === 'en' ? 'Revenue' : '收入', query: lang === 'en' ? 'Revenue summary this month' : '本月收入摘要' });
+  if (cards.length === 0)
+    cards.push({ icon: '💡', text: lang === 'en' ? 'Quick insights' : '快速洞察', query: lang === 'en' ? 'What needs attention today?' : '今天需要关注什么？' });
+  return cards.slice(0, 2);
 }
 
 // Offline fallback responses in Uni AI personality
@@ -385,10 +422,33 @@ export default function FloatingAI() {
       setAiSource('local-fallback');
     }
 
-    const suggestions = extractSuggestions(responseText);
-    const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: responseText, suggestions };
+    const { concise, detail, suggestions } = parseFloatingResponse(responseText);
+    const aiMsgId = (Date.now() + 1).toString();
+    const aiMsg: Message = {
+      id: aiMsgId,
+      role: 'assistant',
+      content: concise,
+      suggestions,
+      detailContent: detail || undefined,
+      detailRevealed: !detail,
+    };
     setMessages(prev => [...prev, aiMsg]);
     setLoading(false);
+
+    // Delayed detail reveal — 2s pause then show detail
+    if (detail) {
+      setTimeout(() => {
+        setLoading(true);
+        setTimeout(() => {
+          setMessages(prev => prev.map(m => m.id === aiMsgId ? {
+            ...m,
+            content: `${concise}\n\n${detail}`,
+            detailRevealed: true,
+          } : m));
+          setLoading(false);
+        }, 800);
+      }, 2000);
+    }
   };
 
   // 3D Animated Avatar component — Korean model face SVG
@@ -683,6 +743,15 @@ export default function FloatingAI() {
                         : `${chatTheme.aiBubble} text-white/80 border border-white/5 rounded-tl-md`
                     }`}>
                       {msg.content}
+                      {/* Detail reveal indicator */}
+                      {msg.role === 'assistant' && msg.detailContent && !msg.detailRevealed && (
+                        <div className="mt-2 flex items-center gap-1.5 text-white/20 text-[9px]">
+                          <motion.div className="w-1 h-1 rounded-full bg-white/25" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity }} />
+                          <motion.div className="w-1 h-1 rounded-full bg-white/25" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0.3 }} />
+                          <motion.div className="w-1 h-1 rounded-full bg-white/25" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0.6 }} />
+                          {lang === 'en' ? 'elaborating...' : '展开中...'}
+                        </div>
+                      )}
                     </div>
                     {/* Read aloud + feedback buttons for AI messages */}
                     {msg.role === 'assistant' && (
@@ -724,23 +793,53 @@ export default function FloatingAI() {
                         </button>
                       </div>
                     )}
-                    {/* Suggested reply cards after AI response */}
-                    {msg.role === 'assistant' && msg.suggestions && msg.suggestions.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-1">
-                        {msg.suggestions.map((s, i) => (
+                    {/* Smart Suggestion Cards — glassmorphism */}
+                    {msg.role === 'assistant' && msg.detailRevealed !== false && (
+                      <motion.div
+                        className="flex flex-wrap gap-1.5 mt-1"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        {/* Topic-based contextual cards */}
+                        {generateFloatingTopicCards(msg.content, lang as 'en' | 'zh').map((card, i) => (
                           <motion.button
-                            key={i}
-                            onClick={() => sendMessage(s)}
-                            className="px-2.5 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.1] text-white/50 text-[10px] transition-all hover:text-white/70"
-                            initial={{ opacity: 0, scale: 0.9 }}
+                            key={`tc-${i}`}
+                            onClick={() => sendMessage(card.query)}
+                            className="group flex items-center gap-1.5 px-2 py-1.5 rounded-lg
+                              bg-white/[0.04] backdrop-blur-sm border border-white/[0.08]
+                              hover:bg-white/[0.09] hover:border-white/[0.16]
+                              shadow-[0_1px_4px_rgba(0,0,0,0.12)]
+                              transition-all duration-200"
+                            initial={{ opacity: 0, scale: 0.92 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: i * 0.05 }}
-                            whileHover={{ scale: 1.03 }}
+                            transition={{ delay: 0.3 + i * 0.06 }}
+                            whileHover={{ scale: 1.04 }}
                           >
-                            {s}
+                            <span className="text-[10px]">{card.icon}</span>
+                            <span className="text-[9px] text-white/40 group-hover:text-white/65 font-medium">{card.text}</span>
                           </motion.button>
                         ))}
-                      </div>
+                        {/* AI-extracted suggestions */}
+                        {msg.suggestions?.map((s, i) => (
+                          <motion.button
+                            key={`sg-${i}`}
+                            onClick={() => sendMessage(s)}
+                            className="px-2 py-1.5 rounded-lg
+                              bg-gradient-to-r from-white/[0.03] to-white/[0.05] backdrop-blur-sm
+                              border border-white/[0.08] hover:border-white/[0.16]
+                              hover:from-white/[0.06] hover:to-white/[0.09]
+                              shadow-[0_1px_4px_rgba(0,0,0,0.1)]
+                              transition-all duration-200"
+                            initial={{ opacity: 0, scale: 0.92 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.5 + i * 0.06 }}
+                            whileHover={{ scale: 1.04 }}
+                          >
+                            <span className="text-[9px] text-white/38 hover:text-white/60 font-medium">{s}</span>
+                          </motion.button>
+                        ))}
+                      </motion.div>
                     )}
                   </div>
                 </motion.div>
