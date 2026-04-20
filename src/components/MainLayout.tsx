@@ -1,13 +1,36 @@
 'use client';
 
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { usePathname } from 'next/navigation';
 import { useApp } from '@/lib/context';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import FloatingAI from '@/components/FloatingAI';
 
+const KEEP_OPEN_ROUTES = ['/dashboard'];
+
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  const { theme, themeOverrides, sidebarOpen } = useApp();
+  const { theme, themeOverrides, sidebarOpen, setSidebarOpen } = useApp();
+  const pathname = usePathname();
+
+  // Auto-collapse sidebar on feature pages
+  useEffect(() => {
+    if (!KEEP_OPEN_ROUTES.includes(pathname)) {
+      setSidebarOpen(false);
+    }
+  }, [pathname, setSidebarOpen]);
+
+  // Auto-collapse on small screens
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 1279px)');
+    const handler = (e: MediaQueryListEvent | MediaQueryList) => {
+      if (e.matches) setSidebarOpen(false);
+    };
+    handler(mql); // check on mount
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, [setSidebarOpen]);
 
   const bgStyle = themeOverrides.gradientFrom ? {
     background: `linear-gradient(to bottom right, ${themeOverrides.gradientFrom}, ${themeOverrides.gradientVia || themeOverrides.gradientFrom}, ${themeOverrides.gradientTo || themeOverrides.gradientFrom})`,
