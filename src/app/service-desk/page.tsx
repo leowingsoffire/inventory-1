@@ -9,6 +9,7 @@ import {
   ArrowRight, ExternalLink, TrendingUp, Clock,
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
+import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
 import { useApp } from '@/lib/context';
 import { t } from '@/lib/i18n';
 import Link from 'next/link';
@@ -223,6 +224,11 @@ export default function ServiceDeskPage() {
               );
             })}
           </div>
+        </motion.div>
+
+        {/* Workflow Guide */}
+        <motion.div variants={itemVariants}>
+          <FeatureGuide {...MODULE_GUIDES.serviceDesk} lang={lang} />
         </motion.div>
 
         {/* Service Category Tiles — ServiceNow-style grid */}

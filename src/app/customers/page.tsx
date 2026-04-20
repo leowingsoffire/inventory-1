@@ -8,6 +8,7 @@ import {
   ArrowRight, Hash,
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
+import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
 import { useApp } from '@/lib/context';
 import { t } from '@/lib/i18n';
 import Link from 'next/link';
@@ -244,6 +245,8 @@ export default function CustomersPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1,2,3].map(i => <div key={i} className="glass-card p-5 h-48 animate-pulse" />)}
           </div>
+        ) : filtered.length === 0 ? (
+          <FeatureGuide {...MODULE_GUIDES.customers} lang={lang} onAction={(a) => { if (a === 'add') { resetForm(); setEditingCustomer(null); setShowModal(true); } }} />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((c, i) => (

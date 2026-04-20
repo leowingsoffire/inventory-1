@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, User, Lightbulb, Mic, MicOff, Volume2, Paperclip, FileText, FileSpreadsheet, FileImage, File, X, MessageSquare, FolderOpen, BookOpen, Upload, Wand2, Eye, Trash2, RefreshCw, Clock, ChevronDown, ChevronUp, Download } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
+import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
 import { useApp } from '@/lib/context';
 import { t } from '@/lib/i18n';
 import { getAvatar, getChatTheme } from '@/lib/ai-avatars';
@@ -642,6 +643,9 @@ export default function AIAssistantPage() {
                         {q}
                       </motion.button>
                     ))}
+                  </div>
+                  <div className="mt-6 w-full max-w-2xl">
+                    <FeatureGuide {...MODULE_GUIDES.aiAssistant} lang={lang} />
                   </div>
                 </div>
               )}

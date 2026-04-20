@@ -8,6 +8,7 @@ import {
   Lock, Eye, Trash2, Globe, Phone, BarChart3, Filter,
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
+import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
 import { useApp } from '@/lib/context';
 
 interface Assessment {
@@ -228,6 +229,8 @@ export default function CompliancePage() {
           <div className="glass-card p-12 text-center">
             <div className="animate-pulse text-white/50">{lang === 'en' ? 'Loading assessments...' : '加载评估中...'}</div>
           </div>
+        ) : assessments.length === 0 ? (
+          <FeatureGuide {...MODULE_GUIDES.compliance} lang={lang} />
         ) : (
           <div className="space-y-4">
             {Object.entries(groupedFiltered).map(([category, items]) => {

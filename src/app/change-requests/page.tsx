@@ -7,6 +7,7 @@ import {
   AlertTriangle, ArrowUpDown, ChevronDown, RefreshCw,
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
+import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
 import { useApp } from '@/lib/context';
 import { t } from '@/lib/i18n';
 import { useEffect, useState, useMemo } from 'react';
@@ -275,6 +276,9 @@ export default function ChangeRequestsPage() {
         </div>
 
         {/* Data Table — ServiceNow-style with column filters */}
+        {changes.length === 0 && !loading ? (
+          <FeatureGuide {...MODULE_GUIDES.changeRequests} lang={lang} onAction={(a) => { if (a === 'add') { resetForm(); setEditItem(null); setShowForm(true); } }} />
+        ) : (
         <div className="glass-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -505,6 +509,7 @@ export default function ChangeRequestsPage() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Detail Modal */}
         <AnimatePresence>

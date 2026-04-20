@@ -7,6 +7,7 @@ import {
   MapPin, MessageSquare, Clock, CheckCircle, User, ArrowRight, Sparkles,
 } from 'lucide-react';
 import MainLayout from '@/components/MainLayout';
+import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
 import { useApp } from '@/lib/context';
 import { useSearchParams, useRouter } from 'next/navigation';
 
@@ -265,10 +266,7 @@ export default function CRMPage() {
               );
             })}
             {filtered.length === 0 && !loading && (
-              <div className="glass-card p-12 text-center">
-                <FileText className="w-12 h-12 text-white/10 mx-auto mb-3" />
-                <p className="text-white/30 text-sm">{lang === 'en' ? 'No activities found' : '未找到活动'}</p>
-              </div>
+              <FeatureGuide {...MODULE_GUIDES.crm} lang={lang} onAction={(a) => { if (a === 'add') { resetForm(); setEditingActivity(null); setShowModal(true); } }} />
             )}
           </div>
         )}
