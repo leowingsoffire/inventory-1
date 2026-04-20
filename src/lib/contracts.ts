@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { generateId } from '@/lib/utils';
 
 export interface Contract {
   id: string;
@@ -23,14 +24,6 @@ export interface Contract {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
-}
-
-function generateId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
 }
 
 export async function ensureContractTable(): Promise<void> {

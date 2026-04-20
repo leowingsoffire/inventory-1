@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { generateId } from '@/lib/utils';
 
 export interface Location {
   id: string; name: string; type: string; address: string | null;
@@ -11,14 +12,6 @@ export interface AssetTransfer {
   requestedBy: string | null; approvedBy: string | null;
   status: string; reason: string | null; notes: string | null;
   requestedAt: string; approvedAt: string | null; completedAt: string | null;
-}
-
-function generateId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
 }
 
 export async function ensureLocationTables(): Promise<void> {

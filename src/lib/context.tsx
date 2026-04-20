@@ -34,6 +34,41 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const ACCENT_VARS = ['--accent-50','--accent-100','--accent-200','--accent-300','--accent-400','--accent-500','--accent-600','--accent-700','--glow-color','--glow-color-light','--selection-color'] as const;
+
+function applyThemeOverrides(root: HTMLElement, overrides: ThemeOverrides): void {
+  if (overrides.accentColor) {
+    const hex = overrides.accentColor;
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const rgba = (a: number) => `rgba(${r},${g},${b},${a})`;
+    root.style.setProperty('--accent-50', rgba(0.05));
+    root.style.setProperty('--accent-100', rgba(0.1));
+    root.style.setProperty('--accent-200', rgba(0.4));
+    root.style.setProperty('--accent-300', rgba(0.6));
+    for (const v of ['--accent-400','--accent-500','--accent-600','--accent-700'] as const) root.style.setProperty(v, hex);
+    root.style.setProperty('--glow-color', rgba(0.5));
+    root.style.setProperty('--glow-color-light', rgba(0.3));
+    root.style.setProperty('--selection-color', rgba(0.4));
+  } else {
+    ACCENT_VARS.forEach(p => root.style.removeProperty(p));
+  }
+
+  const optionalVars: [keyof ThemeOverrides, string][] = [
+    ['gradientFrom', '--custom-gradient-from'],
+    ['gradientVia', '--custom-gradient-via'],
+    ['gradientTo', '--custom-gradient-to'],
+    ['glassOpacity', '--custom-glass-opacity'],
+    ['borderOpacity', '--custom-border-opacity'],
+  ];
+  for (const [key, cssVar] of optionalVars) {
+    const val = overrides[key];
+    if (val !== undefined) root.style.setProperty(cssVar, String(val));
+    else root.style.removeProperty(cssVar);
+  }
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [themeKey, setThemeKey] = useState<ThemeKey>('carbon');
   const [lang, setLang] = useState<Lang>('en');
@@ -68,37 +103,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Apply custom theme overrides via CSS variables
   useEffect(() => {
-    const root = document.documentElement;
-    if (themeOverrides.accentColor) {
-      const hex = themeOverrides.accentColor;
-      const r = parseInt(hex.slice(1, 3), 16);
-      const g = parseInt(hex.slice(3, 5), 16);
-      const b = parseInt(hex.slice(5, 7), 16);
-      root.style.setProperty('--accent-50', `rgba(${r},${g},${b},0.05)`);
-      root.style.setProperty('--accent-100', `rgba(${r},${g},${b},0.1)`);
-      root.style.setProperty('--accent-200', `rgba(${r},${g},${b},0.4)`);
-      root.style.setProperty('--accent-300', `rgba(${r},${g},${b},0.6)`);
-      root.style.setProperty('--accent-400', hex);
-      root.style.setProperty('--accent-500', hex);
-      root.style.setProperty('--accent-600', hex);
-      root.style.setProperty('--accent-700', hex);
-      root.style.setProperty('--glow-color', `rgba(${r},${g},${b},0.5)`);
-      root.style.setProperty('--glow-color-light', `rgba(${r},${g},${b},0.3)`);
-      root.style.setProperty('--selection-color', `rgba(${r},${g},${b},0.4)`);
-    } else {
-      // Remove custom overrides so theme CSS takes over
-      ['--accent-50','--accent-100','--accent-200','--accent-300','--accent-400','--accent-500','--accent-600','--accent-700','--glow-color','--glow-color-light','--selection-color'].forEach(p => root.style.removeProperty(p));
-    }
-    if (themeOverrides.gradientFrom) root.style.setProperty('--custom-gradient-from', themeOverrides.gradientFrom);
-    else root.style.removeProperty('--custom-gradient-from');
-    if (themeOverrides.gradientVia) root.style.setProperty('--custom-gradient-via', themeOverrides.gradientVia);
-    else root.style.removeProperty('--custom-gradient-via');
-    if (themeOverrides.gradientTo) root.style.setProperty('--custom-gradient-to', themeOverrides.gradientTo);
-    else root.style.removeProperty('--custom-gradient-to');
-    if (themeOverrides.glassOpacity !== undefined) root.style.setProperty('--custom-glass-opacity', String(themeOverrides.glassOpacity));
-    else root.style.removeProperty('--custom-glass-opacity');
-    if (themeOverrides.borderOpacity !== undefined) root.style.setProperty('--custom-border-opacity', String(themeOverrides.borderOpacity));
-    else root.style.removeProperty('--custom-border-opacity');
+    applyThemeOverrides(document.documentElement, themeOverrides);
   }, [themeOverrides, themeKey]);
 
   const setTheme = (key: ThemeKey) => { setThemeKey(key); localStorage.setItem('unitech-theme', key); };

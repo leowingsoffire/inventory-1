@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { generateId } from '@/lib/utils';
 
 export type NotificationType =
   | 'warranty-expiry'
@@ -18,14 +19,6 @@ export interface NotificationData {
   link: string | null;
   isRead: boolean;
   createdAt: string;
-}
-
-function generateId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
 }
 
 export async function ensureNotificationTable(): Promise<void> {
@@ -72,9 +65,7 @@ export async function createNotificationForRole(
     `SELECT "id" FROM "User" WHERE "role" = ? AND "isActive" = 1`,
     role,
   );
-  for (const user of users) {
-    await createNotification(user.id, type, title, message, link);
-  }
+  await Promise.all(users.map(user => createNotification(user.id, type, title, message, link)));
 }
 
 export async function createNotificationForAllAdmins(
@@ -87,9 +78,7 @@ export async function createNotificationForAllAdmins(
   const admins = await prisma.$queryRawUnsafe<{ id: string }[]>(
     `SELECT "id" FROM "User" WHERE "role" IN ('admin', 'manager') AND "isActive" = 1`,
   );
-  for (const admin of admins) {
-    await createNotification(admin.id, type, title, message, link);
-  }
+  await Promise.all(admins.map(admin => createNotification(admin.id, type, title, message, link)));
 }
 
 export async function getNotifications(

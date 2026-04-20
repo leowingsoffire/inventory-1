@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { generateId } from '@/lib/utils';
 
 export interface FormTemplate {
   id: string; title: string; description: string | null; category: string;
@@ -11,14 +12,6 @@ export interface FormSubmission {
 }
 export interface FormField {
   id: string; type: 'text' | 'number' | 'date' | 'select' | 'checkbox' | 'textarea'; label: string; required: boolean; options?: string[];
-}
-
-function generateId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
 }
 
 export async function ensureFormTables(): Promise<void> {

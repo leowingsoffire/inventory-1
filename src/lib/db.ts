@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 
+const VERCEL_DB_PATH = '/tmp/dev.db';
+
 function getDbUrl(): string {
   if (process.env.DATABASE_URL) {
     return process.env.DATABASE_URL;
@@ -9,20 +11,15 @@ function getDbUrl(): string {
     try {
       const fs = require('fs');
       const path = require('path');
-      const tmpDb = '/tmp/dev.db';
-      if (!fs.existsSync(tmpDb)) {
+      if (!fs.existsSync(VERCEL_DB_PATH)) {
         const src = path.join(process.cwd(), 'prisma', 'dev.db');
         if (fs.existsSync(src)) {
-          fs.copyFileSync(src, tmpDb);
-          console.log('Copied dev.db to /tmp/dev.db');
-        } else {
-          console.error('Source dev.db not found at:', src);
+          fs.copyFileSync(src, VERCEL_DB_PATH);
         }
       }
-      return `file:${tmpDb}`;
-    } catch (e) {
-      console.error('Error setting up Vercel DB:', e);
-      return 'file:/tmp/dev.db';
+      return `file:${VERCEL_DB_PATH}`;
+    } catch {
+      return `file:${VERCEL_DB_PATH}`;
     }
   }
   

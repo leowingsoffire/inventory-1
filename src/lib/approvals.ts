@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { generateId } from '@/lib/utils';
 import { createNotification, createNotificationForAllAdmins } from '@/lib/notifications';
 
 export interface ApprovalRequest {
@@ -9,14 +10,6 @@ export interface ApprovalRequest {
 export interface ApprovalStep {
   id: string; requestId: string; level: number; approverId: string; status: string;
   comment: string | null; signature: string | null; decidedAt: string | null; createdAt: string;
-}
-
-function generateId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
 }
 
 export async function ensureApprovalTables(): Promise<void> {

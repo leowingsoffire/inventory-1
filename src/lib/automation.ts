@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { generateId } from '@/lib/utils';
 import { createNotification, createNotificationForAllAdmins } from '@/lib/notifications';
 
 // ========== Types ==========
@@ -72,16 +73,6 @@ export interface AutomationStats {
   escalatedToHuman: number;
   failedExecutions: number;
   automationRate: number; // percentage
-}
-
-// ========== Helpers ==========
-
-function generateId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
 }
 
 // ========== DB Setup ==========

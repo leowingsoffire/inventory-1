@@ -37,8 +37,7 @@ export async function POST(request: NextRequest) {
     // If crop data provided, a pre-cropped image from client canvas is expected
     // The client sends the already-cropped canvas output as the file
     if (cropData) {
-      // Crop data is metadata only (x, y, width, height) for logging
-      console.log('Photo uploaded with crop:', cropData);
+      // Crop data is metadata only (x, y, width, height) — no action needed
     }
 
     // Store the base64 photo in the user record
