@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getApprovalRequests, createApprovalRequest } from '@/lib/approvals';
+import { executeRulesForTrigger } from '@/lib/automation';
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,6 +23,13 @@ export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
     const id = await createApprovalRequest(data);
+    // Automation: trigger rules for new approval requests
+    try {
+      await executeRulesForTrigger('approval-created', {
+        approvalId: id, type: data.type, amount: data.amount,
+        title: data.title, requesterId: data.requesterId,
+      }, id, 'approval');
+    } catch { /* non-critical */ }
     return NextResponse.json({ id }, { status: 201 });
   } catch (error) {
     console.error('POST /api/approvals error:', error);

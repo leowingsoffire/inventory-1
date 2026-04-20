@@ -38,6 +38,7 @@ import {
   Mail,
   ClipboardList,
   MapPin,
+  Zap,
 } from 'lucide-react';
 import { useApp } from '@/lib/context';
 import { t } from '@/lib/i18n';
@@ -100,6 +101,7 @@ const navItems: NavItem[] = [
   { href: '/communications', icon: Mail, label: 'nav.communications' },
   { href: '/forms', icon: ClipboardList, label: 'nav.forms' },
   { href: '/locations', icon: MapPin, label: 'nav.locations' },
+  { href: '/automation', icon: Zap, label: 'nav.automation' },
   { href: '/users', icon: ShieldCheck, label: 'nav.users' },
   { href: '/reports', icon: BarChart3, label: 'nav.reports' },
   { href: '/activity', icon: Clock, label: 'nav.activity' },

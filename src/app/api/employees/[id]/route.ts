@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { executeRulesForTrigger } from '@/lib/automation';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -16,7 +17,17 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     const data = await request.json();
+    const previous = await prisma.employee.findUnique({ where: { id } });
     const employee = await prisma.employee.update({ where: { id }, data });
+    // Automation: offboarding trigger when status changes to inactive
+    if (previous?.status === 'active' && employee.status === 'inactive') {
+      try {
+        await executeRulesForTrigger('employee-offboarded', {
+          employeeId: employee.id, name: employee.name, email: employee.email,
+          department: employee.department, title: `Employee offboarded: ${employee.name}`,
+        }, employee.id, 'employee');
+      } catch { /* non-critical */ }
+    }
     return NextResponse.json(employee);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to update employee' }, { status: 500 });

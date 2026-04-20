@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { createNotificationForAllAdmins } from '@/lib/notifications';
+import { executeRulesForTrigger } from '@/lib/automation';
 
 export async function GET() {
   try {
@@ -26,6 +27,13 @@ export async function POST(request: NextRequest) {
         `Priority: ${data.priority || 'normal'} — ${data.description?.slice(0, 80) || 'No description'}`,
         '/maintenance'
       );
+    } catch { /* non-critical */ }
+    // Automation: trigger rules for new tickets
+    try {
+      await executeRulesForTrigger('ticket-created', {
+        ticketId: ticket.id, title: data.title, priority: data.priority || 'medium',
+        category: data.type, description: data.description, assetId: data.assetId,
+      }, ticket.id, 'maintenance');
     } catch { /* non-critical */ }
     return NextResponse.json(ticket, { status: 201 });
   } catch (error) {
