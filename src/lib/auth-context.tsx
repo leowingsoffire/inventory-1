@@ -26,23 +26,31 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'unitech-auth-user';
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user from storage on mount
+  // Validate session on mount by calling /api/auth/me
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
+    let cancelled = false;
+    async function checkSession() {
       try {
-        setUser(JSON.parse(stored));
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) setUser(data.user);
+        } else {
+          // No valid session — clear any stale localStorage
+          localStorage.removeItem('unitech-auth-user');
+        }
       } catch {
-        localStorage.removeItem(STORAGE_KEY);
+        // Network error — stay logged out
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     }
-    setLoading(false);
+    checkSession();
+    return () => { cancelled = true; };
   }, []);
 
   const login = useCallback(async (loginId: string, password: string) => {
@@ -51,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ login: loginId, password }),
+        credentials: 'include',
       });
 
       const data = await res.json();
@@ -60,38 +69,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setUser(data.user);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
       return { success: true };
     } catch {
       return { success: false, error: 'Network error. Please try again.' };
     }
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch {
+      // Best effort — cookie will expire anyway
+    }
     setUser(null);
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('unitech-auth-user');
   }, []);
 
   const refreshUser = useCallback(async () => {
-    if (!user) return;
     try {
-      const res = await fetch(`/api/users/${user.id}`);
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
-        setUser(data);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        setUser(data.user);
       }
     } catch {
       // silently fail
     }
-  }, [user]);
+  }, []);
 
   const updateUser = useCallback((data: Partial<AuthUser>) => {
     setUser(prev => {
       if (!prev) return prev;
-      const updated = { ...prev, ...data };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      return updated;
+      return { ...prev, ...data };
     });
   }, []);
 

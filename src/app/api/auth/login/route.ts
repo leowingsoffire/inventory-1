@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import { createSession } from '@/lib/session';
+import { loginSchema, validateBody } from '@/lib/validation';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 // Hardcoded demo users for environments where SQLite may not be available (e.g., Vercel serverless)
 const DEMO_USERS = [
@@ -44,13 +47,32 @@ function demoLogin(login: string, password: string) {
   return { user: safeUser };
 }
 
+async function handleLoginResult(result: { user: Record<string, unknown> } | null) {
+  if (!result) return null;
+  const u = result.user;
+  await createSession(u.id as string, u.role as string, u.username as string);
+  return result;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { login, password } = await request.json();
-
-    if (!login || !password) {
-      return NextResponse.json({ error: 'Login and password are required' }, { status: 400 });
+    // Rate limiting: 10 attempts per IP per 15 minutes
+    const ip = getClientIp(request);
+    const rl = checkRateLimit(`login:${ip}`, 10, 15 * 60 * 1000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: `Too many login attempts. Try again in ${rl.resetIn} seconds.` },
+        { status: 429 }
+      );
     }
+
+    const body = await request.json();
+    const validation = validateBody(loginSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+
+    const { login, password } = validation.data;
 
     // Try database first
     const dbResult = await tryDatabaseLogin(login, password);
@@ -64,7 +86,8 @@ export async function POST(request: NextRequest) {
       if ('error' in fallbackResult) {
         return NextResponse.json({ error: fallbackResult.error }, { status: fallbackResult.status });
       }
-      return NextResponse.json(fallbackResult);
+      const sessionResult = await handleLoginResult(fallbackResult);
+      return NextResponse.json(sessionResult);
     }
 
     if (dbResult === null) {
@@ -76,14 +99,16 @@ export async function POST(request: NextRequest) {
       if ('error' in fallbackResult) {
         return NextResponse.json({ error: fallbackResult.error }, { status: fallbackResult.status });
       }
-      return NextResponse.json(fallbackResult);
+      const sessionResult = await handleLoginResult(fallbackResult);
+      return NextResponse.json(sessionResult);
     }
 
     if ('error' in dbResult) {
       return NextResponse.json({ error: dbResult.error }, { status: dbResult.status });
     }
 
-    return NextResponse.json(dbResult);
+    const sessionResult = await handleLoginResult(dbResult);
+    return NextResponse.json(sessionResult);
   } catch (error) {
     console.error('Login error:', error);
     // Last resort — try demo login from body
@@ -91,7 +116,8 @@ export async function POST(request: NextRequest) {
       const body = await request.clone().json();
       const fallbackResult = demoLogin(body.login, body.password);
       if (fallbackResult && !('error' in fallbackResult)) {
-        return NextResponse.json(fallbackResult);
+        const sessionResult = await handleLoginResult(fallbackResult);
+        return NextResponse.json(sessionResult);
       }
     } catch { /* ignore */ }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

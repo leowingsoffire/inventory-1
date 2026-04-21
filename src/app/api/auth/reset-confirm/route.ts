@@ -1,18 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import { resetConfirmSchema, validateBody } from '@/lib/validation';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
-    const { token, newPassword } = await request.json();
-
-    if (!token || !newPassword) {
-      return NextResponse.json({ error: 'Token and new password are required' }, { status: 400 });
+    // Rate limiting: 5 attempts per IP per 15 minutes
+    const ip = getClientIp(request);
+    const rl = checkRateLimit(`reset-confirm:${ip}`, 5, 15 * 60 * 1000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: `Too many attempts. Try again in ${rl.resetIn} seconds.` },
+        { status: 429 }
+      );
     }
 
-    if (newPassword.length < 6) {
-      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
+    const body = await request.json();
+    const validation = validateBody(resetConfirmSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
+
+    const { token, newPassword } = validation.data;
 
     // Find user by reset token
     const user = await prisma.user.findFirst({

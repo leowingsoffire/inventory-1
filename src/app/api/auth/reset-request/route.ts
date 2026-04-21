@@ -2,14 +2,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { resetRequestSchema, validateBody } from '@/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
-
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+    // Rate limiting: 5 reset requests per IP per 15 minutes
+    const ip = getClientIp(request);
+    const rl = checkRateLimit(`reset:${ip}`, 5, 15 * 60 * 1000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: `Too many requests. Try again in ${rl.resetIn} seconds.` },
+        { status: 429 }
+      );
     }
+
+    const body = await request.json();
+    const validation = validateBody(resetRequestSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+
+    const { email } = validation.data;
 
     // Find user by personal email or work email
     const user = await prisma.user.findFirst({

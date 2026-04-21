@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import { requireAuth, requirePermission, isAuthError } from '@/lib/api-auth';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
 // GET single user
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
+    const session = await requireAuth();
+    if (isAuthError(session)) return session;
+
     const { id } = await params;
     const user = await prisma.user.findUnique({
       where: { id },
@@ -40,7 +44,16 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 // PATCH update user
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
+    const session = await requireAuth();
+    if (isAuthError(session)) return session;
+
     const { id } = await params;
+
+    // Users can update themselves; admins can update anyone
+    if (id !== session.userId && session.role !== 'dev_admin' && session.role !== 'tenant_admin') {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { username, email, name, displayName, role, personalEmail, isActive, profilePhoto, password } = body;
 
@@ -107,6 +120,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 // DELETE user
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
+    const session = await requirePermission('users', 'canDelete');
+    if (isAuthError(session)) return session;
+
     const { id } = await params;
 
     const user = await prisma.user.findUnique({ where: { id } });

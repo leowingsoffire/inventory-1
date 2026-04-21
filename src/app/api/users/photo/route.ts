@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { requireAuth, isAuthError } from '@/lib/api-auth';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await requireAuth();
+    if (isAuthError(session)) return session;
+
     const formData = await request.formData();
     const file = formData.get('photo') as File | null;
     const userId = formData.get('userId') as string | null;
@@ -17,6 +21,11 @@ export async function POST(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+
+    // Users can only upload their own photo unless they are admin
+    if (userId !== session.userId && session.role !== 'dev_admin' && session.role !== 'tenant_admin') {
+      return NextResponse.json({ error: 'You can only update your own photo' }, { status: 403 });
     }
 
     if (!ALLOWED_TYPES.includes(file.type)) {

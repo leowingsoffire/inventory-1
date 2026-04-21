@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import { requirePermission, isAuthError } from '@/lib/api-auth';
+import { createUserSchema, validateBody } from '@/lib/validation';
 
 // GET all users
 export async function GET() {
   try {
+    const session = await requirePermission('users', 'canRead');
+    if (isAuthError(session)) return session;
+
     const users = await prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
       select: {
@@ -32,16 +37,16 @@ export async function GET() {
 // POST create new user
 export async function POST(request: NextRequest) {
   try {
+    const session = await requirePermission('users', 'canCreate');
+    if (isAuthError(session)) return session;
+
     const body = await request.json();
-    const { username, email, name, displayName, password, role, personalEmail } = body;
-
-    if (!username || !email || !name || !password) {
-      return NextResponse.json({ error: 'Username, email, name, and password are required' }, { status: 400 });
+    const validation = validateBody(createUserSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    if (password.length < 6) {
-      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
-    }
+    const { username, email, name, displayName, password, role, personalEmail } = validation.data;
 
     // Check for existing username or email
     const existing = await prisma.user.findFirst({
