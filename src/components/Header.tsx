@@ -10,6 +10,7 @@ import { useApp } from '@/lib/context';
 import { useAuth } from '@/lib/auth-context';
 import { t } from '@/lib/i18n';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import WeatherCard from './WeatherCard';
 
 const searchRoutes = [
@@ -286,12 +287,16 @@ export default function Header() {
         </div>
 
         {/* User & Sign Out */}
-        <div className="flex items-center gap-2 glass-button px-2.5 py-1.5">
-          <div className="w-6 h-6 rounded-full bg-accent-500/30 flex items-center justify-center">
-            <User className="w-3.5 h-3.5 text-accent-300" />
-          </div>
+        <Link href="/profile" className="flex items-center gap-2 glass-button px-2.5 py-1.5 hover:bg-white/10 transition-all cursor-pointer">
+          {user?.profilePhoto ? (
+            <img src={user.profilePhoto} alt="" className="w-6 h-6 rounded-full object-cover" />
+          ) : (
+            <div className="w-6 h-6 rounded-full bg-accent-500/30 flex items-center justify-center">
+              <User className="w-3.5 h-3.5 text-accent-300" />
+            </div>
+          )}
           <span className="text-xs text-white/80">{user?.displayName || user?.username || 'Admin'}</span>
-        </div>
+        </Link>
         <button
           onClick={() => { logout(); router.push('/'); }}
           className="glass-button flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-all"

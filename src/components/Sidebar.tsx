@@ -40,6 +40,7 @@ import {
   MapPin,
   Zap,
   HelpCircle,
+  UserCircle,
 } from 'lucide-react';
 import { useApp } from '@/lib/context';
 import { t } from '@/lib/i18n';
@@ -108,6 +109,7 @@ const navItems: NavItem[] = [
   { href: '/activity', icon: Clock, label: 'nav.activity' },
   { href: '/ai-assistant', icon: Bot, label: 'nav.ai' },
   { href: '/help', icon: HelpCircle, label: 'nav.help' },
+  { href: '/profile', icon: UserCircle, label: 'nav.profile' },
   { href: '/settings', icon: Settings, label: 'nav.settings' },
 ];
 

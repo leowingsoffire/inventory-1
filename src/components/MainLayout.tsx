@@ -7,6 +7,8 @@ import { useApp } from '@/lib/context';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import FloatingAI from '@/components/FloatingAI';
+import GlobalSearch from '@/components/GlobalSearch';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 const KEEP_OPEN_ROUTES = ['/dashboard'];
 
@@ -76,6 +78,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <div className="relative z-10" style={{ marginLeft: sidebarOpen ? 260 : 72, transition: 'margin-left 0.3s ease-in-out' }}>
         <Header />
         <main className="p-6">
+          <Breadcrumbs />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -86,6 +89,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         </main>
       </div>
       <FloatingAI />
+      <GlobalSearch />
     </div>
   );
 }

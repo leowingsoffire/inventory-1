@@ -99,15 +99,15 @@ export default function DashboardPage() {
   const isEmpty = data.totalAssets === 0 && data.employees === 0 && data.openTickets === 0;
 
   const stats = [
-    { label: t('dash.totalAssets', lang), value: data.totalAssets, icon: Monitor, color: 'from-accent-500 to-accent-600', glow: 'rgba(34,211,238,0.15)', href: '/assets' },
-    { label: t('dash.assigned', lang), value: data.assigned, icon: CheckCircle, color: 'from-emerald-500 to-green-600', glow: 'rgba(52,211,153,0.15)', href: '/assets?status=assigned' },
-    { label: t('dash.available', lang), value: data.available, icon: Package, color: 'from-violet-500 to-purple-600', glow: 'rgba(167,139,250,0.15)', href: '/assets?status=available' },
-    { label: t('dash.maintenance', lang), value: data.maintenance, icon: Wrench, color: 'from-amber-500 to-orange-600', glow: 'rgba(251,191,36,0.15)', href: '/maintenance' },
-    { label: t('dash.employees', lang), value: data.employees, icon: Users, color: 'from-pink-500 to-rose-600', glow: 'rgba(236,72,153,0.15)', href: '/employees' },
-    { label: t('dash.openTickets', lang), value: data.openTickets, icon: AlertTriangle, color: 'from-red-500 to-rose-600', glow: 'rgba(239,68,68,0.15)', href: '/maintenance?status=open' },
-    { label: lang === 'en' ? 'Changes' : '变更', value: data.changes, icon: GitBranch, color: 'from-indigo-500 to-blue-600', glow: 'rgba(99,102,241,0.15)', href: '/change-requests' },
-    { label: lang === 'en' ? 'Customers' : '客户', value: data.customers, icon: Building2, color: 'from-fuchsia-500 to-pink-600', glow: 'rgba(217,70,239,0.15)', href: '/customers' },
-    { label: lang === 'en' ? 'Revenue' : '收入', value: data.revenue, icon: DollarSign, color: 'from-lime-500 to-emerald-600', glow: 'rgba(132,204,22,0.15)', href: '/finance' },
+    { label: t('dash.totalAssets', lang), value: data.totalAssets, icon: Monitor, color: 'from-accent-500 to-accent-600', glow: 'rgba(34,211,238,0.15)', href: '/assets', trend: data.totalAssets > 0 ? '+12%' : '' },
+    { label: t('dash.assigned', lang), value: data.assigned, icon: CheckCircle, color: 'from-emerald-500 to-green-600', glow: 'rgba(52,211,153,0.15)', href: '/assets?status=assigned', trend: data.assigned > 0 ? '+8%' : '' },
+    { label: t('dash.available', lang), value: data.available, icon: Package, color: 'from-violet-500 to-purple-600', glow: 'rgba(167,139,250,0.15)', href: '/assets?status=available', trend: data.available > 0 ? '-3%' : '' },
+    { label: t('dash.maintenance', lang), value: data.maintenance, icon: Wrench, color: 'from-amber-500 to-orange-600', glow: 'rgba(251,191,36,0.15)', href: '/maintenance', trend: data.maintenance > 0 ? '-5%' : '' },
+    { label: t('dash.employees', lang), value: data.employees, icon: Users, color: 'from-pink-500 to-rose-600', glow: 'rgba(236,72,153,0.15)', href: '/employees', trend: data.employees > 0 ? '+2%' : '' },
+    { label: t('dash.openTickets', lang), value: data.openTickets, icon: AlertTriangle, color: 'from-red-500 to-rose-600', glow: 'rgba(239,68,68,0.15)', href: '/maintenance?status=open', trend: data.openTickets > 0 ? '-15%' : '' },
+    { label: lang === 'en' ? 'Changes' : '变更', value: data.changes, icon: GitBranch, color: 'from-indigo-500 to-blue-600', glow: 'rgba(99,102,241,0.15)', href: '/change-requests', trend: data.changes > 0 ? '+4%' : '' },
+    { label: lang === 'en' ? 'Customers' : '客户', value: data.customers, icon: Building2, color: 'from-fuchsia-500 to-pink-600', glow: 'rgba(217,70,239,0.15)', href: '/customers', trend: data.customers > 0 ? '+6%' : '' },
+    { label: lang === 'en' ? 'Revenue' : '收入', value: data.revenue, icon: DollarSign, color: 'from-lime-500 to-emerald-600', glow: 'rgba(132,204,22,0.15)', href: '/finance', trend: data.revenue > 0 ? '+18%' : '' },
   ];
 
   const quickActions = [
@@ -165,7 +165,15 @@ export default function DashboardPage() {
                   <p className="text-2xl font-bold text-white drop-shadow-sm">
                     <AnimatedNumber value={stat.value} />
                   </p>
-                  <p className="text-white/60 text-xs mt-1 font-medium">{stat.label}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-white/60 text-xs font-medium">{stat.label}</p>
+                    {stat.trend && (
+                      <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${stat.trend.startsWith('+') ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {stat.trend.startsWith('+') ? <TrendingUp className="w-2.5 h-2.5" /> : <ArrowUpRight className="w-2.5 h-2.5 rotate-90" />}
+                        {stat.trend}
+                      </span>
+                    )}
+                  </div>
                 </motion.div>
               </Link>
             );

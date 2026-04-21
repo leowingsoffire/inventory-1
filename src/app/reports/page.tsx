@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, Download, PieChart as PieChartIcon, TrendingUp, DollarSign, Calendar, Cpu } from 'lucide-react';
+import { BarChart3, Download, PieChart as PieChartIcon, TrendingUp, DollarSign, Calendar, Cpu, FileSpreadsheet, ChevronDown } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, AreaChart, Area, Legend } from 'recharts';
 import MainLayout from '@/components/MainLayout';
 import { useApp } from '@/lib/context';
 import { FeatureGuide, MODULE_GUIDES } from '@/components/FeatureGuide';
 import { t } from '@/lib/i18n';
+import * as XLSX from 'xlsx';
 
 const monthlyData: {month: string; acquisitions: number; disposals: number; maintenance: number}[] = [];
 const costData: {month: string; acquisition: number; maintenance: number; total: number}[] = [];
@@ -18,6 +19,7 @@ export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'assets' | 'costs' | 'department'>('overview');
   const [loading, setLoading] = useState(true);
   const [hasData, setHasData] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const [categoryData, setCategoryData] = useState<{name: string; value: number; color: string}[]>([]);
   const [statusData, setStatusData] = useState<{name: string; value: number; color: string}[]>([]);
   const [summaryStats, setSummaryStats] = useState<{key: string; value: string; icon: typeof Cpu; change: string}[]>([]);
@@ -52,6 +54,31 @@ export default function ReportsPage() {
     { id: 'department' as const, label: lang === 'en' ? 'By Department' : '按部门' },
   ];
 
+  const handleExport = (format: 'csv' | 'xlsx') => {
+    const wb = XLSX.utils.book_new();
+    // Summary sheet
+    const summaryRows = summaryStats.map(s => ({
+      Metric: s.key === 'totalAssets' ? 'Total Assets' : s.key === 'totalValue' ? 'Total Value' : s.key === 'openTickets' ? 'Open Tickets' : 'Employees',
+      Value: s.value,
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), 'Summary');
+    // Category sheet
+    if (categoryData.length) {
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(categoryData.map(c => ({ Category: c.name, Count: c.value }))), 'By Category');
+    }
+    // Status sheet
+    if (statusData.length) {
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(statusData.map(s => ({ Status: s.name, Count: s.value }))), 'By Status');
+    }
+    // Department sheet
+    if (departmentData.length) {
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(departmentData.map(d => ({ Department: d.dept, Assets: d.assets, Value: d.value }))), 'By Department');
+    }
+    const filename = `report_${new Date().toISOString().slice(0, 10)}.${format}`;
+    XLSX.writeFile(wb, filename, { bookType: format === 'csv' ? 'csv' : 'xlsx' });
+    setShowExportMenu(false);
+  };
+
   const tooltipStyle = {
     contentStyle: { background: 'rgba(17,24,39,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontSize: '12px' },
     itemStyle: { color: '#fff' },
@@ -69,14 +96,30 @@ export default function ReportsPage() {
             </h1>
             <p className="text-white/50 text-sm mt-1">{t('reports.subtitle', lang)}</p>
           </div>
-          <motion.button
-            className="glass-button px-4 py-2 text-sm flex items-center gap-2"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Download className="w-4 h-4" />
-            {lang === 'en' ? 'Export PDF' : '导出PDF'}
-          </motion.button>
+          <div className="relative">
+            <motion.button
+              className="glass-button px-4 py-2 text-sm flex items-center gap-2"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowExportMenu(!showExportMenu)}
+            >
+              <Download className="w-4 h-4" />
+              {lang === 'en' ? 'Export' : '导出'}
+              <ChevronDown className="w-3 h-3" />
+            </motion.button>
+            {showExportMenu && (
+              <div className="absolute right-0 mt-2 w-44 glass-card rounded-xl p-1 z-50 shadow-2xl">
+                <button onClick={() => handleExport('xlsx')} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/80 hover:bg-white/10 rounded-lg transition-all">
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                  Excel (.xlsx)
+                </button>
+                <button onClick={() => handleExport('csv')} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/80 hover:bg-white/10 rounded-lg transition-all">
+                  <FileSpreadsheet className="w-4 h-4 text-blue-400" />
+                  CSV (.csv)
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Stats */}
