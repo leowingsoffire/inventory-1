@@ -36,6 +36,7 @@ const translations: Record<string, Record<Lang, string>> = {
   'nav.forms': { en: 'Custom Forms', zh: '自定义表单' },
   'nav.locations': { en: 'Locations', zh: '位置管理' },
   'nav.automation': { en: 'Automation Center', zh: '自动化中心' },
+  'nav.help': { en: 'Help Center', zh: '帮助中心' },
 
   // Dashboard
   'dash.totalAssets': { en: 'Total Assets', zh: '资产总数' },

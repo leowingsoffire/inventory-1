@@ -39,6 +39,7 @@ import {
   ClipboardList,
   MapPin,
   Zap,
+  HelpCircle,
 } from 'lucide-react';
 import { useApp } from '@/lib/context';
 import { t } from '@/lib/i18n';
@@ -106,6 +107,7 @@ const navItems: NavItem[] = [
   { href: '/reports', icon: BarChart3, label: 'nav.reports' },
   { href: '/activity', icon: Clock, label: 'nav.activity' },
   { href: '/ai-assistant', icon: Bot, label: 'nav.ai' },
+  { href: '/help', icon: HelpCircle, label: 'nav.help' },
   { href: '/settings', icon: Settings, label: 'nav.settings' },
 ];
 

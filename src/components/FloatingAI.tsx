@@ -6,7 +6,7 @@ import {
   Send, X, Sparkles, Minimize2, Settings2, Mic, MicOff,
   AlertTriangle, Shield, Bell, ChevronRight, Volume2, Paperclip,
   FileText, FileSpreadsheet, FileImage, File,
-  ThumbsUp, ThumbsDown, Brain, Plus, Trash2, BookOpen, Save,
+  ThumbsUp, ThumbsDown, Brain, Plus, Trash2, BookOpen, Save, Camera,
 } from 'lucide-react';
 import { useApp } from '@/lib/context';
 import { aiAvatars, aiChatThemes, getAvatar, getChatTheme } from '@/lib/ai-avatars';
@@ -172,7 +172,7 @@ function getOfflineResponse(input: string, lang: 'en' | 'zh'): string {
 }
 
 export default function FloatingAI() {
-  const { lang, aiApiKey, aiAvatar, setAiAvatar, aiChatTheme, setAiChatTheme } = useApp();
+  const { lang, aiApiKey, aiAvatar, setAiAvatar, aiChatTheme, setAiChatTheme, aiProfilePhoto, setAiProfilePhoto } = useApp();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -196,6 +196,7 @@ export default function FloatingAI() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const profilePhotoInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const avatar = getAvatar(aiAvatar);
@@ -451,8 +452,20 @@ export default function FloatingAI() {
     }
   };
 
-  // 3D Animated Avatar component — Korean model face SVG
+  // 3D Animated Avatar component — Korean model face SVG or profile photo
   const Avatar3D = ({ size = 'md', animate = true }: { size?: 'sm' | 'md' | 'lg'; animate?: boolean }) => {
+    if (aiProfilePhoto) {
+      const sizeClasses = { sm: 'w-8 h-8', md: 'w-12 h-12', lg: 'w-20 h-20' };
+      return (
+        <motion.div
+          className={`${sizeClasses[size]} rounded-full overflow-hidden ring-2 ${avatar.ring} flex-shrink-0`}
+          animate={animate ? { scale: [1, 1.03, 1] } : undefined}
+          transition={animate ? { duration: 3, repeat: Infinity } : undefined}
+        >
+          <img src={aiProfilePhoto} alt={avatar.name} className="w-full h-full object-cover" />
+        </motion.div>
+      );
+    }
     const sizeMap = { sm: 'sm' as const, md: 'md' as const, lg: 'lg' as const };
     const animMap = { sm: 'breathe' as const, md: 'rotate3d' as const, lg: 'float' as const };
     return <KoreanFaceAvatar avatar={avatar} size={sizeMap[size]} animate={animate} animation={animMap[size]} />;
@@ -562,6 +575,58 @@ export default function FloatingAI() {
                   style={{ maxHeight: 320 }}
                 >
                   <div className="p-3 space-y-3">
+                    {/* Profile Photo */}
+                    <div>
+                      <p className="text-white/50 text-[10px] font-medium uppercase tracking-wider mb-2">
+                        {lang === 'en' ? 'Profile Photo' : '头像照片'}
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/15 bg-white/5 flex items-center justify-center flex-shrink-0">
+                          {aiProfilePhoto ? (
+                            <img src={aiProfilePhoto} alt="AI" className="w-full h-full object-cover" />
+                          ) : (
+                            <Camera className="w-5 h-5 text-white/25" />
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <motion.button
+                            onClick={() => profilePhotoInputRef.current?.click()}
+                            className="px-3 py-1.5 rounded-lg bg-accent-500/20 border border-accent-500/30 text-accent-400 text-[10px] font-medium"
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            {lang === 'en' ? 'Upload Photo' : '上传照片'}
+                          </motion.button>
+                          {aiProfilePhoto && (
+                            <motion.button
+                              onClick={() => setAiProfilePhoto('')}
+                              className="px-3 py-1.5 rounded-lg bg-red-500/15 border border-red-500/25 text-red-400 text-[10px] font-medium"
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              {lang === 'en' ? 'Remove' : '移除'}
+                            </motion.button>
+                          )}
+                        </div>
+                      </div>
+                      <input
+                        ref={profilePhotoInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 2 * 1024 * 1024) return; // max 2MB
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            const result = reader.result as string;
+                            setAiProfilePhoto(result);
+                          };
+                          reader.readAsDataURL(file);
+                          e.target.value = '';
+                        }}
+                      />
+                    </div>
+
                     {/* Avatar picker */}
                     <div>
                       <button onClick={() => setShowAvatars(!showAvatars)} className="flex items-center gap-1.5 text-white/50 text-[10px] font-medium uppercase tracking-wider mb-2">

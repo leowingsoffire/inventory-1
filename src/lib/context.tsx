@@ -30,6 +30,8 @@ interface AppContextType {
   setAiAvatar: (id: string) => void;
   aiChatTheme: string;
   setAiChatTheme: (id: string) => void;
+  aiProfilePhoto: string;
+  setAiProfilePhoto: (photo: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -76,6 +78,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [aiApiKey, setAiApiKey] = useState('');
   const [aiAvatar, setAiAvatarState] = useState('avatar-01');
   const [aiChatTheme, setAiChatThemeState] = useState('theme-rose');
+  const [aiProfilePhoto, setAiProfilePhotoState] = useState('');
   const [themeOverrides, setThemeOverridesState] = useState<ThemeOverrides>({});
   const [mounted, setMounted] = useState(false);
 
@@ -91,6 +94,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (savedKey) setAiApiKey(savedKey);
     if (savedAvatar) setAiAvatarState(savedAvatar);
     if (savedChatTheme) setAiChatThemeState(savedChatTheme);
+    const savedProfilePhoto = localStorage.getItem('unitech-ai-profile-photo');
+    if (savedProfilePhoto) setAiProfilePhotoState(savedProfilePhoto);
     const savedOverrides = localStorage.getItem('unitech-theme-overrides');
     if (savedOverrides) {
       try { setThemeOverridesState(JSON.parse(savedOverrides)); } catch { /* ignore */ }
@@ -111,6 +116,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const handleSetAiKey = (key: string) => { setAiApiKey(key); localStorage.setItem('unitech-ai-key', key); };
   const setAiAvatar = (id: string) => { setAiAvatarState(id); localStorage.setItem('unitech-ai-avatar', id); };
   const setAiChatTheme = (id: string) => { setAiChatThemeState(id); localStorage.setItem('unitech-ai-chat-theme', id); };
+  const setAiProfilePhoto = (photo: string) => { setAiProfilePhotoState(photo); if (photo) localStorage.setItem('unitech-ai-profile-photo', photo); else localStorage.removeItem('unitech-ai-profile-photo'); };
   const setThemeOverrides = (overrides: ThemeOverrides) => {
     setThemeOverridesState(overrides);
     localStorage.setItem('unitech-theme-overrides', JSON.stringify(overrides));
@@ -134,6 +140,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         aiApiKey, setAiApiKey: handleSetAiKey,
         aiAvatar, setAiAvatar,
         aiChatTheme, setAiChatTheme,
+        aiProfilePhoto, setAiProfilePhoto,
       }}
     >
       {children}
